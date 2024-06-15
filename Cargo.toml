@@ -1,0 +1,16 @@
+[package]
+name = "droid-wrap"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dependencies.droid-wrap-utils]
+path = "utils"
+
+[dependencies.droid-wrap-derive]
+path="derive"
+
+[workspace]
+members = ["derive", "example", "utils"]
+resolver = "2"

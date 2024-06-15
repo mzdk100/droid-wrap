@@ -1,0 +1,14 @@
+[package]
+name = "droid-wrap-example"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+mobile-entry-point = "0.1.1"
+ndk-glue = "0.7.0"
+
+[dependencies.droid-wrap]
+path = ".."
