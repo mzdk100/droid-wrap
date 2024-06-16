@@ -1,7 +1,12 @@
 [package]
 name = "droid-wrap-derive"
-version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 heck = "0.5.0"
