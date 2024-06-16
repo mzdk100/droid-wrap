@@ -21,6 +21,7 @@ java_lang = ["java"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
+version = "*"
 path = "utils"
 
 [dependencies.droid-wrap-derive]
