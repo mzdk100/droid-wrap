@@ -1,0 +1,25 @@
+[package]
+name = "droid-wrap-test"
+description.workspace = true
+authors.workspace = true
+keywords.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+repository.workspace = true
+
+[features]
+android = ["droid-wrap/android_app"]
+android_content = ["android", "droid-wrap/test_android_content"]
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+mobile-entry-point = "0.1.1"
+ndk-glue = "0.7.0"
+
+[dependencies.droid-wrap]
+optional = true
+path = ".."

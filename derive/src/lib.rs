@@ -17,12 +17,12 @@ use heck::ToLowerCamelCase;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use syn::{
-    Expr,
-    Field,
-    FieldMutability,
-    Fields,
-    FieldsNamed, FnArg, ItemFn, ItemStruct, MetaNameValue, parse::{Parse, ParseStream}, parse_macro_input, punctuated::Punctuated, ReturnType,
-    Token, token::SelfValue, Type, Visibility,
+    parse::{Parse, ParseStream},
+    parse_macro_input,
+    punctuated::Punctuated,
+    token::SelfValue,
+    Expr, Field, FieldMutability, Fields, FieldsNamed, FnArg, ItemFn, ItemStruct, MetaNameValue,
+    ReturnType, Token, Type, Visibility,
 };
 
 struct Metadata {
@@ -176,21 +176,45 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
                 let ty_str = ty.to_token_stream().to_string();
                 let v = t.pat.clone();
                 let (ty, v) = if ty_str == "i8" || ty_str == "u8" {
-                    (quote! {"B",}, quote! {(#v as droid_wrap_utils::jbyte).into(),})
+                    (
+                        quote! {"B",},
+                        quote! {(#v as droid_wrap_utils::jbyte).into(),},
+                    )
                 } else if ty_str == "char" {
-                    (quote! {"C",}, quote! {(#v as droid_wrap_utils::jchar).into(),})
+                    (
+                        quote! {"C",},
+                        quote! {(#v as droid_wrap_utils::jchar).into(),},
+                    )
                 } else if ty_str == "i16" || ty_str == "u16" {
-                    (quote! {"S",}, quote! {(#v as droid_wrap_utils::jshort).into(),})
+                    (
+                        quote! {"S",},
+                        quote! {(#v as droid_wrap_utils::jshort).into(),},
+                    )
                 } else if ty_str == "i32" || ty_str == "u32" {
-                    (quote! {"I",}, quote! {(#v as droid_wrap_utils::jint).into(),})
+                    (
+                        quote! {"I",},
+                        quote! {(#v as droid_wrap_utils::jint).into(),},
+                    )
                 } else if ty_str == "i64" || ty_str == "u64" {
-                    (quote! {"J",}, quote! {(#v as droid_wrap_utils::jlong).into(),})
+                    (
+                        quote! {"J",},
+                        quote! {(#v as droid_wrap_utils::jlong).into(),},
+                    )
                 } else if ty_str == "f32" {
-                    (quote! {"F",}, quote! {(#v as droid_wrap_utils::jfloat).into(),})
+                    (
+                        quote! {"F",},
+                        quote! {(#v as droid_wrap_utils::jfloat).into(),},
+                    )
                 } else if ty_str == "f64" {
-                    (quote! {"D",}, quote! {(#v as droid_wrap_utils::jdouble).into(),})
+                    (
+                        quote! {"D",},
+                        quote! {(#v as droid_wrap_utils::jdouble).into(),},
+                    )
                 } else if ty_str == "bool" {
-                    (quote! {"Z",}, quote! {(#v as droid_wrap_utils::jboolean).into()})
+                    (
+                        quote! {"Z",},
+                        quote! {(#v as droid_wrap_utils::jboolean).into()},
+                    )
                 } else {
                     (
                         quote! {#ty::get_object_sig(),},

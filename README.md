@@ -25,6 +25,10 @@
    cd droid-wrap
    cargo apk run -p droid-wrap-example
    ```
+3. 运行测试
+   ```shell
+   cargo apk run -p droid-wrap-test --all-features
+   ```
 
 如需了解更多信息，请查看example目录中的代码示例。
 

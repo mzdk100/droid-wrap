@@ -12,7 +12,7 @@
  */
 
 use droid_wrap_derive::{java_class, java_method};
-use droid_wrap_utils::{GlobalRef, jint, vm_attach};
+use droid_wrap_utils::{jint, vm_attach, GlobalRef};
 
 use crate::{JObjRef, JType};
 

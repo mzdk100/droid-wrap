@@ -11,27 +11,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_method};
-use droid_wrap_utils::{android_context, vm_attach};
+use droid_wrap::android::app::Activity;
 
-use crate::{java::lang::CharSequence, JObjRef, JType};
-
-#[java_class(name = "android/app/Activity")]
-pub struct Activity;
-
-impl Activity {
-    #[java_method]
-    pub fn finish(&self) {}
-
-    #[java_method]
-    pub fn set_title(&self, title: CharSequence) {}
-
-    /**
-     * 获取实例。
-     * */
-    pub fn fetch() -> Self {
-        let ctx = android_context();
-        let obj = vm_attach(|env| env.new_global_ref(&ctx).unwrap());
-        Self { _obj: obj }
-    }
+#[mobile_entry_point::mobile_entry_point]
+fn main() {
+    #[cfg(feature = "android_content")]
+    droid_wrap::android::content::test_context();
+    Activity::fetch().finish();
+    println!("Test all successfully.");
 }

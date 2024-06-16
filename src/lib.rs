@@ -11,6 +11,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+//! 封装Android系统的API。
+//! [官方参考文档](https://developer.android.google.cn/reference/packages)
+
 #![doc = include_str!("../README.md")]
 
 /**
@@ -25,6 +28,20 @@ pub mod android {
     #[cfg(feature = "android_app")]
     #[cfg_attr(docsrs, doc(cfg(feature = "android_app")))]
     pub mod app;
+
+    /**
+     * 包含用于访问和发布设备上的数据的类。
+     * */
+    #[cfg(feature = "android_content")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_content")))]
+    pub mod content;
+
+    /**
+     * 提供一些类，这些类公开处理屏幕布局和与用户交互的基本用户界面类。
+     * */
+    #[cfg(feature = "android_view")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_view")))]
+    pub mod view;
 }
 
 /**

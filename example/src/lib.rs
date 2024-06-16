@@ -14,10 +14,9 @@
 use droid_wrap::android::app::Activity;
 use droid_wrap::java::lang::{CharSequence, Integer, System};
 
-
 #[mobile_entry_point::mobile_entry_point]
 fn main() {
-    let act = Activity::from_ctx();
+    let act = Activity::fetch();
     act.finish();
     let cs = CharSequence::from("hello");
     dbg!(&cs);
