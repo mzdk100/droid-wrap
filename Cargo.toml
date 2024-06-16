@@ -33,11 +33,11 @@ java_lang = ["java"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
-version = "*"
+version = "0.1.0"
 path = "utils"
 
 [dependencies.droid-wrap-derive]
-version = "*"
+version = "0.1.0"
 path="derive"
 
 [workspace]
