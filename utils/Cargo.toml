@@ -1,5 +1,6 @@
 [package]
 name = "droid-wrap-utils"
+description.workspace = true
 authors.workspace = true
 keywords.workspace = true
 license.workspace = true
