@@ -1,7 +1,22 @@
 [package]
+authors = ["mzdk100 <mzdk100@foxmail.com>"]
 name = "droid-wrap"
+description = "用于Rust的Android API的高级封装"
+license = "Apache-2.0"
 version = "0.1.0"
 edition = "2021"
+repository = "https://gitcode.net/mzdk100/droid-wrap.git"
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
+
+[features]
+android = []
+android_app = ["android", "java_lang"]
+java = []
+java_lang = ["java"]
 
 [dependencies]
 

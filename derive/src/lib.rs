@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2024. The RigelA open source project team and
+ * its contributors reserve all rights.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 use proc_macro::TokenStream;
 
 use heck::ToLowerCamelCase;
@@ -29,6 +42,22 @@ impl Parse for Metadata {
     }
 }
 
+/// 定义java class，将此属性标记在struct上，可以自动实现操作java对象的必要功能。
+///
+/// # Arguments
+///
+/// * `attrs`: 属性输入。
+/// * `input`: struct输入。
+///
+/// returns: TokenStream
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_derive::java_class;
+/// #[java_class(name = "java/lang/System")]
+/// struct System;
+/// ```
 #[proc_macro_attribute]
 pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let attrs: Metadata = syn::parse2(Into::<TokenStream2>::into(attrs)).unwrap();
@@ -69,7 +98,7 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let name = item.ident.clone();
     let generics = item.generics.clone();
 
-    quote! {
+    let stream = quote! {
         #item
 
         impl<'j> JType<'j> for #name #generics {
@@ -105,10 +134,29 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 &#added
             }
         }
-    }
-    .into()
+    };
+    stream.into()
 }
 
+/// 实现java类的方法，将此属性标记在fn函数上，可以自动实现调用java方法，可以自动识别静态方法（如果参数中没有“self”）。
+///
+/// # Arguments
+///
+/// * `_`: 未使用。
+/// * `input`: 函数输入。
+///
+/// returns: TokenStream
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_derive::java_method;
+/// struct System;
+/// impl System {
+/// #[java_method]
+/// fn current_time_millis() -> i64 {}
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
@@ -185,18 +233,40 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
         quote! {#ret_type::get_object_sig()}
     };
 
-    quote! {
-        #vis #sig {
-            droid_wrap_utils::vm_attach(|env| {
-                let ret = env.call_method(
-                    #self_.java_ref(),
-                    #name,
-                    format!(#fmt, #arg_types #ret_type_sig).as_str(),
-                    &[#arg_values],
-                )
-                .unwrap();
-                TryInto::<#ret_type>::try_into(ret).unwrap()
-            })
+    if self_.is_none() {
+        quote! {
+            #vis #sig {
+                droid_wrap_utils::vm_attach(|env| {
+                    static CLASS: std::sync::OnceLock<droid_wrap_utils::GlobalRef> = std::sync::OnceLock::new();
+                    let class = CLASS.get_or_init(|| {
+                        let obj = env.find_class(Self::CLASS).unwrap();
+                        env.new_global_ref(obj).unwrap()
+                    });
+                    let ret = env.call_static_method(
+                        class,
+                        #name,
+                        format!(#fmt, #arg_types #ret_type_sig).as_str(),
+                        &[#arg_values],
+                    )
+                    .unwrap();
+                    TryInto::<#ret_type>::try_into(ret).unwrap()
+                })
+            }
+        }
+    } else {
+        quote! {
+            #vis #sig {
+                droid_wrap_utils::vm_attach(|env| {
+                    let ret = env.call_method(
+                        #self_.java_ref(),
+                        #name,
+                        format!(#fmt, #arg_types #ret_type_sig).as_str(),
+                        &[#arg_values],
+                    )
+                    .unwrap();
+                    TryInto::<#ret_type>::try_into(ret).unwrap()
+                })
+            }
         }
     }
     .into()

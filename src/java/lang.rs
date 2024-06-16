@@ -1,13 +1,24 @@
+/*
+ * Copyright (c) 2024. The RigelA open source project team and
+ * its contributors reserve all rights.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
+use droid_wrap_derive::{java_class, java_method};
+use droid_wrap_utils::{GlobalRef, jint, vm_attach};
+
 use crate::{JObjRef, JType};
-use droid_wrap_derive::java_class;
-use droid_wrap_utils::{global_ref, jint, vm_attach, GlobalRef};
 
 impl<'a> JObjRef<'a> for String {
     fn java_ref(&self) -> GlobalRef {
-        vm_attach(|env| {
-            let s = env.new_string(&self).unwrap();
-            global_ref(s.as_ref())
-        })
+        CharSequence::from(self.as_str()).java_ref()
     }
 }
 
@@ -17,10 +28,7 @@ impl<'a> JType<'a> for String {
 
 impl<'a> JObjRef<'a> for &'static str {
     fn java_ref(&self) -> GlobalRef {
-        vm_attach(|env| {
-            let s = env.new_string(*self).unwrap();
-            global_ref(s.as_ref())
-        })
+        CharSequence::from(*self).java_ref()
     }
 }
 
@@ -37,7 +45,7 @@ impl Integer {
             let i = env
                 .new_object(Self::CLASS, "(I)V", &[(value as jint).into()])
                 .unwrap();
-            global_ref(&i)
+            env.new_global_ref(&i).unwrap()
         });
         Self { _obj: obj }
     }
@@ -50,8 +58,16 @@ impl From<&str> for CharSequence {
     fn from(value: &str) -> Self {
         let obj = vm_attach(|env| {
             let cs = env.new_string(value).unwrap();
-            global_ref(&cs)
+            env.new_global_ref(&cs).unwrap()
         });
         Self { _obj: obj }
     }
+}
+
+#[java_class(name = "java/lang/System")]
+pub struct System;
+
+impl System {
+    #[java_method]
+    pub fn current_time_millis() -> i64 {}
 }
