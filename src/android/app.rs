@@ -24,7 +24,7 @@ impl Activity {
     pub fn finish(&self) {}
 
     #[java_method]
-    pub fn set_title(&self, title: CharSequence) {}
+    pub fn set_title(&self, title: &CharSequence) {}
 
     /**
      * 获取实例。
@@ -32,7 +32,7 @@ impl Activity {
     pub fn fetch() -> Self {
         let ctx = android_context();
         let obj = vm_attach(|env| env.new_global_ref(&ctx).unwrap());
-        Self { _obj: obj }
+        Self::_new(&obj)
     }
 }
 

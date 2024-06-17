@@ -32,6 +32,7 @@ use crate::utils::{
 
 struct Metadata {
     class_name: Expr,
+    base_class: Option<Expr>,
 }
 
 impl Parse for Metadata {
@@ -43,10 +44,18 @@ impl Parse for Metadata {
             .unwrap()
             .value
             .clone();
-        Ok(Self { class_name: cls })
+        let based = match attrs.iter().find(|i| i.path.is_ident("extends")) {
+            Some(o) => Some(o.value.clone()),
+            None => None,
+        };
+        Ok(Self {
+            class_name: cls,
+            base_class: based,
+        })
     }
 }
 
+//noinspection SpellCheckingInspection
 /// 定义java class，将此属性标记在struct上，可以自动实现操作java对象的必要功能。
 ///
 /// # Arguments
@@ -67,44 +76,118 @@ impl Parse for Metadata {
 pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let attrs: Metadata = syn::parse2(Into::<TokenStream2>::into(attrs)).unwrap();
     let cls = attrs.class_name;
+    let based = attrs.base_class;
     let mut item = parse_macro_input!(input as ItemStruct);
-    let mut add_field = Field {
+    let mut add_field_this = Field {
         attrs: vec![],
         vis: Visibility::Inherited,
         mutability: FieldMutability::None,
-        ident: Some(Ident::new("_obj", Span::call_site())),
+        ident: Some(Ident::new("_this", Span::call_site())),
         colon_token: None,
         ty: Type::Verbatim(quote! {droid_wrap_utils::GlobalRef}),
     };
-    let (fields, added) = match item.fields {
+    let mut add_field_super = Field {
+        attrs: vec![],
+        vis: Visibility::Inherited,
+        mutability: FieldMutability::None,
+        ident: Some(Ident::new("_based", Span::call_site())),
+        colon_token: None,
+        ty: Type::Verbatim(based.to_token_stream()),
+    };
+
+    let (fields, added_this, added_super) = match item.fields {
         Fields::Named(mut f) => {
-            f.named.push(add_field);
-            (Fields::Named(f), quote! {self._obj})
+            f.named.push(add_field_this);
+            let g = if based.is_some() {
+                f.named.push(add_field_super);
+                quote! {_based}
+            } else {
+                quote!()
+            };
+            (Fields::Named(f), quote! {_this}, g)
         }
         Fields::Unnamed(mut f) => {
-            add_field.ident = None;
-            f.unnamed.push(add_field);
+            add_field_this.ident = None;
+            add_field_super.ident = None;
+            f.unnamed.push(add_field_this);
             let len = f.unnamed.len().to_string();
-            (Fields::Unnamed(f), quote! {self.#len})
+            let g = if based.is_some() {
+                f.unnamed.push(add_field_super);
+                let len = f.unnamed.len().to_string();
+                quote! {#len}
+            } else {
+                quote!()
+            };
+            (Fields::Unnamed(f), quote! {#len}, g)
         }
         Fields::Unit => {
             let mut fields = Punctuated::<Field, Token![,]>::new();
-            fields.push(add_field);
+            fields.push(add_field_this);
+            let g = if based.is_some() {
+                fields.push(add_field_super);
+                quote! {_based}
+            } else {
+                quote!()
+            };
             (
                 Fields::Named(FieldsNamed {
                     brace_token: Default::default(),
                     named: fields,
                 }),
-                quote! {self._obj},
+                quote! {_this},
+                g,
             )
         }
     };
     item.fields = fields;
+
     let name = item.ident.clone();
     let generics = item.generics.clone();
 
+    let impl_new = if based.is_some() {
+        quote! {
+            impl #generics #name #generics {
+                pub(crate) fn _new(this: &droid_wrap_utils::GlobalRef) -> Self {
+                    Self {#added_this: this.clone(), #added_super: this.into()}
+                }
+            }
+        }
+    } else {
+        quote! {
+            impl #generics #name #generics {
+                pub(crate) fn _new(this: &droid_wrap_utils::GlobalRef) -> Self {
+                    Self {#added_this:this.clone()}
+                }
+            }
+        }
+    };
+
+    let impl_based_deref = if based.is_some() {
+        quote! {
+            impl #generics std::ops::Deref for #name #generics {
+                type Target = #based;
+
+                fn deref(&self) -> &Self::Target {
+                    &self.#added_super
+                }
+            }
+        }
+    } else {
+        quote! {
+            impl #generics std::ops::Deref for #name #generics {
+                type Target = droid_wrap_utils::GlobalRef;
+
+                fn deref(&self) -> &Self::Target {
+                    &self.#added_this
+                }
+            }
+        }
+    };
+
     let stream = quote! {
         #item
+
+        #impl_new
 
         impl<'j> JType<'j> for #name #generics {
             type Error = droid_wrap_utils::Error;
@@ -113,9 +196,22 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
         impl<'j> JObjRef<'j> for #name #generics {
             fn java_ref(&self) -> droid_wrap_utils::GlobalRef {
-                #added.clone()
+                self.#added_this.clone()
             }
         }
+
+        impl #generics PartialEq for #name #generics {
+            fn eq(&self, other: &Self) -> bool {
+                droid_wrap_utils::vm_attach(|env| {
+                    env.call_method(
+                        self.java_ref(),
+                        "equals",
+                        "(Ljava/lang/Object;)Z",
+                        &[other.java_ref().as_obj().into()]
+                    ).unwrap().z().unwrap()
+                })
+            }
+    }
 
         impl #generics ToString for #name #generics {
             fn to_string(&self) -> String {
@@ -133,13 +229,13 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
 
-        impl #generics std::ops::Deref for #name #generics {
-            type Target = droid_wrap_utils::GlobalRef;
-
-            fn deref(&self) -> &Self::Target {
-                &#added
+        impl #generics From<&droid_wrap_utils::GlobalRef> for #name #generics {
+            fn from(obj: &droid_wrap_utils::GlobalRef) -> Self {
+                Self::_new(&obj)
             }
         }
+
+        #impl_based_deref
     };
     stream.into()
 }

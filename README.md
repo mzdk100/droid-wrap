@@ -42,6 +42,18 @@
 
 提供Activity类的常用API。
 
+### 安卓内容(android_content)
+
+android.content.Context的API等。
+
+### 安卓视图(android_view)
+
+android.view.View的API等。
+
+### 安卓小部件(android_widget)
+
+常用的一些UI小部件。
+
 ## java功能(java)
 
 ### java语言内置(java_lang)

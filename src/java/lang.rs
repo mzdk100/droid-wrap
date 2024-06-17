@@ -119,7 +119,7 @@ impl From<&str> for CharSequence {
             let cs = env.new_string(value).unwrap();
             env.new_global_ref(&cs).unwrap()
         });
-        Self { _obj: obj }
+        Self::_new(&obj)
     }
 }
 
@@ -136,6 +136,12 @@ impl System {
      * */
     #[java_method]
     pub fn current_time_millis() -> i64 {}
+
+    /**
+     * 运行垃圾收集器。调用 gc 方法表明 Java 虚拟机会努力回收未使用的对象，以便使它们当前占用的内存可供快速重用。当控制权从方法调用返回时，Java 虚拟机已尽最大努力从所有丢弃的对象中回收空间。调用 System.gc() 实际上等同于调用： Runtime.getRuntime().gc()
+     * */
+    #[java_method]
+    pub fn gc() {}
 }
 
 #[cfg(feature = "test_java_lang")]
@@ -147,4 +153,5 @@ pub fn test() {
     let cs = CharSequence::from("hello");
     assert_eq!("hello", cs.to_string());
     assert!(System::current_time_millis() > 0);
+    System::gc();
 }

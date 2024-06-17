@@ -42,6 +42,13 @@ pub mod android {
     #[cfg(feature = "android_view")]
     #[cfg_attr(docsrs, doc(cfg(feature = "android_view")))]
     pub mod view;
+
+    /**
+     * 小部件包包含可在应用程序屏幕上使用的（大部分是视觉的）UI 元素。
+     * */
+    #[cfg(feature = "android_widget")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_widget")))]
+    pub mod widget;
 }
 
 /**

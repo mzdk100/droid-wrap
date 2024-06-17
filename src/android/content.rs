@@ -24,9 +24,7 @@ pub struct Context;
 #[cfg(feature = "android_app")]
 impl From<&crate::android::app::Activity> for Context {
     fn from(value: &crate::android::app::Activity) -> Self {
-        Self {
-            _obj: value.java_ref(),
-        }
+        Self::_new(&value.java_ref())
     }
 }
 

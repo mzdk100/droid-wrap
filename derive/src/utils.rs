@@ -136,7 +136,7 @@ pub(crate) fn get_object_return_value_token(ret_type: TokenStream) -> (TokenStre
                         return (
                             quote! {
                                 if let Ok(obj) = env.new_global_ref(obj) {
-                                    Some(#ret_type {_obj: obj})
+                                    Some(#ret_type::_new(&obj))
                                 } else {
                                     None
                                 }
@@ -148,7 +148,7 @@ pub(crate) fn get_object_return_value_token(ret_type: TokenStream) -> (TokenStre
                         return (
                             quote! {
                                 match env.new_global_ref(obj) {
-                                    Ok(o) => Ok(#ret_type {_obj: o}),
+                                    Ok(o) => Ok(#ret_type::_new(&o)),
                                     Err(e) => Err(e)
                                 }
                             },
@@ -163,7 +163,7 @@ pub(crate) fn get_object_return_value_token(ret_type: TokenStream) -> (TokenStre
     (
         quote! {
             let obj = env.new_global_ref(obj).unwrap();
-            #ret_type {_obj: obj}
+            #ret_type::_new(&obj)
         },
         ret_type,
     )
@@ -188,6 +188,20 @@ pub(crate) fn get_return_value_token(
             if let PathArguments::AngleBracketed(arg) = item.arguments {
                 if let Some(GenericArgument::Type(Type::Path(arg))) = arg.args.first() {
                     if item.ident.to_string() == "Option" {
+                        if arg.path.is_ident("bool") {
+                            // bool需要单独处理。
+                            return (
+                                quote! {
+                                    if let Ok(obj) = ret.z() {
+                                        Some(obj)
+                                    } else {
+                                        None
+                                    }
+                                },
+                                ret_type_sig.clone(),
+                            );
+                        }
+                        // 非bool
                         let ret_type = arg.path.clone();
                         return (
                             quote! {
@@ -197,9 +211,22 @@ pub(crate) fn get_return_value_token(
                                     None
                                 }
                             },
-                            quote! {#ret_type::get_object_sig()},
+                            ret_type_sig.clone(),
                         );
                     } else if item.ident.to_string() == "Result" {
+                        if arg.path.is_ident("bool") {
+                            // bool需要单独处理。
+                            return (
+                                quote! {
+                                    match ret.z() {
+                                        Ok(o) => Ok(o),
+                                        Err(e) => Err(e)
+                                    }
+                                },
+                                ret_type_sig.clone(),
+                            );
+                        }
+                        // 非bool
                         let ret_type = arg.path.clone();
                         return (
                             quote! {
@@ -208,7 +235,7 @@ pub(crate) fn get_return_value_token(
                                     Err(e) => Err(e)
                                 }
                             },
-                            quote! {#ret_type::get_object_sig()},
+                            ret_type_sig.clone(),
                         );
                     }
                 }
@@ -216,6 +243,16 @@ pub(crate) fn get_return_value_token(
         }
         Err(_) => {}
     }
+    if ret_type.to_string() == "bool" {
+        // bool需要单独处理。
+        return (
+            quote! {
+                ret.z().unwrap()
+            },
+            ret_type_sig.clone(),
+        );
+    }
+    // 非bool
     (
         quote! {
             TryInto::<#ret_type>::try_into(ret).unwrap()

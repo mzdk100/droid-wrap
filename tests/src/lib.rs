@@ -16,13 +16,20 @@ use droid_wrap::android::app::Activity;
 #[mobile_entry_point::mobile_entry_point]
 fn main() {
     #[cfg(feature = "android_app")]
-    droid_wrap::android::content::test();
+    droid_wrap::android::app::test();
+    println!("Test android.app successfully.");
     #[cfg(feature = "android_content")]
     droid_wrap::android::content::test();
+    println!("Test android.content successfully.");
     #[cfg(feature = "android_view")]
     droid_wrap::android::view::test();
+    println!("Test android.view successfully.");
+    #[cfg(feature = "android_widget")]
+    droid_wrap::android::widget::test();
+    println!("Test android.widget successfully.");
     #[cfg(feature = "java_lang")]
     droid_wrap::java::lang::test();
+    println!("Test java.lang successfully.");
     Activity::fetch().finish();
     println!("Test all successfully.");
 }

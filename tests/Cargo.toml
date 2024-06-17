@@ -13,6 +13,7 @@ repository.workspace = true
 android = ["droid-wrap/android_app"]
 android_content = ["android", "droid-wrap/test_android_content"]
 android_view = ["android", "droid-wrap/test_android_view"]
+android_widget = ["android", "droid-wrap/test_android_widget"]
 java = []
 java_lang = ["java", "droid-wrap/test_java_lang"]
 
