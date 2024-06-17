@@ -11,7 +11,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::java_class;
+use droid_wrap_derive::{java_class, java_constructor};
+use crate::{
+    android::content::Context,
+    JType,JObjRef
+};
 
 /**
  * 此类代表用户界面组件的基本构建块。View 占据屏幕上的矩形区域，负责绘制和事件处理。View 是小部件的基类，用于创建交互式 UI 组件（按钮、文本字段等）。ViewGroup 子类是布局的基类，布局是不可见的容器，用于容纳其他 View（或其他 ViewGroup）并定义其布局属性。
@@ -28,5 +32,18 @@ use droid_wrap_derive::java_class;
 pub struct View;
 
 impl View {
-    pub fn new() -> Self {}
+    /**
+     * 从代码创建视图时使用的简单构造函数。
+     * `context` 视图在其中运行的上下文，通过它可以访问当前主题、资源等。
+     * */
+    #[java_constructor]
+    pub fn new(context: Context) -> Self {}
+}
+
+#[cfg(feature = "test_android_view")]
+pub fn test() {
+    use crate::android::app::Activity;
+    let ctx: Context = (&Activity::fetch()).into();
+    let view = View::new(ctx);
+    assert!(view.to_string().starts_with("android.view.View"));
 }

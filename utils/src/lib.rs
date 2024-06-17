@@ -12,6 +12,7 @@
  */
 
 pub use jni::{
+    errors::Error,
     objects::{GlobalRef, JClass, JObject},
     sys::{jboolean, jchar, jdouble, jfloat, jint, jlong, jshort},
     AttachGuard, JavaVM,
@@ -40,6 +41,8 @@ macro_rules! import {
          * 用于描述java类的信息。
          * */
         pub trait JType<'j>: JObjRef<'j> {
+            /// 错误类型。
+            type Error;
             /// java类的名称。
             const CLASS: &'j str;
 

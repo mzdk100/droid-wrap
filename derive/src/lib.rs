@@ -11,6 +11,8 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+mod utils;
+
 use proc_macro::TokenStream;
 
 use heck::ToLowerCamelCase;
@@ -20,9 +22,12 @@ use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    token::SelfValue,
-    Expr, Field, FieldMutability, Fields, FieldsNamed, FnArg, ItemFn, ItemStruct, MetaNameValue,
-    ReturnType, Token, Type, Visibility,
+    Expr, Field, FieldMutability, Fields, FieldsNamed, ItemFn, ItemStruct, MetaNameValue, Token,
+    Type, Visibility,
+};
+
+use crate::utils::{
+    get_object_return_value_token, get_return_value_token, parse_function_signature,
 };
 
 struct Metadata {
@@ -102,6 +107,7 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
         #item
 
         impl<'j> JType<'j> for #name #generics {
+            type Error = droid_wrap_utils::Error;
             const CLASS: &'j str = #cls;
         }
 
@@ -160,125 +166,37 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
+    let mut attrs = TokenStream2::new();
+    for i in item.attrs.iter() {
+        attrs.extend(i.to_token_stream());
+    }
     let name = item.sig.ident.to_string().to_lower_camel_case();
     let vis = item.vis.clone();
     let sig = item.sig.clone();
-    let mut self_: Option<SelfValue> = None;
-    let mut arg_types = Punctuated::<Expr, Token![,]>::new();
-    let mut arg_values = TokenStream2::new();
-    for x in &sig.inputs {
-        match x {
-            FnArg::Receiver(r) => {
-                self_ = Some(r.self_token.clone());
-            }
-            FnArg::Typed(t) => {
-                let ty = t.ty.clone();
-                let ty_str = ty.to_token_stream().to_string();
-                let v = t.pat.clone();
-                let (ty, v) = if ty_str == "i8" || ty_str == "u8" {
-                    (
-                        quote! {"B",},
-                        quote! {(#v as droid_wrap_utils::jbyte).into(),},
-                    )
-                } else if ty_str == "char" {
-                    (
-                        quote! {"C",},
-                        quote! {(#v as droid_wrap_utils::jchar).into(),},
-                    )
-                } else if ty_str == "i16" || ty_str == "u16" {
-                    (
-                        quote! {"S",},
-                        quote! {(#v as droid_wrap_utils::jshort).into(),},
-                    )
-                } else if ty_str == "i32" || ty_str == "u32" {
-                    (
-                        quote! {"I",},
-                        quote! {(#v as droid_wrap_utils::jint).into(),},
-                    )
-                } else if ty_str == "i64" || ty_str == "u64" {
-                    (
-                        quote! {"J",},
-                        quote! {(#v as droid_wrap_utils::jlong).into(),},
-                    )
-                } else if ty_str == "f32" {
-                    (
-                        quote! {"F",},
-                        quote! {(#v as droid_wrap_utils::jfloat).into(),},
-                    )
-                } else if ty_str == "f64" {
-                    (
-                        quote! {"D",},
-                        quote! {(#v as droid_wrap_utils::jdouble).into(),},
-                    )
-                } else if ty_str == "bool" {
-                    (
-                        quote! {"Z",},
-                        quote! {(#v as droid_wrap_utils::jboolean).into()},
-                    )
-                } else {
-                    (
-                        quote! {#ty::get_object_sig(),},
-                        quote! {#v.java_ref().as_obj().into()},
-                    )
-                };
-                arg_types.push(Expr::Verbatim(ty));
-                arg_values.extend(v);
-            }
-        }
-    }
-    let fmt = vec!["{}"; arg_types.len()];
-    let arg_types = arg_types.to_token_stream();
-    let fmt = format!("({})", fmt.join(",")) + "{}";
+    let (self_, arg_types, fmt, arg_values, ret_type_sig, ret_type) =
+        parse_function_signature(&sig);
 
-    let ret_type = match sig.output {
-        ReturnType::Default => quote! {()},
-        ReturnType::Type(_, ref t) => t.to_token_stream(),
-    };
-    let ty_str = ret_type.to_string();
-    let ret_type_sig = if ty_str == "i8" || ty_str == "u8" {
-        quote! {"B"}
-    } else if ty_str == "char" {
-        quote! {"C"}
-    } else if ty_str == "i16" || ty_str == "u16" {
-        quote! {"S"}
-    } else if ty_str == "i32" || ty_str == "u32" {
-        quote! {"I"}
-    } else if ty_str == "i64" || ty_str == "u64" {
-        quote! {"J"}
-    } else if ty_str == "f32" {
-        quote! {"F"}
-    } else if ty_str == "f64" {
-        quote! {"D"}
-    } else if ty_str == "bool" {
-        quote! {"Z"}
-    } else if ty_str == "()" {
-        quote! {"V"}
-    } else {
-        quote! {#ret_type::get_object_sig()}
-    };
+    let (ret_value, ret_type_sig) = get_return_value_token(&ret_type_sig, ret_type);
 
     if self_.is_none() {
         quote! {
+            #attrs
             #vis #sig {
                 droid_wrap_utils::vm_attach(|env| {
-                    static CLASS: std::sync::OnceLock<droid_wrap_utils::GlobalRef> = std::sync::OnceLock::new();
-                    let class = CLASS.get_or_init(|| {
-                        let obj = env.find_class(Self::CLASS).unwrap();
-                        env.new_global_ref(obj).unwrap()
-                    });
                     let ret = env.call_static_method(
-                        class,
+                        Self::CLASS,
                         #name,
                         format!(#fmt, #arg_types #ret_type_sig).as_str(),
                         &[#arg_values],
                     )
                     .unwrap();
-                    TryInto::<#ret_type>::try_into(ret).unwrap()
+                    #ret_value
                 })
             }
         }
     } else {
         quote! {
+            #attrs
             #vis #sig {
                 droid_wrap_utils::vm_attach(|env| {
                     let ret = env.call_method(
@@ -288,10 +206,74 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
                         &[#arg_values],
                     )
                     .unwrap();
-                    TryInto::<#ret_type>::try_into(ret).unwrap()
+                    #ret_value
                 })
             }
         }
     }
     .into()
+}
+
+/// 实现java类的构造器，将此属性标记在fn函数上，可以自动实现调用java类的构造器。
+///
+/// # Arguments
+///
+/// * `_`: 未使用。
+/// * `input`: 函数输入。
+///
+/// returns: TokenStream
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_derive::java_constructor;
+/// struct Integer;
+/// impl Integer {
+/// #[java_constructor]
+/// fn new(value: i32) -> Self {}
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
+    let item = parse_macro_input!(input as ItemFn);
+    let mut attrs = TokenStream2::new();
+    for i in item.attrs.iter() {
+        attrs.extend(i.to_token_stream());
+    }
+    let vis = item.vis.clone();
+    let sig = item.sig.clone();
+    let (self_, arg_types, fmt, arg_values, _, ret_type) = parse_function_signature(&sig);
+
+    if !self_.is_none() {
+        panic!(
+            "Incorrect constructor, please remove the '{}' in the arguments!",
+            self_.to_token_stream()
+        );
+    }
+
+    if !ret_type.to_string().contains("Self") {
+        panic!(
+            "Incorrect constructor, please modify the '{}' to 'Self', 'Option<Self>' or 'Result<Self, Self::Error>' in the return value!",
+            ret_type
+        );
+    }
+
+    let (ret_value, _) = get_object_return_value_token(ret_type);
+
+    let stream = quote! {
+        #attrs
+        #vis #sig {
+            droid_wrap_utils::vm_attach(|env| {
+                let obj = env.new_object(
+                    Self::CLASS,
+                    format!(#fmt, #arg_types "V").as_str(),
+                    &[#arg_values],
+                )
+                .unwrap();
+                #ret_value
+            })
+        }
+    };
+
+    stream.into()
 }

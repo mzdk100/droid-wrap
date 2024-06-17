@@ -31,7 +31,7 @@ impl From<&crate::android::app::Activity> for Context {
 }
 
 #[cfg(feature = "test_android_content")]
-pub fn test_context() {
+pub fn test() {
     let act = crate::android::app::Activity::fetch();
     assert!(act.to_string().starts_with("android.app.NativeActivity"));
     let ctx: Context = (&act).into();

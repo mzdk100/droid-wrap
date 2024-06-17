@@ -35,3 +35,9 @@ impl Activity {
         Self { _obj: obj }
     }
 }
+
+#[cfg(feature = "test_android_app")]
+pub fn test() {
+    let act = Activity::fetch();
+    assert!(act.to_string().starts_with("android.app.NativeActivity"));
+}

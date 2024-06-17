@@ -15,8 +15,14 @@ use droid_wrap::android::app::Activity;
 
 #[mobile_entry_point::mobile_entry_point]
 fn main() {
+    #[cfg(feature = "android_app")]
+    droid_wrap::android::content::test();
     #[cfg(feature = "android_content")]
-    droid_wrap::android::content::test_context();
+    droid_wrap::android::content::test();
+    #[cfg(feature = "android_view")]
+    droid_wrap::android::view::test();
+    #[cfg(feature = "java_lang")]
+    droid_wrap::java::lang::test();
     Activity::fetch().finish();
     println!("Test all successfully.");
 }

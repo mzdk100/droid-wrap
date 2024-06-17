@@ -32,7 +32,10 @@ android_view = ["android"]
 java = []
 java_lang = ["java"]
 test = []
+test_android_app = ["android_app"]
 test_android_content = ["android_app", "android_content"]
+test_android_view = ["android_content", "android_view"]
+test_java_lang = ["java_lang"]
 
 [dependencies]
 
