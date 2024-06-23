@@ -14,93 +14,77 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
-    parse2, punctuated::Punctuated, token::SelfValue, Expr, FnArg, GenericArgument, PathArguments,
-    PathSegment, ReturnType, Signature, Token, Type,
+    parse::{Parse, ParseStream},
+    parse2,
+    punctuated::Punctuated,
+    token::SelfValue,
+    Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token, Type,
+    TypeReference,
 };
 
-pub(crate) fn parse_function_signature(
-    sig: &Signature,
-) -> (
-    Option<SelfValue>,
-    TokenStream,
-    String,
-    TokenStream,
-    TokenStream,
-    TokenStream,
-) {
-    let mut self_: Option<SelfValue> = None;
-    let mut arg_types = Punctuated::<Expr, Token![,]>::new();
-    let mut arg_values = TokenStream::new();
-    for x in &sig.inputs {
-        match x {
-            FnArg::Receiver(r) => {
-                self_ = Some(r.self_token.clone());
-            }
-            FnArg::Typed(t) => {
-                let ty = t.ty.clone();
-                let ty_str = ty.to_token_stream().to_string();
-                let v = t.pat.clone();
-                let (ty, v) = if ty_str == "i8" || ty_str == "u8" {
-                    (
-                        quote! {"B",},
-                        quote! {(#v as droid_wrap_utils::jbyte).into(),},
-                    )
-                } else if ty_str == "char" {
-                    (
-                        quote! {"C",},
-                        quote! {(#v as droid_wrap_utils::jchar).into(),},
-                    )
-                } else if ty_str == "i16" || ty_str == "u16" {
-                    (
-                        quote! {"S",},
-                        quote! {(#v as droid_wrap_utils::jshort).into(),},
-                    )
-                } else if ty_str == "i32" || ty_str == "u32" {
-                    (
-                        quote! {"I",},
-                        quote! {(#v as droid_wrap_utils::jint).into(),},
-                    )
-                } else if ty_str == "i64" || ty_str == "u64" {
-                    (
-                        quote! {"J",},
-                        quote! {(#v as droid_wrap_utils::jlong).into(),},
-                    )
-                } else if ty_str == "f32" {
-                    (
-                        quote! {"F",},
-                        quote! {(#v as droid_wrap_utils::jfloat).into(),},
-                    )
-                } else if ty_str == "f64" {
-                    (
-                        quote! {"D",},
-                        quote! {(#v as droid_wrap_utils::jdouble).into(),},
-                    )
-                } else if ty_str == "bool" {
-                    (
-                        quote! {"Z",},
-                        quote! {(#v as droid_wrap_utils::jboolean).into()},
-                    )
-                } else {
-                    (
-                        quote! {#ty::get_object_sig(),},
-                        quote! {#v.java_ref().as_obj().into()},
-                    )
-                };
-                arg_types.push(Expr::Verbatim(ty));
-                arg_values.extend(v);
-            }
-        }
-    }
-    let fmt = vec!["{}"; arg_types.len()];
-    let arg_types = arg_types.to_token_stream();
-    let fmt = format!("({})", fmt.join(",")) + "{}";
+pub(crate) struct ClassMetadata {
+    pub(crate) class_name: Expr,
+    pub(crate) base_class: Option<Expr>,
+}
 
-    let ret_type = match sig.output {
-        ReturnType::Default => quote! {()},
-        ReturnType::Type(_, ref t) => t.to_token_stream(),
+impl Parse for ClassMetadata {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let attrs = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+        let cls = attrs
+            .iter()
+            .find(|i| i.path.is_ident("name"))
+            .unwrap()
+            .value
+            .clone();
+        let based = match attrs.iter().find(|i| i.path.is_ident("extends")) {
+            Some(o) => Some(o.value.clone()),
+            None => None,
+        };
+        Ok(Self {
+            class_name: cls,
+            base_class: based,
+        })
+    }
+}
+
+pub(crate) struct InterfaceMetadata {
+    pub(crate) interface_name: Expr,
+}
+
+impl Parse for InterfaceMetadata {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let attrs = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+        let cls = attrs
+            .iter()
+            .find(|i| i.path.is_ident("name"))
+            .unwrap()
+            .value
+            .clone();
+        Ok(Self {
+            interface_name: cls,
+        })
+    }
+}
+
+fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
+    let res = parse2::<PathSegment>(ty.clone());
+
+    let unwrapped = match res {
+        Ok(item) => match item.arguments {
+            PathArguments::AngleBracketed(arg) => arg.args.first().unwrap().to_token_stream(),
+            _ => item.to_token_stream(),
+        },
+        _ => match parse2::<Type>(ty.clone()) {
+            Ok(Type::Reference(TypeReference { elem, .. })) => elem.to_token_stream(),
+            _ => ty.clone(),
+        },
     };
-    let ty_str = ret_type.to_string();
-    let ret_type_sig = if ty_str == "i8" || ty_str == "u8" {
+    (unwrapped, ty.to_token_stream())
+}
+
+fn get_type_descriptor_token(ty: &TokenStream) -> TokenStream {
+    let ty_str = ty.to_string();
+    if ty_str == "i8" || ty_str == "u8" {
         quote! {"B"}
     } else if ty_str == "char" {
         quote! {"C"}
@@ -119,144 +103,148 @@ pub(crate) fn parse_function_signature(
     } else if ty_str == "()" {
         quote! {"V"}
     } else {
-        quote! {#ret_type::get_object_sig()}
-    };
-    (self_, arg_types, fmt, arg_values, ret_type_sig, ret_type)
+        quote! {#ty::get_object_sig()}
+    }
 }
 
-pub(crate) fn get_object_return_value_token(ret_type: TokenStream) -> (TokenStream, TokenStream) {
-    let res = parse2::<PathSegment>(ret_type.clone());
+pub(crate) fn parse_function_signature(
+    sig: &Signature,
+) -> (
+    Option<SelfValue>,
+    Vec<TokenStream>,
+    TokenStream,
+    String,
+    TokenStream,
+    TokenStream,
+) {
+    let mut self_: Option<SelfValue> = None;
+    let mut arg_types = Vec::new();
+    let mut arg_types_sig = TokenStream::new();
+    let mut arg_values = Punctuated::<Expr, Token![,]>::new();
+    for x in &sig.inputs {
+        match x {
+            FnArg::Receiver(r) => {
+                self_ = Some(r.self_token.clone());
+            }
+            FnArg::Typed(t) => {
+                let (unwrapped_ty, _) = unwrap_type(&t.ty.to_token_stream());
+                let ty_str = unwrapped_ty.to_string();
+                let v = t.pat.clone();
+                let v = if ty_str == "i8" || ty_str == "u8" {
+                    quote! {(#v as droid_wrap_utils::jbyte).into()}
+                } else if ty_str == "char" {
+                    quote! {(#v as droid_wrap_utils::jchar).into()}
+                } else if ty_str == "i16" || ty_str == "u16" {
+                    quote! {(#v as droid_wrap_utils::jshort).into()}
+                } else if ty_str == "i32" || ty_str == "u32" {
+                    quote! {(#v as droid_wrap_utils::jint).into()}
+                } else if ty_str == "i64" || ty_str == "u64" {
+                    quote! {(#v as droid_wrap_utils::jlong).into()}
+                } else if ty_str == "f32" {
+                    quote! {(#v as droid_wrap_utils::jfloat).into()}
+                } else if ty_str == "f64" {
+                    quote! {(#v as droid_wrap_utils::jdouble).into()}
+                } else if ty_str == "bool" {
+                    quote! {(#v as droid_wrap_utils::jboolean).into()}
+                } else {
+                    quote! {#v.java_ref().as_obj().into()}
+                };
 
-    match res {
-        Ok(item) => {
-            if let PathArguments::AngleBracketed(arg) = item.arguments {
-                if let Some(GenericArgument::Type(Type::Path(arg))) = arg.args.first() {
-                    if item.ident.to_string() == "Option" {
-                        let ret_type = arg.path.clone();
-                        return (
-                            quote! {
-                                if let Ok(obj) = env.new_global_ref(obj) {
-                                    Some(#ret_type::_new(&obj))
-                                } else {
-                                    None
-                                }
-                            },
-                            ret_type.to_token_stream(),
-                        );
-                    } else if item.ident.to_string() == "Result" {
-                        let ret_type = arg.path.clone();
-                        return (
-                            quote! {
-                                match env.new_global_ref(obj) {
-                                    Ok(o) => Ok(#ret_type::_new(&o)),
-                                    Err(e) => Err(e)
-                                }
-                            },
-                            ret_type.to_token_stream(),
-                        );
-                    }
-                }
+                let arg_sig = get_type_descriptor_token(&unwrapped_ty);
+                arg_types.push(unwrapped_ty);
+                arg_types_sig.extend(quote!(#arg_sig,));
+                arg_values.push(Expr::Verbatim(v));
             }
         }
-        Err(_) => {}
     }
+
+    let fmt = vec!["{}"; arg_values.len()];
+    let fmt = format!("({})", fmt.join("")) + "{}";
+
+    let ret_type = match sig.output {
+        ReturnType::Default => quote! {()},
+        ReturnType::Type(_, ref t) => t.to_token_stream(),
+    };
     (
-        quote! {
-            let obj = env.new_global_ref(obj).unwrap();
-            #ret_type::_new(&obj)
-        },
+        self_,
+        arg_types,
+        arg_types_sig,
+        fmt,
+        arg_values.to_token_stream(),
         ret_type,
     )
 }
 
-pub(crate) fn get_return_value_token(
-    ret_type_sig: &TokenStream,
-    ret_type: TokenStream,
-) -> (TokenStream, TokenStream) {
+pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> TokenStream {
+    let (unwrapped_ty, ty) = unwrap_type(&ret_type);
+
+    if ty.to_string().starts_with("Option") {
+        quote! {
+            if let Ok(obj) = env.new_global_ref(obj) {
+                Some(#unwrapped_ty::_new(&obj))
+            } else {
+                None
+            }
+        }
+    } else if ty.to_string().starts_with("Result") {
+        quote! {
+            match env.new_global_ref(obj) {
+                Ok(o) => Ok(#unwrapped_ty::_new(&o)),
+                Err(e) => Err(e)
+            }
+        }
+    } else {
+        quote! {
+            let obj = env.new_global_ref(obj).unwrap();
+            #unwrapped_ty::_new(&obj)
+        }
+    }
+}
+
+pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, TokenStream) {
+    let (unwrapped_ty, ty) = unwrap_type(ret_type);
+    let ret_type_sig = get_type_descriptor_token(&unwrapped_ty);
+
     if ret_type_sig.to_string().contains("get_object_sig") {
-        let (ret_value, ret_type) = get_object_return_value_token(ret_type);
+        let ret_value = get_object_return_value_token(&ret_type);
         return (
             quote! {
                 let obj = ret.l().unwrap();
                 #ret_value
             },
-            quote! {#ret_type::get_object_sig()},
+            quote! {#unwrapped_ty::get_object_sig()},
         );
     }
-    match parse2::<PathSegment>(ret_type.clone()) {
-        Ok(item) => {
-            if let PathArguments::AngleBracketed(arg) = item.arguments {
-                if let Some(GenericArgument::Type(Type::Path(arg))) = arg.args.first() {
-                    if item.ident.to_string() == "Option" {
-                        if arg.path.is_ident("bool") {
-                            // bool需要单独处理。
-                            return (
-                                quote! {
-                                    if let Ok(obj) = ret.z() {
-                                        Some(obj)
-                                    } else {
-                                        None
-                                    }
-                                },
-                                ret_type_sig.clone(),
-                            );
-                        }
-                        // 非bool
-                        let ret_type = arg.path.clone();
-                        return (
-                            quote! {
-                                if let Ok(obj) = TryInto::<#ret_type>::try_into(ret) {
-                                    Some(obj)
-                                } else {
-                                    None
-                                }
-                            },
-                            ret_type_sig.clone(),
-                        );
-                    } else if item.ident.to_string() == "Result" {
-                        if arg.path.is_ident("bool") {
-                            // bool需要单独处理。
-                            return (
-                                quote! {
-                                    match ret.z() {
-                                        Ok(o) => Ok(o),
-                                        Err(e) => Err(e)
-                                    }
-                                },
-                                ret_type_sig.clone(),
-                            );
-                        }
-                        // 非bool
-                        let ret_type = arg.path.clone();
-                        return (
-                            quote! {
-                                match TryInto::<#ret_type>::try_into(ret) {
-                                    Ok(o) => Ok(o),
-                                    Err(e) => Err(e)
-                                }
-                            },
-                            ret_type_sig.clone(),
-                        );
-                    }
-                }
+
+    let ty_str = unwrapped_ty.to_string();
+    let opt = if ty_str == "bool" {
+        // bool需要单独处理。
+        quote! {ret.z()}
+    } else if ty_str == "char" {
+        // char需要单独处理。
+        quote! {
+            match ret.c() {
+                Ok(c) => Ok(c as u8 as char),
+                Err(e) => Err(e)
             }
         }
-        Err(_) => {}
-    }
-    if ret_type.to_string() == "bool" {
-        // bool需要单独处理。
-        return (
-            quote! {
-                ret.z().unwrap()
-            },
-            ret_type_sig.clone(),
-        );
-    }
-    // 非bool
-    (
+    } else {
+        // 非bool和char
+        quote! {TryInto::<#unwrapped_ty>::try_into(ret)}
+    };
+
+    let opt = if ty.to_string().starts_with("Option") {
         quote! {
-            TryInto::<#ret_type>::try_into(ret).unwrap()
-        },
-        ret_type_sig.clone(),
-    )
+            if let Ok(obj) = #opt {
+                Some(obj)
+            } else {
+                None
+            }
+        }
+    } else if ty.to_string().starts_with("Result") {
+        opt
+    } else {
+        quote! {#opt.unwrap()}
+    };
+    (opt, ret_type_sig)
 }

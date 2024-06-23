@@ -13,19 +13,33 @@
 
 当您如果在尝试封装类似的功能函数时，请优先考虑上述规则。
 
+## 特点
+
+- Java 动态代理，使用Rust函数实现java接口的方法；
+- 提供常用的Android API；
+- API调用符合rust代码规范；
+- 拥有完整的测试，覆盖每个函数调用；
+- 构建和使用简单；
+- 多线程安全。
+
 ## 使用
 
-1. 安装apk打包工具
+1. 环境配置
+   在使用之前需要确保配置Android SDK和Java环境。
+    - ANDROID_HOME： 指向Android SDK的根目录路径。
+    - JAVA_HOME： 指向jre或者jdk的根目录路径。
+      注意：我们不使用javac来编译生成java字节码，所以无须使用完整的JDK环境，仅使用JRE（Java 运行时）即可。
+2. 安装apk打包工具
    ```shell
    cargo install cargo-apk
    ```
-2. 运行示例
+3. 运行示例
    ```shell
    git clone https://gitcode.net/mzdk100/droid-wrap.git
    cd droid-wrap
    cargo apk run -p droid-wrap-example
    ```
-3. 运行测试
+4. 运行测试
    ```shell
    cargo apk run -p droid-wrap-test --all-features
    ```
@@ -46,6 +60,10 @@
 
 android.content.Context的API等。
 
+### 安卓语音(android_speech)
+
+android.speech.tts.TextToSpeech的API等。
+
 ### 安卓视图(android_view)
 
 android.view.View的API等。
@@ -60,3 +78,6 @@ android.view.View的API等。
 
 实现了java.lang.String,java.lang.Integer等类型。
 
+### java缓冲区(java_nio)
+
+实现了java.nio.ByteBuffer等类型。

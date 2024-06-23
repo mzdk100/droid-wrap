@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{android::content::Context, JObjRef, JType};
+use crate::{android::content::Context, JObjNew, JObjRef, JType};
 use droid_wrap_derive::{java_class, java_constructor, java_method};
 
 /**
@@ -50,6 +50,7 @@ impl View {
     #[java_method]
     pub fn get_height(&self) -> i32 {}
 
+    //noinspection SpellCheckingInspection
     /**
      * 调用此操作可以尝试将焦点集中到特定视图或其子视图之一。如果视图不可聚焦（isFocusable返回false），或者由于其他条件而无法聚焦（当设备处于触摸模式、不可见、未启用或没有大小时，在触摸模式下无法聚焦（isForusableInTouchMode）），则视图实际上不会聚焦。另请参阅focusSearch(int)，这是用来表示有焦点，并希望视图的父母寻找下一个焦点的方法。这相当于用参数FOCUS_DOWN和null调用requestFocus(int, Rect)。
      * 返回：这个视图或它的一个后代是否真的成为焦点。

@@ -16,20 +16,50 @@ use droid_wrap::android::app::Activity;
 #[mobile_entry_point::mobile_entry_point]
 fn main() {
     #[cfg(feature = "android_app")]
-    droid_wrap::android::app::test();
-    println!("Test android.app successfully.");
+    {
+        droid_wrap::android::app::test();
+        println!("Test android.app successfully.");
+    }
     #[cfg(feature = "android_content")]
-    droid_wrap::android::content::test();
-    println!("Test android.content successfully.");
+    {
+        droid_wrap::android::content::test();
+        println!("Test android.content successfully.");
+    }
+    #[cfg(feature = "android_speech_tts")]
+    {
+        droid_wrap::android::speech::tts::test();
+        println!("Test android.speech.tts successfully.");
+    }
     #[cfg(feature = "android_view")]
-    droid_wrap::android::view::test();
-    println!("Test android.view successfully.");
+    {
+        droid_wrap::android::view::test();
+        println!("Test android.view successfully.");
+    }
     #[cfg(feature = "android_widget")]
-    droid_wrap::android::widget::test();
-    println!("Test android.widget successfully.");
+    {
+        droid_wrap::android::widget::test();
+        println!("Test android.widget successfully.");
+    }
     #[cfg(feature = "java_lang")]
-    droid_wrap::java::lang::test();
-    println!("Test java.lang successfully.");
+    {
+        droid_wrap::java::lang::test();
+        println!("Test java.lang successfully.");
+    }
+    #[cfg(feature = "java_lang_reflect")]
+    {
+        droid_wrap::java::lang::reflect::test();
+        println!("Test java.lang.reflect successfully.");
+    }
+    #[cfg(feature = "java_nio")]
+    {
+        droid_wrap::java::nio::test();
+        println!("Test java.nio successfully.");
+    }
+    #[cfg(feature = "dalvik_system")]
+    {
+        droid_wrap::dalvik::system::test();
+        println!("Test dalvik.system successfully.");
+    }
     Activity::fetch().finish();
     println!("Test all successfully.");
 }

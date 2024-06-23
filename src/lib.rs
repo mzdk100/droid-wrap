@@ -37,6 +37,11 @@ pub mod android {
     pub mod content;
 
     /**
+     * 语音能力。
+     * */
+    pub mod speech;
+
+    /**
      * 提供一些类，这些类公开处理屏幕布局和与用户交互的基本用户界面类。
      * */
     #[cfg(feature = "android_view")]
@@ -52,6 +57,20 @@ pub mod android {
 }
 
 /**
+ * Dalvik 虚拟机。
+ * */
+#[cfg(feature = "dalvik")]
+#[cfg_attr(docsrs, doc(cfg(feature = "dalvik")))]
+pub mod dalvik {
+    /**
+     * Dalvik 虚拟机系统。
+     * */
+    #[cfg(feature = "dalvik_system")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "dalvik_system")))]
+    pub mod system;
+}
+
+/**
  * Java API。
  * */
 #[cfg(feature = "java")]
@@ -63,6 +82,13 @@ pub mod java {
     #[cfg(feature = "java_lang")]
     #[cfg_attr(docsrs, doc(cfg(feature = "java_lang")))]
     pub mod lang;
+
+    /**
+     * 定义缓冲区，它是用于数据的容器，并概述了其他NIO软件包。
+     * */
+    #[cfg(feature = "java_nio")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "java_nio")))]
+    pub mod nio;
 }
 
 droid_wrap_utils::import!();

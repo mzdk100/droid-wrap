@@ -11,31 +11,70 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_constructor, java_method};
+/**
+ * 提供用于获取有关类和对象的反射信息的类和接口。
+ * */
+#[cfg(feature = "java_lang_reflect")]
+#[cfg_attr(docsrs, doc(cfg(feature = "java_lang_reflect")))]
+pub mod reflect;
+
+use droid_wrap_derive::{java_class, java_constructor, java_interface, java_method};
 use droid_wrap_utils::{vm_attach, Error, GlobalRef};
 
-use crate::{JObjRef, JType};
+use crate::{JObjNew, JObjRef, JType};
 
-impl<'a> JObjRef<'a> for String {
+/**
+ * Object 类是类层次结构的根。每个类都有 Object 作为超类。所有对象（包括数组）都实现了此类的方法。
+ * */
+#[java_class(name = "java/lang/Object")]
+pub struct Object;
+
+impl Object {
+    /**
+     * 返回对象的哈希码值。此方法支持哈希表，例如 java.util.HashMap 提供的哈希表。
+     * hashCode 的一般约定是：在 Java 应用程序执行期间，只要对同一对象多次调用该方法，则 hashCode 方法必须始终返回相同的整数，前提是未修改对象上 equals 比较中使用的信息。此整数不必在应用程序的一次执行和同一应用程序的另一次执行之间保持一致。如果根据 equals(Object) 方法，两个对象相等，则对这两个对象中的每一个调用 hashCode 方法必须产生相同的整数结果。如果根据 equals(Object) 方法，两个对象不相等，则对这两个对象中的每一个调用 hashCode 方法不必产生不同的整数结果。
+     * 但是，程序员应该知道，为不相等的对象产生不同的整数结果可能会提高哈希表的性能。在合理可行的范围内，Object 类定义的 hashCode 方法确实会为不同的对象返回不同的整数。 （hashCode 可能被实现为某个时间点的对象内存地址的某个函数，也可能不被实现。）
+     * 返回：此对象的哈希码值。
+     * */
+    #[java_method]
+    pub fn hash_code(&self) -> i32 {}
+}
+
+impl JObjRef for String {
     fn java_ref(&self) -> GlobalRef {
-        CharSequence::from(self.as_str()).java_ref()
+        vm_attach(|env| {
+            let s = env.new_string(self.as_str()).unwrap();
+            env.new_global_ref(&s).unwrap()
+        })
     }
 }
 
-impl<'a> JType<'a> for String {
-    type Error = Error;
-    const CLASS: &'a str = "java/lang/String";
-}
-
-impl<'a> JObjRef<'a> for &'static str {
-    fn java_ref(&self) -> GlobalRef {
-        CharSequence::from(*self).java_ref()
+impl JObjNew for String {
+    fn _new(this: &GlobalRef) -> Self {
+        vm_attach(|env| {
+            let s = env.get_string(this.as_obj().into()).unwrap();
+            Self::from(s.to_str().unwrap())
+        })
     }
 }
 
-impl<'a> JType<'a> for &'static str {
+impl JType for String {
     type Error = Error;
-    const CLASS: &'a str = "java/lang/String";
+    const CLASS: &'static str = "java/lang/String";
+}
+
+pub trait CharSequenceExt {
+    fn to_char_sequence<CS: CharSequence>(&self) -> CS;
+}
+
+impl<'a> CharSequenceExt for &'a str {
+    fn to_char_sequence<CS: CharSequence>(&self) -> CS {
+        vm_attach(|env| {
+            let s = env.new_string(*self).unwrap();
+            let s = env.new_global_ref(&s).unwrap();
+            CS::_new(&s)
+        })
+    }
 }
 
 /**
@@ -63,7 +102,7 @@ impl Integer {
      * `i` 一个 int 值。
      * */
     #[java_method]
-    pub fn value_of<'j>(i: i32) -> Result<Self, <Self as JType<'j>>::Error> {}
+    pub fn value_of(i: i32) -> Result<Self, <Self as JType>::Error> {}
 }
 
 /**
@@ -89,38 +128,38 @@ impl Float {
      * `f` 浮点值。
      * */
     #[java_method]
-    pub fn value_of<'j>(f: f32) -> Result<Self, <Self as JType<'j>>::Error> {}
+    pub fn value_of(f: f32) -> Result<Self, <Self as JType>::Error> {}
 }
 
 /**
  * CharSequence 是可读的 char 值序列。此接口提供对许多不同种类的 char 序列的统一、只读访问。char 值表示基本多语言平面 (BMP) 中的字符或代理。有关详细信息，请参阅 Unicode 字符表示。此接口不会细化 equals 和 hashCode 方法的一般约定。因此，测试两个实现 CharSequence 的对象是否相等的结果通常是不确定的。每个对象可能由不同的类实现，并且不能保证每个类都能够测试其实例与另一个类的实例是否相等。因此，将任意 CharSequence 实例用作集合中的元素或映射中的键是不合适的。
  * */
-#[java_class(name = "java/lang/CharSequence")]
-pub struct CharSequence;
+#[java_interface(name = "java/lang/CharSequence")]
+pub trait CharSequence {
+    /**
+     * 返回此字符序列的长度。长度是序列中的16位字符的数量。
+     * 返回：此序列中的字符数量
+     * */
+    fn length(&self) -> i32;
 
-impl From<&str> for CharSequence {
-    /// 从字符串引用获取CharSequence对象。
-    ///
-    /// # Arguments
-    ///
-    /// * `value`: 字符串引用。
-    ///
-    /// returns: CharSequence
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use droid_wrap::java::lang::CharSequence;
-    /// let cs = CharSequence::from("hello");
-    /// dbg!(cs);
-    /// ```
-    fn from(value: &str) -> Self {
-        let obj = vm_attach(|env| {
-            let cs = env.new_string(value).unwrap();
-            env.new_global_ref(&cs).unwrap()
-        });
-        Self::_new(&obj)
-    }
+    /**
+     * 返回指定索引处的 char 值。索引范围从零到 length() - 1。序列的第一个 char 值位于索引零处，下一个位于索引一处，依此类推，就像数组索引一样。如果索引指定的 char 值是代理，则返回代理值。
+     * 抛出 IndexOutOfBoundsException 如果 index 参数为负数或不小于 length()
+     * `index` 要返回的 char 值的索引
+     * 返回：指定的 char 值
+     * */
+    fn char_at(&self, index: i32) -> Result<char, Error>;
+}
+
+#[java_class(name = "java/lang/CharSequenceImpl")]
+pub struct CharSequenceImpl;
+
+impl CharSequence for CharSequenceImpl {
+    #[java_method]
+    fn length(&self) -> i32 {}
+
+    #[java_method]
+    fn char_at(&self, index: i32) -> Result<char, Error> {}
 }
 
 /**
@@ -144,14 +183,53 @@ impl System {
     pub fn gc() {}
 }
 
+/**
+ * 类加载器是负责加载类的对象。ClassLoader 类是一个抽象类。给定类的二进制名称，类加载器应尝试定位或生成构成该类定义的数据。典型的策略是将名称转换为文件名，然后从文件系统中读取该名称的“类文件”。
+ * 每个 Class 对象都包含对定义它的 ClassLoader 的引用。数组类的类对象不是由类加载器创建的，而是由 Java 运行时根据需要自动创建的。Class.getClassLoader() 返回的数组类的类加载器与其元素类型的类加载器相同；如果元素类型是原始类型，则数组类没有类加载器。
+ * 应用程序实现 ClassLoader 的子类，以扩展 Java 虚拟机动态加载类的方式。安全管理器通常可以使用类加载器来指示安全域。 ClassLoader 类使用委托模型来搜索类和资源。
+ * ClassLoader 的每个实例都有一个关联的父类加载器。当请求查找类或资源时，ClassLoader 实例会将对类或资源的搜索委托给其父类加载器，然后再尝试自己查找类或资源。虚拟机的内置类加载器称为“引导类加载器”，它本身没有父类，但可以充当 ClassLoader 实例的父类。
+ * 支持并发加载类的类加载器称为具有并行能力的类加载器，需要在类初始化时通过调用 ClassLoader.registerAsParallelCapable 方法来注册自己。请注意，默认情况下，ClassLoader 类被注册为具有并行能力。但是，如果其子类具有并行能力，则仍需要注册自己。
+ * 在委托模型不是严格分层的环境中，类加载器需要具有并行能力，否则类加载可能会导致死锁，因为加载器锁会在整个类加载过程中一直保持（请参阅 loadClass 方法）。
+ * 通常，Java 虚拟机以与平台相关的方式从本地文件系统加载类。例如，在 UNIX 系统上，虚拟机从 CLASSPATH 环境变量定义的目录中加载类。但是，某些类可能不是源自文件；它们可能源自其他来源，例如网络，或者可以由应用程序构造。方法 defineClass 将字节数组转换为 Class 类的实例。
+ * 可以使用 Class.newInstance 创建此新定义类的实例。类加载器创建的对象的方法和构造函数可能会引用其他类。为了确定引用的类，Java 虚拟机会调用最初创建该类的类加载器的 loadClass 方法。例如，应用程序可以创建网络类加载器以从服务器下载类文件。示例代码可能如下所示：
+ * ```java
+ * ClassLoader loader = new NetworkClassLoader(host, port);
+ * Object main = loader.loadClass("Main", true).newInstance();
+ * ...
+ * ```
+ * 网络类加载器子类必须定义 findClass 和 loadClassData 方法，以便从网络加载类。下载组成类的字节后，应使用 defineClass 方法创建类实例。示例实现如下：
+ * ```java
+ * class NetworkClassLoader extends ClassLoader {
+ * String host;
+ * int port;
+ * public Class findClass(String name) {
+ * byte[] b = loadClassData(name);
+ * return defineClass(name, b, 0, b.length);
+ * }
+ * private byte[] loadClassData(String name) {
+ * // 从连接加载类数据
+ * ...
+ * }
+ * }
+ * ```
+ * 二进制名称作为 String 参数提供给 ClassLoader 中方法的任何类名都必须是 Java™ 语言规范定义的二进制名称。有效类名的示例包括：
+ * "java.lang.String" "javax.swing.JSpinner$DefaultEditor" "java.security.KeyStore$Builder$FileBuilder$1" "java.net.URLClassLoader$3$1"
+ * */
+#[java_class(name = "java/lang/ClassLoader")]
+pub struct ClassLoader;
+
 #[cfg(feature = "test_java_lang")]
 pub fn test() {
     let integer = Integer::value_of(100).unwrap();
     assert_eq!("100", integer.to_string());
     let float = Float::value_of(423.3).unwrap();
     assert_eq!("423.3", float.to_string());
-    let cs = CharSequence::from("hello");
+    let cs = "hello".to_char_sequence::<CharSequenceImpl>();
     assert_eq!("hello", cs.to_string());
+    assert_eq!(5, cs.length());
+    assert_eq!('h', cs.char_at(0).unwrap());
     assert!(System::current_time_millis() > 0);
     System::gc();
+    let cl = ClassLoader::null();
+    assert_eq!(cl, ClassLoader::null());
 }

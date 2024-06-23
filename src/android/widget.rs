@@ -13,7 +13,7 @@
 
 use droid_wrap_derive::{java_class, java_constructor, java_method};
 
-use crate::{android::content::Context, java::lang::CharSequence, JObjRef, JType};
+use crate::{android::content::Context, java::lang::CharSequence, JObjNew, JObjRef, JType};
 
 /**
  * 用于输入和修改文本的用户界面元素。定义编辑文本小部件时，必须指定 android.R.styleable.TextView_inputType 属性。例如，对于纯文本输入，将 inputType 设置为“text”：
@@ -82,26 +82,45 @@ impl TextView {
      * `text` 要显示的文本
      * */
     #[java_method]
-    pub fn set_text(&self, text: &CharSequence) {}
+    pub fn set_text<CS: CharSequence>(&self, text: &CS) {}
 
     /**
      * 返回 TextView 正在显示的文本。如果使用 BufferType.SPANNABLE 或 BufferType.EDITABLE 参数调用 setText(CharSequence)，则可以将此方法的返回值分别转换为 Spannable 或 Editable。返回值的内容不应修改。如果您想要一个可修改的内容，您应该先制作自己的副本。
      * 返回：文本视图显示的文本。
      * */
     #[java_method]
-    pub fn get_text(&self) -> CharSequence {}
+    pub fn get_text<CS: CharSequence>(&self) -> CS {}
+
+    /**
+     * 设置 TextView 的文本为空时显示的文本。Null 表示使用普通的空文本。Hint 目前不参与确定视图的大小。
+     * `hint` 要显示的提示文字。
+     * */
+    #[java_method]
+    pub fn set_hint<CS: CharSequence>(&self, hint: &CS) {}
+
+    /**
+     * 返回TextView的文本为空时显示的提示。
+     * */
+    #[java_method]
+    pub fn get_hint<CS: CharSequence>(&self) -> CS {}
 }
 
 #[cfg(feature = "test_android_widget")]
 pub fn test() {
-    use crate::android::app::Activity;
+    use crate::{
+        android::app::Activity,
+        java::lang::{CharSequenceExt, CharSequenceImpl},
+    };
     let ctx: Context = (&Activity::fetch()).into();
     let edit = EditText::new(&ctx);
     assert!(edit.to_string().starts_with("android.widget.EditText"));
     edit.select_all();
     let text = TextView::new(&ctx);
     assert!(text.to_string().starts_with("android.widget.TextView"));
-    let cs = CharSequence::from("你好");
+    let cs = "你好".to_char_sequence::<CharSequenceImpl>();
     text.set_text(&cs);
-    assert_eq!(cs, text.get_text());
+    assert_eq!(cs, text.get_text::<CharSequenceImpl>());
+    let cs = "世界".to_char_sequence::<CharSequenceImpl>();
+    text.set_hint(&cs);
+    assert_eq!(cs, text.get_hint::<CharSequenceImpl>());
 }
