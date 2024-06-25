@@ -230,7 +230,27 @@ pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, To
         }
     } else {
         // 非bool和char
-        quote! {TryInto::<#unwrapped_ty>::try_into(ret)}
+        if ty_str.starts_with("u") {
+            // 无符号数字
+            let ty = if ty_str.ends_with("16") {
+                quote! { i16 }
+            } else if ty_str.ends_with("32") {
+                quote! { i32 }
+            } else if ty_str.ends_with("64") {
+                quote! { i64 }
+            } else {
+                panic!("Unsupported return value type {ty_str}.");
+            };
+            quote! {
+                match TryInto::<#ty>::try_into(ret) {
+                    Ok(v) => Ok(v as #unwrapped_ty),
+                    Err(e) => Err(e)
+                }
+            }
+        } else {
+            // 带符号数字
+            quote! {TryInto::<#unwrapped_ty>::try_into(ret)}
+        }
     };
 
     let opt = if ty.to_string().starts_with("Option") {

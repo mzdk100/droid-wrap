@@ -25,6 +25,11 @@ fn main() {
         droid_wrap::android::content::test();
         println!("Test android.content successfully.");
     }
+    #[cfg(feature = "android_os")]
+    {
+        droid_wrap::android::os::test();
+        println!("Test android.os successfully.");
+    }
     #[cfg(feature = "android_speech_tts")]
     {
         droid_wrap::android::speech::tts::test();

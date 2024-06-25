@@ -51,9 +51,14 @@ impl JObjRef for String {
 
 impl JObjNew for String {
     fn _new(this: &GlobalRef) -> Self {
+        if this.is_null() {
+            return Self::default();
+        }
         vm_attach(|env| {
-            let s = env.get_string(this.as_obj().into()).unwrap();
-            Self::from(s.to_str().unwrap())
+            if let Ok(s) = env.get_string(this.as_obj().into()) {
+                return Self::from(s.to_str().unwrap());
+            }
+            Self::null()
         })
     }
 }

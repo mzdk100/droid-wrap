@@ -37,6 +37,20 @@ pub mod android {
     pub mod content;
 
     /**
+     * 提供管理音频和视频中各种媒体接口的类。
+     * */
+    #[cfg(feature = "android_media")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_media")))]
+    pub mod media;
+
+    /**
+     * 提供设备上的基本操作系统服务、消息传递和进程间通信。
+     * */
+    #[cfg(feature = "android_os")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_os")))]
+    pub mod os;
+
+    /**
      * 语音能力。
      * */
     pub mod speech;
