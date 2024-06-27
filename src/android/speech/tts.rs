@@ -18,7 +18,7 @@ use droid_wrap_derive::{
 use crate::{
     android::{content::Context, os::Bundle},
     java::lang::CharSequence,
-    JObjNew, JObjRef, JType,
+    JObjNew, JObjRef, JProxy, JType,
 };
 
 /**
@@ -101,7 +101,7 @@ impl TextToSpeech {
      * `listener` 当 TextToSpeech 引擎初始化时将调用 TextToSpeech.OnInitListener。如果发生故障，可能会在 TextToSpeech 实例完全构造之前立即调用侦听器。
      * */
     #[java_constructor]
-    fn new<L: OnInitListener>(context: &Context, listener: &L) -> Self {}
+    pub fn new<L: OnInitListener>(context: &Context, listener: &L) -> Self {}
 
     /**
      * 中断当前话语（无论是播放还是渲染到文件）并丢弃队列中的其他话语。
@@ -189,9 +189,9 @@ impl TextToSpeech {
     #[java_method]
     pub fn speak<CS: CharSequence>(
         &self,
-        text: CS,
+        text: &CS,
         queue_mode: i32,
-        params: Bundle,
+        params: Option<Bundle>,
         utterance_id: String,
     ) -> i32 {
     }
@@ -225,9 +225,8 @@ pub fn test() {
             println!("Tts is initialized status: {}.", status)
         }
     }
-    static INIT_LISTENER: std::sync::OnceLock<OnInitListenerImpl> = std::sync::OnceLock::new();
-    let listener = INIT_LISTENER.get_or_init(|| OnInitListenerImpl::new());
-    let tts = TextToSpeech::new(&context, listener);
+    let a = OnInitListenerImpl::new(());
+    let tts = TextToSpeech::new(&context, a.as_ref());
     assert!(tts
         .to_string()
         .starts_with("android.speech.tts.TextToSpeech"));
@@ -240,9 +239,9 @@ pub fn test() {
     assert!(!tts.get_current_engine().is_empty());
     // dbg!(tts.are_defaults_enforced());
     tts.speak(
-        "你好".to_char_sequence::<CharSequenceImpl>(),
+        &"你好".to_char_sequence::<CharSequenceImpl>(),
         TextToSpeech::QUEUE_ADD,
-        Bundle::null(),
+        None,
         "test".to_string(),
     );
     tts.shutdown();

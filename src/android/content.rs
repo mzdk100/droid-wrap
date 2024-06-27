@@ -36,10 +36,52 @@ impl Context {
     pub fn send_broadcast(&self, intent: &Intent) {}
 
     /**
+     * 与 startActivity(Intent, Bundle) 相同，但未指定任何选项。
+     * `intent` 要启动的活动的描述。
+     * 抛出：ActivityNotFoundException – `
+     * */
+    #[java_method]
+    pub fn start_activity(&self, intent: &Intent) {}
+
+    /**
      * 返回此应用程序包的名称。
      * */
     #[java_method]
     pub fn get_package_name(&self) -> String {}
+
+    /**
+     * 返回此上下文所派生自的基础上下文的名称。这与 getOpPackageName() 相同，除非系统组件加载到其他应用进程中，在这种情况下 getOpPackageName() 将是该进程中主软件包的名称（以便应用操作 uid 验证可以使用该名称）。
+     * */
+    #[java_method]
+    pub fn get_base_package_name(&self) -> String {}
+
+    /**
+     * 返回应用于此上下文中的 android.app.AppOpsManager 调用的包名称，以便 app ops manager 的 uid 验证可以使用该名称。这通常不适用于第三方应用程序开发人员。
+     * */
+    #[java_method]
+    pub fn get_op_package_name(&self) -> String {}
+
+    /**
+     * 归因可用于复杂的应用中，以在逻辑上区分应用的各个部分。例如，博客应用可能还内置有即时通讯应用。在这种情况下，每个子功能可以使用两个单独的标签。
+     * 返回：此上下文所针对的归因标签，如果这是默认标签，则返回 null。
+     * */
+    #[java_method]
+    pub fn get_attribution_tag(&self) -> Option<String> {}
+
+    /**
+     * 返回此上下文的主要 Android 包的完整路径。Android 包是一个 ZIP 文件，其中包含应用程序的主要资源。注意：这通常对应用程序没有用，因为它们不应直接访问文件系统。
+     * 返回：String 资源路径。
+     * */
+    #[java_method]
+    pub fn get_package_resource_path(&self) -> String {}
+
+    /**
+     * 返回此上下文的主要 Android 包的完整路径。Android 包是一个 ZIP 文件，其中包含应用程序的主要代码和资产。
+     * 注意：这通常对应用程序没有用，因为它们不应直接访问文件系统。
+     * 返回：String 代码和资产的路径。
+     * */
+    #[java_method]
+    pub fn get_package_code_path(&self) -> String {}
 }
 
 /**
@@ -3130,13 +3172,13 @@ impl Intent {
      * 与 getData() 相同，但以编码字符串的形式返回 URI。
      * */
     #[java_method]
-    pub fn get_data_string(&self) -> String {}
+    pub fn get_data_string(&self) -> Option<String> {}
 }
 
 #[cfg(feature = "android_app")]
 impl From<&crate::android::app::Activity> for Context {
     fn from(value: &crate::android::app::Activity) -> Self {
-        Self::_new(&value.java_ref())
+        Self::_new(&value.java_ref(), ())
     }
 }
 
@@ -3150,6 +3192,17 @@ pub fn test() {
         .starts_with("android.app.NativeActivity"));
     assert_ne!(context.get_class_loader(), ClassLoader::null());
     assert_eq!("rust.droid_wrap_test", context.get_package_name());
+    assert_eq!(
+        context.get_base_package_name(),
+        context.get_op_package_name()
+    );
+    assert_eq!(None, context.get_attribution_tag());
+    assert!(context
+        .get_package_resource_path()
+        .contains("rust.droid_wrap_test"));
+    assert!(context
+        .get_package_code_path()
+        .contains("rust.droid_wrap_test"));
 
     let intent = Intent::new();
     assert!(intent.to_string().starts_with("Intent"));
@@ -3168,7 +3221,8 @@ pub fn test() {
     assert_eq!(Intent::FLAG_ACTIVITY_NEW_TASK, intent.get_flags());
     intent.remove_flags(Intent::FLAG_ACTIVITY_NEW_TASK);
     assert_eq!(0, intent.get_flags());
-    dbg!(intent.get_data_string());
+    assert_eq!(None, intent.get_data_string());
 
     context.send_broadcast(&intent);
+    context.start_activity(&intent);
 }

@@ -53,7 +53,16 @@ pub mod android {
     /**
      * 语音能力。
      * */
+    #[cfg(feature = "android_speech")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_speech")))]
     pub mod speech;
+
+    /**
+     * 提供用于呈现或跟踪屏幕上的文本和文本跨度的类。
+     * */
+    #[cfg(feature = "android_text")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_text")))]
+    pub mod text;
 
     /**
      * 提供一些类，这些类公开处理屏幕布局和与用户交互的基本用户界面类。

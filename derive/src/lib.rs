@@ -20,13 +20,13 @@ use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use syn::{
     parse2, parse_macro_input, punctuated::Punctuated, Field, FieldMutability, Fields, FieldsNamed,
-    ImplItem, ItemFn, ItemImpl, ItemStruct, ItemTrait, Token, TraitItem, Type, TypeParamBound,
-    Visibility,
+    ImplItem, ItemFn, ItemImpl, ItemStruct, ItemTrait, LitInt, Token, TraitItem, Type,
+    TypeParamBound, Visibility,
 };
 
 use crate::utils::{
-    get_object_return_value_token, get_return_value_token, parse_function_signature, ClassMetadata,
-    InterfaceMetadata,
+    get_attrs_token, get_object_return_value_token, get_return_value_token, get_stmts_token,
+    parse_function_signature, ClassMetadata, InterfaceMetadata,
 };
 
 //noinspection SpellCheckingInspection
@@ -52,6 +52,10 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let cls = attrs.class_name;
     let based = attrs.base_class;
     let mut item = parse_macro_input!(input as ItemStruct);
+    let name = item.ident.clone();
+    let generics = item.generics.clone();
+    let mut item2 = item.clone();
+
     let mut add_field_this = Field {
         attrs: vec![],
         vis: Visibility::Inherited,
@@ -69,35 +73,46 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
         ty: Type::Verbatim(based.to_token_stream()),
     };
 
-    let (fields, added_this, added_super) = match item.fields {
+    let (fields, added_this, added_super, added_default) = match item.fields {
         Fields::Named(mut f) => {
+            let mut added_default = TokenStream2::new();
+            for i in f.named.iter() {
+                let i = i.ident.clone();
+                added_default.extend(quote! {#i: fields.#i,});
+            }
             f.named.push(add_field_this);
-            let g = if based.is_some() {
+            let added_super = if based.is_some() {
                 f.named.push(add_field_super);
                 quote! {_based}
             } else {
                 quote!()
             };
-            (Fields::Named(f), quote! {_this}, g)
+            (Fields::Named(f), quote! {_this}, added_super, added_default)
         }
         Fields::Unnamed(mut f) => {
+            let mut added_default = TokenStream2::new();
+            for i in 0..f.unnamed.len() {
+                let i = LitInt::new(&i.to_string(), Span::call_site());
+                added_default.extend(quote! {#i: fields.#i,});
+            }
             add_field_this.ident = None;
             add_field_super.ident = None;
+            let len = LitInt::new(&f.unnamed.len().to_string(), Span::call_site());
+            let added_this = quote! {#len};
             f.unnamed.push(add_field_this);
-            let len = f.unnamed.len().to_string();
-            let g = if based.is_some() {
+            let added_super = if based.is_some() {
+                let len = LitInt::new(&f.unnamed.len().to_string(), Span::call_site());
                 f.unnamed.push(add_field_super);
-                let len = f.unnamed.len().to_string();
                 quote! {#len}
             } else {
                 quote!()
             };
-            (Fields::Unnamed(f), quote! {#len}, g)
+            (Fields::Unnamed(f), added_this, added_super, added_default)
         }
         Fields::Unit => {
             let mut fields = Punctuated::<Field, Token![,]>::new();
             fields.push(add_field_this);
-            let g = if based.is_some() {
+            let added_super = if based.is_some() {
                 fields.push(add_field_super);
                 quote! {_based}
             } else {
@@ -109,27 +124,29 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                     named: fields,
                 }),
                 quote! {_this},
-                g,
+                added_super,
+                quote!(),
             )
         }
     };
     item.fields = fields;
 
-    let name = item.ident.clone();
-    let generics = item.generics.clone();
-
-    let impl_new = if based.is_some() {
+    let build_self = if based.is_some() {
         quote! {
-            fn _new(this: &droid_wrap_utils::GlobalRef) -> Self {
-                Self {#added_this: this.clone(), #added_super: this.into()}
-            }
+            Self {#added_this: this.clone(), #added_super: this.into(), #added_default }
         }
     } else {
         quote! {
-            fn _new(this: &droid_wrap_utils::GlobalRef) -> Self {
-                Self {#added_this:this.clone()}
-            }
+            Self {#added_this:this.clone(), #added_default }
         }
+    };
+
+    let (item2_token, name2) = if added_default.is_empty() {
+        (quote!(), quote! {()})
+    } else {
+        let name2 = Ident::new((name.to_string() + "Default").as_str(), Span::call_site());
+        item2.ident = name2.clone();
+        (quote! {#item2}, quote! {#name2})
     };
 
     let impl_based_deref = if based.is_some() {
@@ -156,9 +173,20 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
     let stream = quote! {
         #item
+        #item2_token
+
+        impl #generics #name #generics {
+            pub fn get_this_ref(&self) -> &droid_wrap_utils::GlobalRef {
+                &self.#added_this
+            }
+        }
 
         impl #generics JObjNew for #name #generics {
-            #impl_new
+            type Fields = #name2;
+
+            fn _new(this: &droid_wrap_utils::GlobalRef, fields: Self::Fields) -> Self {
+                #build_self
+            }
         }
 
         impl #generics JType for #name #generics {
@@ -200,8 +228,17 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                     return "null".to_string();
                 }
                 droid_wrap_utils::vm_attach(|env| {
-                    let s = env.call_method(r.clone(), "toString", format!("()L{};", String::CLASS).as_str(), &[]).unwrap().l().unwrap();
-                    let s = env.get_string((&s).into()).unwrap();
+                    let s = match env.call_method(r.clone(), "toString", format!("()L{};", String::CLASS).as_str(), &[]) {
+                        Ok(s) => match s.l() {
+                            Ok(s) => s,
+                            Err(e) => return e.to_string()
+                        },
+                        Err(e) => return e.to_string()
+                    };
+                    let s = match env.get_string((&s).into()) {
+                        Ok(s) => s,
+                        Err(e) => return e.to_string()
+                    };
                     s.to_str().unwrap().to_string()
                 })
             }
@@ -215,7 +252,7 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
         impl #generics From<&droid_wrap_utils::GlobalRef> for #name #generics {
             fn from(obj: &droid_wrap_utils::GlobalRef) -> Self {
-                Self::_new(&obj)
+                Self::_new(&obj, <Self as JObjNew>::Fields::default())
             }
         }
 
@@ -246,29 +283,41 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
-    let mut attrs = TokenStream2::new();
-    for i in item.attrs.iter() {
-        attrs.extend(i.to_token_stream());
-    }
+    let attrs = get_attrs_token(&item.attrs);
+    let stmts = get_stmts_token(&item.block.stmts);
     let name = item.sig.ident.to_string().to_lower_camel_case();
     let vis = item.vis.clone();
     let sig = item.sig.clone();
 
     let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig);
-    let (ret_value, ret_type_sig) = get_return_value_token(&ret_type);
+    let (ret_value, ret_type_sig, is_result_type) = get_return_value_token(&ret_type);
+
+    let ret_value = if is_result_type {
+        quote! {
+            match ret {
+                Ok(ret) => {#ret_value}
+                Err(e) => Err(e)
+            }
+        }
+    } else {
+        quote! {
+            let ret = ret.unwrap();
+            #ret_value
+        }
+    };
 
     if self_.is_none() {
         quote! {
             #attrs
             #vis #sig {
+                #stmts
                 droid_wrap_utils::vm_attach(|env| {
                     let ret = env.call_static_method(
                         Self::CLASS,
                         #name,
                         format!(#fmt, #arg_types #ret_type_sig).as_str(),
                         &[#arg_values],
-                    )
-                    .unwrap();
+                    );
                     #ret_value
                 })
             }
@@ -283,8 +332,7 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
                         #name,
                         format!(#fmt, #arg_types #ret_type_sig).as_str(),
                         &[#arg_values],
-                    )
-                    .unwrap();
+                    );
                     #ret_value
                 })
             }
@@ -315,13 +363,10 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
-    let mut attrs = TokenStream2::new();
-    for i in item.attrs.iter() {
-        attrs.extend(i.to_token_stream());
-    }
+    let attrs = get_attrs_token(&item.attrs);
     let vis = item.vis.clone();
     let sig = item.sig.clone();
-    let block = item.block.clone();
+    let stmts = get_stmts_token(&item.block.stmts);
     let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig);
 
     if !self_.is_none() {
@@ -338,12 +383,12 @@ pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
         );
     }
 
-    let ret_value = get_object_return_value_token(&ret_type);
+    let (ret_value, _) = get_object_return_value_token(&ret_type);
 
     let stream = quote! {
         #attrs
         #vis #sig {
-            #block
+            #stmts
             droid_wrap_utils::vm_attach(|env| {
                 let obj = env.new_object(
                     <Self as JType>::CLASS,
@@ -406,6 +451,7 @@ pub fn java_interface(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
 //noinspection SpellCheckingInspection
 /// 实现java interface，将此属性标记在impl上，可以自动实现java接口的动态代理，从而实现java层回调rust层。
+/// 其中在接口中定义的每一个方法将自动实现并暴露给java层，但以下划线“_”开头的函数除外。
 ///
 /// # Arguments
 ///
@@ -453,6 +499,10 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
         match item {
             ImplItem::Fn(f) => {
                 let name = f.sig.ident.clone();
+                if name.to_string().starts_with("_") {
+                    // 跳过下划线开头的函数
+                    continue;
+                }
                 let name_camel = f.sig.ident.to_string().to_lower_camel_case();
                 let (self_, arg_types, _, _, _, ret_type) = parse_function_signature(&f.sig);
                 if self_.is_none() {
@@ -465,17 +515,26 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 let mut arg_tokens = TokenStream2::new();
                 for i in 0..arg_types.len() {
                     let ty = &arg_types[i];
-                    arg_tokens.extend(quote! {
-                        droid_wrap_utils::ParseJObjectType::<#ty>::parse(&args2[#i], env),
-                    });
+                    let ty_str = ty.to_string();
+                    let ar = if [
+                        "bool", "char", "i16", "u16", "i32", "u32", "i64", "u64", "f32", "f64",
+                    ]
+                    .contains(&ty_str.as_str())
+                    {
+                        quote! {
+                            droid_wrap_utils::ParseJObjectType::<#ty>::parse(&args2[#i], env),
+                        }
+                    } else {
+                        quote! {{
+                            let r = env.new_global_ref(&args2[#i]).unwrap();
+                            #ty::_new(&r, Default::default())
+                        },}
+                    };
+                    arg_tokens.extend(ar);
                 }
                 methods.extend(quote! {
                     Ok(#name_camel) => {
-                        let size = env.get_array_length(args).unwrap();
-                        let mut args2 = Vec::with_capacity(size as usize);
-                        for i in 0..size {
-                            args2.push(env.get_object_array_element(&args, i).unwrap());
-                        }
+                        let args2 = droid_wrap_utils::to_vec(env, &args);
                         let ret = self_.#name(#arg_tokens);
                         #ret_token
                     },
@@ -493,13 +552,13 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
     };
 
     let impl_new = quote! {
-        fn new() -> Self {
-            use std::sync::{Arc, OnceLock};
+        fn new(fields: Self::Fields) -> std::sync::Arc<Self> {
+            use std::sync::Arc;
             let interface = #class_token.replace("/", ".");
-            let self_: Arc<OnceLock<isize>> = OnceLock::new().into();
-            let self_2 = self_.clone();
-            let proxy = droid_wrap_utils::new_proxy(&[&interface], move |env, method, args| {
-                let self_ = unsafe { &*((*self_2.get().unwrap()) as *const Self) };
+            let proxy = droid_wrap_utils::new_proxy(&[&interface]);
+            let ret = Arc::new(Self::_new(&proxy, fields));
+            let self_ = ret.clone();
+            droid_wrap_utils::bind_proxy_handler(&proxy, move |env, method, args| {
                 let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
                 let name = env.get_string((&name).into()).unwrap();
                 match name.to_str() {
@@ -507,8 +566,6 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                     _ => Self::null().java_ref()
                 }
             });
-            let ret = Self::_new(&proxy);
-            self_.get_or_init(|| &ret as *const Self as isize);
             ret
         }
     };
@@ -517,13 +574,13 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
         #attrs
         #item
 
-        impl #name {
+        impl JProxy for #name {
             #impl_new
         }
 
         impl Drop for #name {
             fn drop(&mut self) {
-                droid_wrap_utils::drop_proxy(&self._this);
+                droid_wrap_utils::unbind_proxy_handler(self.get_this_ref());
             }
         }
     };

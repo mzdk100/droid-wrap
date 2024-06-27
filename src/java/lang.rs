@@ -18,10 +18,13 @@
 #[cfg_attr(docsrs, doc(cfg(feature = "java_lang_reflect")))]
 pub mod reflect;
 
-use droid_wrap_derive::{java_class, java_constructor, java_interface, java_method};
+use droid_wrap_derive::{
+    java_class, java_constructor, java_implement, java_interface, java_method,
+};
 use droid_wrap_utils::{vm_attach, Error, GlobalRef};
+use std::sync::Arc;
 
-use crate::{JObjNew, JObjRef, JType};
+use crate::{JObjNew, JObjRef, JProxy, JType};
 
 /**
  * Object 类是类层次结构的根。每个类都有 Object 作为超类。所有对象（包括数组）都实现了此类的方法。
@@ -50,7 +53,9 @@ impl JObjRef for String {
 }
 
 impl JObjNew for String {
-    fn _new(this: &GlobalRef) -> Self {
+    type Fields = ();
+
+    fn _new(this: &GlobalRef, _: Self::Fields) -> Self {
         if this.is_null() {
             return Self::default();
         }
@@ -69,15 +74,20 @@ impl JType for String {
 }
 
 pub trait CharSequenceExt {
-    fn to_char_sequence<CS: CharSequence>(&self) -> CS;
+    fn to_char_sequence<CS: CharSequence>(&self) -> CS
+    where
+        <CS as JObjNew>::Fields: Default;
 }
 
 impl<'a> CharSequenceExt for &'a str {
-    fn to_char_sequence<CS: CharSequence>(&self) -> CS {
+    fn to_char_sequence<CS: CharSequence>(&self) -> CS
+    where
+        <CS as JObjNew>::Fields: Default,
+    {
         vm_attach(|env| {
             let s = env.new_string(*self).unwrap();
             let s = env.new_global_ref(&s).unwrap();
-            CS::_new(&s)
+            CS::_new(&s, Default::default())
         })
     }
 }
@@ -168,6 +178,42 @@ impl CharSequence for CharSequenceImpl {
 }
 
 /**
+ * 任何实例旨在由线程执行的类都应实现 Runnable 接口。该类必须定义一个名为 run 的无参数方法。此接口旨在为希望在活动期间执行代码的对象提供通用协议。例如，Runnable 由 Thread 类实现。
+ * 活动状态仅表示线程已启动且尚未停止。此外，Runnable 还提供了在不子类化 Thread 的情况下使类处于活动状态的方法。实现 Runnable 的类可以通过实例化 Thread 实例并将其自身作为目标传递，而无需子类化 Thread 即可运行。
+ * 在大多数情况下，如果您只打算覆盖 run() 方法而不覆盖其他 Thread 方法，则应使用 Runnable 接口。这一点很重要，因为除非程序员打算修改或增强类的基本行为，否则不应子类化类。
+ * */
+#[java_interface(name = "java/lang/Runnable")]
+pub trait Runnable {
+    /**
+     * 当使用实现 Runnable 接口的对象创建线程时，启动该线程会导致在该单独执行的线程中调用该对象的 run 方法。
+     * 方法 run 的一般约定是它可以采取任何操作。
+     * */
+    fn run(&self);
+}
+
+#[java_class(name = "java/lang/RunnableImpl")]
+pub struct RunnableImpl(Box<dyn Fn() + Sync + Send>);
+
+impl RunnableImpl {
+    pub fn from_fn(func: impl Fn() + Sync + Send + 'static) -> Arc<Self> {
+        Self::new(RunnableImplDefault(Box::new(func)))
+    }
+}
+
+impl Default for RunnableImplDefault {
+    fn default() -> Self {
+        Self(Box::new(|| ()))
+    }
+}
+
+#[java_implement]
+impl Runnable for RunnableImpl {
+    fn run(&self) {
+        self.0();
+    }
+}
+
+/**
  * System 类包含几个有用的类字段和方法。它无法实例化。 System 类提供的功能包括标准输入、标准输出和错误输出流；访问外部定义的属性和环境变量；加载文件和库的方法；以及用于快速复制数组一部分的实用方法。
  * */
 #[java_class(name = "java/lang/System")]
@@ -237,4 +283,6 @@ pub fn test() {
     System::gc();
     let cl = ClassLoader::null();
     assert_eq!(cl, ClassLoader::null());
+    let func = RunnableImpl::from_fn(move || println!("Runnable is running."));
+    dbg!(func);
 }

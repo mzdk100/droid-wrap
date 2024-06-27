@@ -58,7 +58,13 @@
 
 ### 安卓内容(android_content)
 
-android.content.Context的API等。
+1. android.content.Context;
+2. android.content.ContextWrapper;
+3. android.content.Intent。;
+
+### 安卓系统(android_os)
+
+android.os.Bundle。
 
 ### 安卓语音(android_speech)
 
@@ -66,11 +72,15 @@ android.speech.tts.TextToSpeech的API等。
 
 ### 安卓视图(android_view)
 
-android.view.View的API等。
+android.view.View的API等（包括点击监听器的实现）。
 
 ### 安卓小部件(android_widget)
 
-常用的一些UI小部件。
+常用的一些UI小部件：
+
+1. android.widget.TextView;
+2. android.widget.EditText;
+3. android.widget.Button。
 
 ## java功能(java)
 

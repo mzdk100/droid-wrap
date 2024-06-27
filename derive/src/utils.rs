@@ -18,8 +18,8 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     token::SelfValue,
-    Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token, Type,
-    TypeReference,
+    Attribute, Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Stmt,
+    Token, Type, TypeReference,
 };
 
 pub(crate) struct ClassMetadata {
@@ -175,44 +175,48 @@ pub(crate) fn parse_function_signature(
     )
 }
 
-pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> TokenStream {
+pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> (TokenStream, bool) {
     let (unwrapped_ty, ty) = unwrap_type(&ret_type);
 
-    if ty.to_string().starts_with("Option") {
+    let mut is_result_type = false;
+    let value = if ty.to_string().starts_with("Option") {
         quote! {
             if let Ok(obj) = env.new_global_ref(obj) {
-                Some(#unwrapped_ty::_new(&obj))
+                Option::<#unwrapped_ty>::_new(&obj, Default::default())
             } else {
                 None
             }
         }
     } else if ty.to_string().starts_with("Result") {
+        is_result_type = true;
         quote! {
             match env.new_global_ref(obj) {
-                Ok(o) => Ok(#unwrapped_ty::_new(&o)),
+                Ok(o) => Ok(#unwrapped_ty::_new(&o, Default::default())),
                 Err(e) => Err(e)
             }
         }
     } else {
         quote! {
             let obj = env.new_global_ref(obj).unwrap();
-            #unwrapped_ty::_new(&obj)
+            #unwrapped_ty::_new(&obj, Default::default())
         }
-    }
+    };
+    (value, is_result_type)
 }
 
-pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, TokenStream) {
+pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, TokenStream, bool) {
     let (unwrapped_ty, ty) = unwrap_type(ret_type);
     let ret_type_sig = get_type_descriptor_token(&unwrapped_ty);
 
     if ret_type_sig.to_string().contains("get_object_sig") {
-        let ret_value = get_object_return_value_token(&ret_type);
+        let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);
         return (
             quote! {
                 let obj = ret.l().unwrap();
                 #ret_value
             },
             quote! {#unwrapped_ty::get_object_sig()},
+            is_result_type,
         );
     }
 
@@ -253,6 +257,7 @@ pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, To
         }
     };
 
+    let mut is_result_type = false;
     let opt = if ty.to_string().starts_with("Option") {
         quote! {
             if let Ok(obj) = #opt {
@@ -262,9 +267,26 @@ pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, To
             }
         }
     } else if ty.to_string().starts_with("Result") {
+        is_result_type = true;
         opt
     } else {
         quote! {#opt.unwrap()}
     };
-    (opt, ret_type_sig)
+    (opt, ret_type_sig, is_result_type)
+}
+
+pub(crate) fn get_attrs_token(attrs: &[Attribute]) -> TokenStream {
+    let mut attrs2 = TokenStream::new();
+    for i in attrs.iter() {
+        attrs2.extend(i.to_token_stream());
+    }
+    attrs2
+}
+
+pub(crate) fn get_stmts_token(stmts: &[Stmt]) -> TokenStream {
+    let mut stmts2 = TokenStream::new();
+    for i in stmts.iter() {
+        stmts2.extend(i.to_token_stream());
+    }
+    stmts2
 }

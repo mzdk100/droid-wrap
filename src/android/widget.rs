@@ -39,6 +39,17 @@ impl EditText {
      * */
     #[java_method]
     pub fn select_all(&self) {}
+
+    /**
+     * 方便选择。
+     * setSelection(Spannable, int, int)。
+     * */
+    #[java_method]
+    pub fn set_selection(&self, start: i32, stop: i32) -> Result<(), droid_wrap_utils::Error> {}
+
+    pub fn get_default_editable(&self) -> bool {
+        self._based.get_default_editable()
+    }
 }
 
 /**
@@ -82,45 +93,135 @@ impl TextView {
      * `text` 要显示的文本
      * */
     #[java_method]
-    pub fn set_text<CS: CharSequence>(&self, text: &CS) {}
+    pub fn set_text<CS: CharSequence>(&self, text: Option<CS>)
+    where
+        <CS as JObjNew>::Fields: Default,
+    {
+    }
 
     /**
      * 返回 TextView 正在显示的文本。如果使用 BufferType.SPANNABLE 或 BufferType.EDITABLE 参数调用 setText(CharSequence)，则可以将此方法的返回值分别转换为 Spannable 或 Editable。返回值的内容不应修改。如果您想要一个可修改的内容，您应该先制作自己的副本。
      * 返回：文本视图显示的文本。
      * */
     #[java_method]
-    pub fn get_text<CS: CharSequence>(&self) -> CS {}
+    pub fn get_text<CS: CharSequence>(&self) -> Option<CS>
+    where
+        <CS as JObjNew>::Fields: Default,
+    {
+    }
 
     /**
      * 设置 TextView 的文本为空时显示的文本。Null 表示使用普通的空文本。Hint 目前不参与确定视图的大小。
      * `hint` 要显示的提示文字。
      * */
     #[java_method]
-    pub fn set_hint<CS: CharSequence>(&self, hint: &CS) {}
+    pub fn set_hint<CS: CharSequence>(&self, hint: Option<CS>)
+    where
+        <CS as JObjNew>::Fields: Default,
+    {
+    }
 
     /**
      * 返回TextView的文本为空时显示的提示。
      * */
     #[java_method]
-    pub fn get_hint<CS: CharSequence>(&self) -> CS {}
+    pub fn get_hint<CS: CharSequence>(&self) -> Option<CS>
+    where
+        <CS as JObjNew>::Fields: Default,
+    {
+    }
+
+    /**
+     * 子类会重写此功能以指定它们默认具有 KeyListener，即使在 XML 选项中没有特别调用。
+     * */
+    #[java_method]
+    pub fn get_default_editable(&self) -> bool {}
+
+    /**
+     * 使用为 EditorInfo.inputType 定义的常量设置内容的类型。这将通过调用 setKeyListener(KeyListener) 来更改键侦听器，以匹配给定的内容类型。如果给定的内容类型是 EditorInfo.TYPE_NULL，则不会为此文本视图显示软键盘。
+     * 请注意，如果更改输入类型的 EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE 标志，则显示的最大行数（请参阅 setMaxLines(int)）将被修改。
+     * `type` 输入类型。
+     * */
+    #[java_method]
+    pub fn set_input_type(&self, r#type: i32) {}
+
+    /**
+     * 获取可编辑内容的类型。
+     * */
+    #[java_method]
+    pub fn get_input_type(&self) -> i32 {}
+}
+
+/**
+ * 要在活动中显示按钮，请将按钮添加到活动的布局 XML 文件：
+ * ```xml
+ *   <Button
+ *       android:id="@+id/ button_id"
+ *       android:layout_height="wrap_content"
+ *       android:layout_width="wrap_content"
+ *       android:text="@string/ self_destruct" />
+ * ```
+ * 要指定按下按钮时的操作，请在相应的活动代码中对按钮对象设置单击监听器：
+ * ```java
+ *   public class MyActivity extends Activity {
+ *       protected void onCreate(Bundle savedInstanceState) {
+ *           super. onCreate(savedInstanceState);
+ *
+ *           setContentView(R. layout. content_layout_id);
+ *
+ *           final Button button = findViewById(R. id. button_id);
+ *           button. setOnClickListener(new View. OnClickListener() {
+ *               public void onClick(View v) {
+ *                   // Code here executes on main thread after user presses button
+ *               }
+ *           });
+ *       }
+ *   }
+ * ```
+ * 上面的代码片段创建了一个 android.view.View.OnClickListener 实例，并使用 setOnClickListener(View.OnClickListener) 将侦听器连接到按钮。因此，系统会在用户按下按钮后执行您在 onClick(View) 中编写的代码。
+ * 系统在主线程上执行 onClick 中的代码。这意味着您的 onClick 代码必须快速执行，以避免延迟您的应用对进一步用户操作的响应。有关更多详细信息，请参阅保持您的应用响应迅速。
+ * 每个按钮都使用系统的默认按钮背景进行样式设置，该背景通常因平台的不同版本而异。如果您对默认按钮样式不满意，可以对其进行自定义。有关更多详细信息和代码示例，请参阅按钮样式指南。有关按钮上可用的所有 XML 样式属性，请参阅按钮属性、TextView 属性、视图属性。请参阅样式和主题指南，了解如何实现和组织与样式相关的属性的覆盖。
+ * */
+#[java_class(name = "android/widget/Button", extends=TextView)]
+pub struct Button;
+
+impl Button {
+    /**
+     * 从代码创建按钮时要使用的简单构造函数。
+     * `context` 按钮正在运行的上下文，它可以访问当前主题，资源等。
+     * */
+    #[java_constructor]
+    pub fn new(context: &Context) -> Self {}
 }
 
 #[cfg(feature = "test_android_widget")]
 pub fn test() {
     use crate::{
-        android::app::Activity,
+        android::{
+            app::Activity,
+            text::{InputType, InputTypeImpl},
+        },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let ctx: Context = (&Activity::fetch()).into();
-    let edit = EditText::new(&ctx);
+    let context: Context = (&Activity::fetch()).into();
+    let edit = EditText::new(&context);
     assert!(edit.to_string().starts_with("android.widget.EditText"));
     edit.select_all();
-    let text = TextView::new(&ctx);
+    // let _ = edit.set_selection(0,2);
+    let text = TextView::new(&context);
     assert!(text.to_string().starts_with("android.widget.TextView"));
-    let cs = "你好".to_char_sequence::<CharSequenceImpl>();
-    text.set_text(&cs);
-    assert_eq!(cs, text.get_text::<CharSequenceImpl>());
-    let cs = "世界".to_char_sequence::<CharSequenceImpl>();
-    text.set_hint(&cs);
-    assert_eq!(cs, text.get_hint::<CharSequenceImpl>());
+    text.set_text(Some("你好".to_char_sequence::<CharSequenceImpl>()));
+    assert_eq!(
+        Some("你好".to_char_sequence()),
+        text.get_text::<CharSequenceImpl>()
+    );
+    text.set_hint(Some("世界".to_char_sequence::<CharSequenceImpl>()));
+    assert_eq!(
+        Some("世界".to_char_sequence::<CharSequenceImpl>()),
+        text.get_hint()
+    );
+    text.set_input_type(InputTypeImpl::TYPE_CLASS_DATETIME);
+    assert_eq!(InputTypeImpl::TYPE_CLASS_DATETIME, text.get_input_type());
+    let button = Button::new(&context);
+    button.set_text(Some("测试按钮".to_char_sequence::<CharSequenceImpl>()));
 }

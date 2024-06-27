@@ -17,13 +17,16 @@ pub use jni::{
     sys::{jboolean, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
     AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
-use log::warn;
-use std::fmt::Debug;
-use std::str::FromStr;
+use log::{debug, warn};
 use std::{
     collections::HashMap,
+    fmt::Debug,
     hash::{DefaultHasher, Hash, Hasher},
-    sync::{Mutex, OnceLock, RwLock},
+    str::FromStr,
+    sync::{
+        mpsc::{channel, Receiver, Sender},
+        OnceLock, RwLock,
+    },
 };
 
 // Rust 代理对象的哈希值映射到 Rust 函数
@@ -38,7 +41,19 @@ static HOOK_OBJECTS: RwLock<
     >,
 > = RwLock::new(None);
 // Rust 代理对象的哈希值映射到 Java 被代理的对象的哈希值
-static HOOK_OBJECTS_OTHER: Mutex<Option<HashMap<u64, i32>>> = Mutex::new(None);
+static HOOK_OBJECTS_OTHER: RwLock<Option<HashMap<u64, i32>>> = RwLock::new(None);
+static HOOK_DROP_CHANNEL: OnceLock<(Sender<u64>, Recv)> = OnceLock::new();
+
+struct Recv(Receiver<u64>);
+unsafe impl Sync for Recv {}
+unsafe impl Send for Recv {}
+impl std::ops::Deref for Recv {
+    type Target = Receiver<u64>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 /**
  * 定义必要的trait，以便于在本地为任何数据类型实现JAVA对象所需的功能。
@@ -47,6 +62,10 @@ static HOOK_OBJECTS_OTHER: Mutex<Option<HashMap<u64, i32>>> = Mutex::new(None);
 macro_rules! import {
     () => {
         use droid_wrap_utils::{vm_attach, GlobalRef, JObject};
+        use std::{
+            rc::Rc,
+            sync::{Arc, Mutex},
+        };
 
         /**
          * JObjectRef trait提供从任何数据类型获取java对象的全局引用。
@@ -63,11 +82,14 @@ macro_rules! import {
          * 用于从java对象创建本地对象。
          * */
         pub trait JObjNew {
+            /// 字段类型
+            type Fields;
+
             /**
              * 从java对象创建本地对象。
              * `this` java对象引用。
              * */
-            fn _new(this: &GlobalRef) -> Self;
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self;
 
             /**
              * 创建空对象。
@@ -75,9 +97,10 @@ macro_rules! import {
             fn null() -> Self
             where
                 Self: Sized,
+                Self::Fields: Default,
             {
                 let null = vm_attach(|env| env.new_global_ref(JObject::null()).unwrap());
-                Self::_new(&null)
+                Self::_new(&null, Default::default())
             }
         }
 
@@ -95,6 +118,102 @@ macro_rules! import {
              * */
             fn get_object_sig() -> String {
                 format!("L{};", Self::CLASS)
+            }
+        }
+
+        /**
+         * 用于Java动态代理的创建。
+         * */
+        pub trait JProxy: JObjNew {
+            fn new(fields: Self::Fields) -> std::sync::Arc<Self>;
+        }
+
+        impl<T: JObjRef + JObjNew> JObjRef for Option<T>
+        where
+            <T as JObjNew>::Fields: Default,
+        {
+            fn java_ref(&self) -> GlobalRef {
+                match self {
+                    None => T::null().java_ref(),
+                    Some(v) => v.java_ref(),
+                }
+            }
+        }
+
+        impl<T: JObjRef + JObjNew> JObjNew for Option<T> {
+            type Fields = T::Fields;
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                match this.is_null() {
+                    true => None,
+                    false => Some(T::_new(this, fields)),
+                }
+            }
+        }
+
+        impl<T: JType> JType for Arc<T> {
+            const CLASS: &'static str = T::CLASS;
+            type Error = T::Error;
+            fn get_object_sig() -> String {
+                T::get_object_sig()
+            }
+        }
+
+        impl<T: JObjRef> JObjRef for Arc<T> {
+            fn java_ref(&self) -> GlobalRef {
+                self.as_ref().java_ref()
+            }
+        }
+
+        impl<T: JObjNew> JObjNew for Arc<T> {
+            type Fields = T::Fields;
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                T::_new(this, fields).into()
+            }
+        }
+
+        impl<T: JType> JType for Rc<T> {
+            const CLASS: &'static str = T::CLASS;
+            type Error = T::Error;
+            fn get_object_sig() -> String {
+                T::get_object_sig()
+            }
+        }
+
+        impl<T: JObjRef> JObjRef for Rc<T> {
+            fn java_ref(&self) -> GlobalRef {
+                self.as_ref().java_ref()
+            }
+        }
+
+        impl<T: JObjNew> JObjNew for Rc<T> {
+            type Fields = T::Fields;
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                T::_new(this, fields).into()
+            }
+        }
+
+        impl<T: JType> JType for Mutex<T> {
+            const CLASS: &'static str = T::CLASS;
+            type Error = T::Error;
+            fn get_object_sig() -> String {
+                T::get_object_sig()
+            }
+        }
+
+        impl<T: JObjNew> JObjNew for Mutex<T> {
+            type Fields = T::Fields;
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                T::_new(this, fields).into()
+            }
+        }
+
+        impl<T: JObjRef> JObjRef for Mutex<T> {
+            fn java_ref(&self) -> GlobalRef {
+                self.java_ref()
             }
         }
     };
@@ -150,25 +269,11 @@ pub fn android_context<'a>() -> JObject<'a> {
 /// # Examples
 ///
 /// ```
-/// use droid_wrap_utils::{new_proxy, vm_attach};
-/// let proxy = new_proxy(&["java.lang.Runnable"], |mut env, method, args| {
-///     let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
-///     let name = env.get_string((&name).into()).unwrap();
-///     println!("Method `{}` is called with proxy.", name.to_str().unwrap());
-///     env.new_global_ref(droid_wrap_utils::JObject::null()).unwrap()
-/// });
-/// vm_attach(|env| {
-///     env.call_method(&proxy, "run", "()V", &[]).unwrap();
-/// })
+/// use droid_wrap_utils::new_proxy;
+/// let proxy = new_proxy(&["java.lang.Runnable"]);
 /// ```
 //noinspection SpellCheckingInspection
-pub fn new_proxy(
-    interfaces: &[&str],
-    handler: impl Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef
-        + Send
-        + Sync
-        + 'static,
-) -> GlobalRef {
+pub fn new_proxy(interfaces: &[&str]) -> GlobalRef {
     let class = load_rust_call_method_hook_class();
     let (hash_code, res) = vm_attach(|env| {
         let obj = env.new_object(class, "()V", &[]).unwrap();
@@ -213,24 +318,113 @@ pub fn new_proxy(
             .unwrap();
         (hash_code, env.new_global_ref(&res).unwrap())
     });
-    let mut lock = HOOK_OBJECTS.write().unwrap();
-    if lock.is_none() {
-        lock.replace(HashMap::new());
-    }
-    lock.as_mut().unwrap().insert(hash_code, Box::new(handler));
-    drop(lock);
-    let mut lock = HOOK_OBJECTS_OTHER.lock().unwrap();
+    let mut lock = HOOK_OBJECTS_OTHER.write().unwrap();
     if lock.is_none() {
         lock.replace(HashMap::new());
     }
     let mut hasher = DefaultHasher::new();
     res.hash(&mut hasher);
     lock.as_mut().unwrap().insert(hasher.finish(), hash_code);
+    drop(lock);
     res
 }
 
 //noinspection SpellCheckingInspection
-/// 删除由new_proxy函数生成的java代理对象。
+/// java动态代理绑定rust函数。
+///
+/// # Arguments
+///
+/// * `proxy`: 代理对象。
+/// * `handler`: 一个处理函数。
+///
+/// returns: ()
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_utils::{bind_proxy_handler, new_proxy, vm_attach};
+/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// bind_proxy_handler(&proxy, |mut env, method, args| {
+///     let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
+///     let name = env.get_string((&name).into()).unwrap();
+///     println!("Method `{}` is called with proxy.", name.to_str().unwrap());
+///     env.new_global_ref(droid_wrap_utils::JObject::null()).unwrap()
+/// });
+/// vm_attach(|env| {
+///     env.call_method(&proxy, "run", "()V", &[]).unwrap();
+/// })
+/// ```
+pub fn bind_proxy_handler(
+    proxy: &GlobalRef,
+    handler: impl Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef
+        + Send
+        + Sync
+        + 'static,
+) {
+    let hash_code = get_proxy_hash_code(proxy);
+    let mut lock = HOOK_OBJECTS.try_write().unwrap();
+    if lock.is_none() {
+        lock.replace(HashMap::new());
+    }
+    lock.as_mut().unwrap().insert(hash_code, Box::new(handler));
+    let (_, rx) = HOOK_DROP_CHANNEL.get_or_init(|| {
+        let (tx, rx) = channel();
+        (tx, Recv(rx))
+    });
+    loop {
+        match rx.try_recv() {
+            Ok(proxy_hash_code) => {
+                let lock2 = HOOK_OBJECTS_OTHER.read().unwrap();
+                if let Some(map) = lock2.as_ref() {
+                    let Some(code) = map.get(&proxy_hash_code) else {
+                        continue;
+                    };
+                    let code = *code;
+                    drop(lock2);
+                    if let Some(map) = lock.as_mut() {
+                        map.remove_entry(&code);
+                        debug!("Proxy `{}` is dropped.", proxy_hash_code);
+                    }
+                }
+            }
+            Err(..) => {
+                break;
+            }
+        }
+    }
+}
+
+/// 获取java代理对象的哈希值。
+///
+/// # Arguments
+///
+/// * `proxy`: 代理对象。
+///
+/// returns: i32
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_utils::{new_proxy, get_proxy_hash_code};
+/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// let hash_code = get_proxy_hash_code(&proxy);
+/// ```
+pub fn get_proxy_hash_code(proxy: &GlobalRef) -> i32 {
+    let mut hasher = DefaultHasher::new();
+    proxy.hash(&mut hasher);
+    let proxy_hash_code = hasher.finish();
+    let lock = HOOK_OBJECTS_OTHER.read().unwrap();
+    if let Some(map) = lock.as_ref() {
+        let Some(code) = map.get(&proxy_hash_code) else {
+            return 0;
+        };
+        return *code;
+    }
+    0
+}
+
+//noinspection SpellCheckingInspection
+/// 删除java动态代理绑定的rust函数。
 ///
 /// # Arguments
 ///
@@ -241,42 +435,17 @@ pub fn new_proxy(
 /// # Examples
 ///
 /// ```
-/// use droid_wrap_utils::{drop_proxy, new_proxy, vm_attach};
-/// let proxy = new_proxy(&["java.lang.Runnable"], |mut env, method, args| {
-///     let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
-///     let name = env.get_string((&name).into()).unwrap();
-///     println!("Method `{}` is called with proxy.", name.to_str().unwrap());
-///     env.new_global_ref(droid_wrap_utils::JObject::null()).unwrap()
-/// });
-/// vm_attach(|env| {
-///     env.call_method(&proxy, "run", "()V", &[]).unwrap();
-/// });
-/// drop_proxy(&proxy);
+/// use droid_wrap_utils::{unbind_proxy_handler, new_proxy};
+/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// unbind_proxy_handler(&proxy);
 /// ```
-pub fn drop_proxy(proxy: &GlobalRef) {
+pub fn unbind_proxy_handler(proxy: &GlobalRef) {
     let mut hasher = DefaultHasher::new();
     proxy.hash(&mut hasher);
     let proxy_hash_code = hasher.finish();
-    let hash_code = {
-        let lock = HOOK_OBJECTS_OTHER.lock().unwrap();
-        if let Some(map) = lock.as_ref() {
-            let Some(code) = map.get(&proxy_hash_code) else {
-                return;
-            };
-            let code = *code;
-            drop(lock);
-            let mut lock = HOOK_OBJECTS_OTHER.lock().unwrap();
-            lock.as_mut().unwrap().remove_entry(&proxy_hash_code);
-            code
-        } else {
-            return;
-        }
-    };
-    let mut lock = HOOK_OBJECTS.write().unwrap();
-    if let Some(map) = lock.as_mut() {
-        map.remove_entry(&hash_code);
+    if let Some((tx, _)) = HOOK_DROP_CHANNEL.get() {
+        let _ = tx.send(proxy_hash_code);
     }
-    drop_proxy(proxy);
 }
 
 /**
@@ -371,4 +540,34 @@ unsafe extern "C" fn rust_callback<'a>(
     }
     drop(lock);
     JObject::null()
+}
+
+/// 把java对象数组转换成Vec
+///
+/// # Arguments
+///
+/// * `env`: java环境
+/// * `arr`: java数组
+///
+/// returns: Vec<JObject, Global>
+///
+/// # Examples
+///
+/// ```
+/// use jni::objects::JObjectArray;
+/// use droid_wrap_utils::{to_vec, vm_attach};
+/// unsafe { vm_attach(|env| {
+/// let arr=JObjectArray::from_raw(0 as _);
+/// to_vec(env, &arr);
+/// }) }
+/// ```
+pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Vec<JObject<'a>> {
+    let Ok(size) = env.get_array_length(arr) else {
+        return vec![];
+    };
+    let mut arr2 = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        arr2.push(env.get_object_array_element(arr, i).unwrap());
+    }
+    arr2
 }
