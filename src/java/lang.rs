@@ -232,6 +232,14 @@ impl System {
      * */
     #[java_method]
     pub fn gc() {}
+
+    /**
+     * 终止当前正在运行的 Java 虚拟机。该参数用作状态代码；按照惯例，非零状态代码表示异常终止。此方法调用 Runtime 类中的 exit 方法。此方法永远不会正常返回。调用 System.exit(n) 实际上等同于调用： Runtime.getRuntime().exit(n)
+     * `status` 退出状态。
+     * 抛出:SecurityException – 如果存在安全管理器并且其 checkExit 方法不允许以指定状态退出。
+     * */
+    #[java_method]
+    pub fn exit(status: i32) -> Result<(), <Self as JType>::Error> {}
 }
 
 /**
@@ -285,4 +293,5 @@ pub fn test() {
     assert_eq!(cl, ClassLoader::null());
     let func = RunnableImpl::from_fn(move || println!("Runnable is running."));
     dbg!(func);
+    // System::exit(0).unwrap();
 }
