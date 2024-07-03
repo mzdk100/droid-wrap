@@ -13,7 +13,10 @@
 
 use droid_wrap_derive::{java_class, java_constructor, java_method};
 
-use crate::{java::lang::ClassLoader, JObjNew, JObjRef, JType};
+use crate::{
+    java::lang::{ClassLoader, Object},
+    JObjNew, JObjRef, JType,
+};
 
 /**
  * 与应用程序环境相关的全局信息的接口。这是一个抽象类，其实现由 Android 系统提供。它允许访问特定于应用程序的资源和类，以及对应用程序级操作（如启动活动、广播和接收意图等）的向上调用。
@@ -22,8 +25,750 @@ use crate::{java::lang::ClassLoader, JObjNew, JObjRef, JType};
 pub struct Context;
 
 impl Context {
+    /// 与 getSystemService(String) 一起使用来查询 android.os.PowerManager 来控制电源管理，包括“唤醒锁”，它可让您在运行长时间任务时保持设备开启。
+    pub const POWER_SERVICE: &'static str = "power";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.PowerStatsService 以访问电力统计服务。
+    pub const POWER_STATS_SERVICE: &'static str = "powerstats";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.RecoverySystem 以访问恢复系统服务。
+    pub const RECOVERY_SERVICE: &'static str = "recovery";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.SystemUpdateManager 以访问系统更新管理器服务。
+    pub const SYSTEM_UPDATE_SERVICE: &'static str = "system_update";
+
+    /// 与GetSystemService(String)一起查询android.view.WindowManager访问系统的窗口管理器。
+    pub const WINDOW_SERVICE: &'static str = "window";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.view.LayoutInflater 以在此上下文中扩充布局资源。
+    pub const LAYOUT_INFLATER_SERVICE: &'static str = "layout_inflater";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.accounts.AccountManager，以便在您选择的时间接收意图。
+    pub const ACCOUNT_SERVICE: &'static str = "account";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.ActivityManager 以便与全局系统状态进行交互。
+    pub const ACTIVITY_SERVICE: &'static str = "activity";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.ActivityTaskManager 以便与全局系统状态进行交互。
+    pub const ACTIVITY_TASK_SERVICE: &'static str = "activity_task";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.UriGrantsManager 以便与全局系统状态进行交互。
+    pub const URI_GRANTS_SERVICE: &'static str = "uri_grants";
+
+    /// 与GetSystemService(String)一起查询android.app.AlarmManager在您选择时接收意图。
+    pub const ALARM_SERVICE: &'static str = "alarm";
+
+    /// 与GetSystemService(String)一起查询android.app.NotificationManager，以告知用户背景事件。
+    pub const NOTIFICATION_SERVICE: &'static str = "notification";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.view.accessibility.AccessibilityManager，以便通过注册的事件监听器向用户提供 UI 事件的反馈。
+    pub const ACCESSIBILITY_SERVICE: &'static str = "accessibility";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.view.accessibility.CaptioningManager，以获取字幕属性并监听字幕偏好设置的变化。
+    pub const CAPTIONING_SERVICE: &'static str = "captioning";
+
+    /// 与 getSystemService(String) 一起使用来查询用于控制键盘保护的 android.app.KeyguardManager。
+    pub const KEYGUARD_SERVICE: &'static str = "keyguard";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.location.LocationManager 来控制位置更新。
+    pub const LOCATION_SERVICE: &'static str = "location";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.location.CountryDetector 来检测用户所在的国家/地区。
+    pub const COUNTRY_DETECTOR: &'static str = "country_detector";
+
     /**
-     * 返回可用于检索此包中的类的类加载器。
+     * 与 getSystemService(String) 一起使用来查询 android.app.SearchManager 来处理搜索。
+     * 配置＃ui_mode_type_watch不支持android.app.SearchManager。
+     * */
+    pub const SEARCH_SERVICE: &'static str = "search";
+
+    /// 与 getSystemService(String) 一起使用来查询用于访问传感器的 android.hardware.SensorManager。
+    pub const SENSOR_SERVICE: &'static str = "sensor";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.SensorPrivacyManager，以访问传感器隐私功能。
+    pub const SENSOR_PRIVACY_SERVICE: &'static str = "sensor_privacy";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.storage.StorageManager 来访问系统存储功能。
+    pub const STORAGE_SERVICE: &'static str = "storage";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.usage.StorageStatsManager 以访问系统存储统计信息。
+    pub const STORAGE_STATS_SERVICE: &'static str = "storagestats";
+
+    /// 与 getSystemService(String) 一起使用来查询 com.android.server.WallpaperService 以访问壁纸。
+    pub const WALLPAPER_SERVICE: &'static str = "wallpaper";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.VibratorManager，以访问设备振动器、与单个振动器交互以及在多个振动器上播放同步效果。
+    pub const VIBRATOR_MANAGER_SERVICE: &'static str = "vibrator_manager";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.Vibrator 以便与振动硬件进行交互。
+    #[deprecated(note = "使用 android.os.VibratorManager 来查询默认系统振动器。")]
+    pub const VIBRATOR_SERVICE: &'static str = "vibrator";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.StatusBarManager，以便与状态栏和快速设置进行交互。
+    pub const STATUS_BAR_SERVICE: &'static str = "statusbar";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.ConnectivityManager 来处理网络连接管理。
+    pub const CONNECTIVITY_SERVICE: &'static str = "connectivity";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.PacProxyManager，以处理 pac 代理信息的管理。
+    pub const PAC_PROXY_SERVICE: &'static str = "pac_proxy";
+
+    /// 与 getSystemService(String) 一起使用来查询用于管理虚拟运营商网络的 android.net.vcn.VcnManager
+    pub const VCN_MANAGEMENT_SERVICE: &'static str = "vcn_management";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.INetd 以便与网络堆栈进行通信
+    pub const NETD_SERVICE: &'static str = "netd";
+
+    /// 与 android.os.ServiceManager.getService() 一起使用来查询 INetworkStackConnector IBinder 以便与网络堆栈进行通信
+    pub const NETWORK_STACK_SERVICE: &'static str = "network_stack";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.TetheringManager 来管理网络共享功能。
+    pub const TETHERING_SERVICE: &'static str = "tethering";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.IpSecManager，以便使用 IPSec 加密套接字或网络。
+    pub const IPSEC_SERVICE: &'static str = "ipsec";
+
+    /// 与GetSystemService(String)一起查询android.net.VpnManager来管理平台内置VPN的配置文件。
+    pub const VPN_MANAGEMENT_SERVICE: &'static str = "vpn_management";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.ConnectivityDiagnosticsManager，以执行网络连接诊断以及从系统接收网络连接信息。
+    pub const CONNECTIVITY_DIAGNOSTICS_SERVICE: &'static str = "connectivity_diagnostics";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.TestNetworkManager 以构建 TUN 和有限使用网络
+    pub const TEST_NETWORK_SERVICE: &'static str = "test_network";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.IUpdateLock，用于管理不得被无头 OTA 应用程序或类似应用程序中断的运行时序列。
+    pub const UPDATE_LOCK_SERVICE: &'static str = "updatelock";
+
+    //noinspection SpellCheckingInspection
+    /// 对于内部网络管理服务来说是常量，并不是真正的上下文服务。
+    pub const NETWORKMANAGEMENT_SERVICE: &'static str = "network_management";
+
+    /// 与 getSystemService(String) 一起使用来查询用于管理切片的 com.android.server.slice.SliceManagerService。
+    pub const SLICE_SERVICE: &'static str = "slice";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.app.usage.NetworkStatsManager进行查询网络使用统计信息。
+    pub const NETWORK_STATS_SERVICE: &'static str = "netstats";
+
+    //noinspection SpellCheckingInspection
+    pub const NETWORK_POLICY_SERVICE: &'static str = "netpolicy";
+
+    pub const NETWORK_WATCHLIST_SERVICE: &'static str = "network_watchlist";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.WifiManager 来处理 Wi-Fi 访问的管理。
+    pub const WIFI_SERVICE: &'static str = "wifi";
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 与 getSystemService(String) 一起使用来查询 android.net.wifi.wificond.WifiNl80211Manager，用于处理 Wi-Fi nl802.11 守护进程（wificond）的管理。
+     * @see android.net.wifi.wificond.WifiNl80211Manager
+     * */
+    pub const WIFI_NL80211_SERVICE: &'static str = "wifinl80211";
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 与 getSystemService(String) 一起使用来查询 android.net.wifi.p2p.WifiP2pManager 来处理 Wi-Fi 对等连接的管理。
+     * @see android.net.wifi.p2p.WifiP2pManager
+     * */
+    pub const WIFI_P2P_SERVICE: &'static str = "wifip2p";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.aware.WifiAwareManager 来处理 Wi-Fi Aware 的管理。
+    pub const WIFI_AWARE_SERVICE: &'static str = "wifiaware";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.WifiScanner 以扫描 wifi 世界
+    pub const WIFI_SCANNING_SERVICE: &'static str = "wifiscanner";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于测距 wifi 设备的 android.net.wifi.RttManager
+    #[deprecated]
+    pub const WIFI_RTT_SERVICE: &'static str = "rttmanager";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于测量带有 wifi 的设备范围的 android.net.wifi.rtt.WifiRttManager。
+    pub const WIFI_RTT_RANGING_SERVICE: &'static str = "wifirtt";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.lowpan.LowpanManager，以处理 LoWPAN 访问的管理。
+    pub const LOWPAN_SERVICE: &'static str = "lowpan";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.net.EthernetManager 来处理以太网访问的管理。
+    pub const ETHERNET_SERVICE: &'static str = "ethernet";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.nsd.NsdManager，用于处理网络服务发现的管理
+    pub const NSD_SERVICE: &'static str = "servicediscovery";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.AudioManager，用于处理音量、铃声模式和音频路由的管理。
+    pub const AUDIO_SERVICE: &'static str = "audio";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.AudioDeviceVolumeManager，以处理音频设备（例如扬声器、USB 耳机）音量的管理。
+    pub const AUDIO_DEVICE_VOLUME_SERVICE: &'static str = "audio_device_volume";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.MediaTranscodingManager 以进行媒体转码。
+    pub const MEDIA_TRANSCODING_SERVICE: &'static str = "media_transcoding";
+
+    /**
+     * AuthService 协调生物识别和 PIN/图案/密码认证。
+     * BiometricService 被分为两个服务，AuthService 和 BiometricService，其中 AuthService 是协调所有类型身份验证的高级服务，而 BiometricService 是仅负责生物识别身份验证的下层服务。
+     * 理想情况下，我们应该将 BiometricManager 重命名为 AuthManager，因为它在逻辑上与 AuthService 相对应。但是，由于 BiometricManager 是一个公共 API，因此我们保留了旧名称，但将内部实现更改为使用 AuthService。
+     * 截至目前，AUTH_SERVICE 常量仅用于在 SystemServiceRegistry 和 SELinux 中识别服务。要获取 AUTH_SERVICE 的管理器，应使用 BIOMETRIC_SERVICE 和 getSystemService(String) 来查询 android.hardware.biometrics.BiometricManager
+     * 两个服务及其管理器的映射：[服务] [管理器] AuthService BiometricManager BiometricService N/A
+     * */
+    pub const AUTH_SERVICE: &'static str = "auth";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.fingerprint.FingerprintManager 来处理指纹管理。
+    pub const FINGERPRINT_SERVICE: &'static str = "fingerprint";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.face.FaceManager 来处理面部身份验证的管理。
+    pub const FACE_SERVICE: &'static str = "face";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.iris.IrisManager，用于处理虹膜认证的管理。
+    pub const IRIS_SERVICE: &'static str = "iris";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.biometrics.BiometricManager，用于处理生物识别和 PIN/模式/密码身份验证。
+    pub const BIOMETRIC_SERVICE: &'static str = "biometric";
+
+    /// 与 getSystemService(String) 一起使用来查询用于管理 android.media.MediaSession2 的 android.media.MediaCommunicationManager。
+    pub const MEDIA_COMMUNICATION_SERVICE: &'static str = "media_communication";
+
+    /// 与getSystemService一起查询android.media.MediaRouter来控制和管理媒体路由。
+    pub const MEDIA_ROUTER_SERVICE: &'static str = "media_router";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.session.MediaSessionManager 来管理媒体会话。
+    pub const MEDIA_SESSION_SERVICE: &'static str = "media_session";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.TelephonyManager，用于处理设备的电话功能管理。
+    pub const TELEPHONY_SERVICE: &'static str = "phone";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.SubscriptionManager，以处理设备的电话订阅管理。
+    pub const TELEPHONY_SUBSCRIPTION_SERVICE: &'static str = "telephony_subscription_service";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telecom.TelecomManager 来管理设备的电信相关功能。
+    pub const TELECOM_SERVICE: &'static str = "telecom";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.CarrierConfigManager，以读取运营商配置值。
+    pub const CARRIER_CONFIG_SERVICE: &'static str = "carrier_config";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.euicc.EuiccManager 来管理设备 eUICC（嵌入式 SIM）。
+    pub const EUICC_SERVICE: &'static str = "euicc";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.telephony.euicc.EuiccCardManager访问设备EUICC（嵌入式SIM）。
+    pub const EUICC_CARD_SERVICE: &'static str = "euicc_card";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.MmsManager 来发送/接收 MMS 消息。
+    pub const MMS_SERVICE: &'static str = "mms";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.content.ClipboardManager，以访问和修改全局剪贴板的内容。
+    pub const CLIPBOARD_SERVICE: &'static str = "clipboard";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于文本分类服务的 TextClassificationManager。
+    pub const TEXT_CLASSIFICATION_SERVICE: &'static str = "textclassification";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.view.selectiontoolbar.SelectionToolBarmanager进行选择工具栏服务。
+    pub const SELECTION_TOOLBAR_SERVICE: &'static str = "selection_toolbar";
+
+    /// 与 getSystemService(String) 一起使用来查询字体服务的 android.graphics.fonts.FontManager。
+    pub const FONT_SERVICE: &'static str = "font";
+
+    /// 与 getSystemService(String) 一起使用来查询 com.android.server.attention.AttentionManagerService 以获得注意服务。
+    pub const ATTENTION_SERVICE: &'static str = "attention";
+
+    /**
+     * (内部) 旋转解析器服务的官方发布名称。
+     * // TODO(b/178151184): 释放前，将其更改为旋转解析器。
+     * */
+    pub const ROTATION_RESOLVER_SERVICE: &'static str = "resolver";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.view.inputmethod.InputMethodManager 来访问输入法。
+    pub const INPUT_METHOD_SERVICE: &'static str = "input_method";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.view.textservice.TextServicesManager 来访问文本服务。
+    pub const TEXT_SERVICES_MANAGER_SERVICE: &'static str = "textservices";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.appwidget.AppWidgetManager 来访问 AppWidgets。
+    pub const APPWIDGET_SERVICE: &'static str = "appwidget";
+
+    //noinspection SpellCheckingInspection
+    /// (内部)语音交互管理器服务的官方发布名称。
+    pub const VOICE_INTERACTION_MANAGER_SERVICE: &'static str = "voiceinteraction";
+
+    /// （内部）自动填充服务的官方出版名称。
+    pub const AUTOFILL_MANAGER_SERVICE: &'static str = "autofill";
+
+    //noinspection SpellCheckingInspection
+    /// （内部）文本到语音管理服务的官方发布名称。
+    pub const TEXT_TO_SPEECH_MANAGER_SERVICE: &'static str = "texttospeech";
+
+    /// 内容捕获服务的官方发布名称。
+    pub const CONTENT_CAPTURE_MANAGER_SERVICE: &'static str = "content_capture";
+
+    /// 翻译服务的官方出版名称。
+    pub const TRANSLATION_MANAGER_SERVICE: &'static str = "translation";
+
+    /// 支持ui翻译功能的翻译服务的官方发布名称。
+    pub const UI_TRANSLATION_SERVICE: &'static str = "ui_translation";
+
+    /// 用于获取任务快照的内容选择和分类。
+    pub const CONTENT_SUGGESTIONS_SERVICE: &'static str = "content_suggestions";
+
+    /**
+     * 应用程序预测服务的官方发布名称。
+     * 注意：此服务是可选的；“ ”的调用者。
+     * */
+    pub const APP_PREDICTION_SERVICE: &'static str = "app_prediction";
+
+    /**
+     * 搜索 UI 服务的官方发布名称。
+     * 注意：此服务是可选的；“ ”的调用者。
+     * */
+    pub const SEARCH_UI_SERVICE: &'static str = "search_ui";
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 用于获取智能空间服务。
+     * 注意：此服务是可选的；“ ”的调用者。
+     * */
+    pub const SMARTSPACE_SERVICE: &'static str = "smartspace";
+
+    /**
+     * 用于获取云搜索服务。
+     * 注意：此服务是可选的；“ ”的调用者。
+     * */
+    pub const CLOUDSEARCH_SERVICE: &'static str = "cloudsearch";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来访问 com.android.server.voiceinteraction.SoundTriggerService。
+    pub const SOUND_TRIGGER_SERVICE: &'static str = "soundtrigger";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来访问 com.android.server.soundtrigger_middleware.SoundTriggerMiddlewareService。
+    pub const SOUND_TRIGGER_MIDDLEWARE_SERVICE: &'static str = "soundtrigger_middleware";
+
+    /**
+     * 用于获取壁纸效果生成服务。
+     * 注意：此服务是可选的；“ ”的调用者。
+     * */
+    pub const WALLPAPER_EFFECTS_GENERATION_SERVICE: &'static str = "wallpaper_effects_generation";
+
+    /// 用于访问MusicRecognitionManagerService。
+    pub const MUSIC_RECOGNITION_SERVICE: &'static str = "music_recognition";
+
+    /// （内部）许可服务的官方出版名称。
+    pub const PERMISSION_SERVICE: &'static str = "permission";
+
+    /// 旧版（内部）权限服务的官方发布名称。
+    //@SystemApi(client = SystemApi.Client.MODULE_LIBRARIES)
+    pub const LEGACY_PERMISSION_SERVICE: &'static str = "legacy_permission";
+
+    /// (内部)权限控制器服务的官方发布名称。
+    pub const PERMISSION_CONTROLLER_SERVICE: &'static str = "permission_controller";
+
+    /// (内部)权限检查服务的官方发布名称。
+    pub const PERMISSION_CHECKER_SERVICE: &'static str = "permission_checker";
+
+    /// (内部) 权限执行服务的官方发布名称。
+    pub const PERMISSION_ENFORCER_SERVICE: &'static str = "permission_enforcer";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.apphibernation.AppHibernationManager 以便与休眠服务进行通信。
+    pub const APP_HIBERNATION_SERVICE: &'static str = "app_hibernation";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.backup.IBackupManager IBackupManager 以便与备份机制进行通信。
+    pub const BACKUP_SERVICE: &'static str = "backup";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.content.rollback.RollbackManager 以便与回滚管理器进行通信
+    pub const ROLLBACK_SERVICE: &'static str = "rollback";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.scheduling.RebootReadinessManager，以便与重启准备就绪检测器进行通信。
+    pub const REBOOT_READINESS_SERVICE: &'static str = "reboot_readiness";
+
+    /// 与 getSystemService(String) 一起使用来查询用于记录诊断日志的 android.os.DropBoxManager 实例。
+    pub const DROPBOX_SERVICE: &'static str = "dropbox";
+
+    /// BackgroundInstallControlService 的系统服务名称。此服务负责监督设备上的 MBA 并提供 MBA 的相关元数据。
+    pub const BACKGROUND_INSTALL_CONTROL_SERVICE: &'static str = "background_install_control";
+
+    /// BinaryTransparencyService 的系统服务名称。它用于查询与设备上各种预安装和系统二进制文件有关的测量值，以便为用户提供透明度。
+    pub const BINARY_TRANSPARENCY_SERVICE: &'static str = "transparency";
+
+    //noinspection SpellCheckingInspection
+    /// DeviceIdleManager 的系统服务名称。
+    pub const DEVICE_IDLE_CONTROLLER: &'static str = "deviceidle";
+
+    /// PowerWhitelistManager 的系统服务名称。
+    #[deprecated]
+    pub const POWER_WHITELIST_MANAGER: &'static str = "power_whitelist";
+
+    /// PowerExemptionManager 的系统服务名称。
+    pub const POWER_EXEMPTION_SERVICE: &'static str = "power_exemption";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.admin.DevicePolicyManager 来进行全局设备策略管理。
+    pub const DEVICE_POLICY_SERVICE: &'static str = "device_policy";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于控制 UI 模式的 android.app.UiModeManager。
+    pub const UI_MODE_SERVICE: &'static str = "uimode";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.DownloadManager 以请求 HTTP 下载。
+    pub const DOWNLOAD_SERVICE: &'static str = "download";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.BatteryManager 来管理电池状态。
+    pub const BATTERY_SERVICE: &'static str = "batterymanager";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.nfc.NfcManager 以使用 NFC。
+    pub const NFC_SERVICE: &'static str = "nfc";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.bluetooth.BluetoothManager 以使用蓝牙。
+    pub const BLUETOOTH_SERVICE: &'static str = "bluetooth";
+
+    /// 与GetSystemService(String)一起查询android.net.sip.SipManager访问SIP相关服务。
+    pub const SIP_SERVICE: &'static str = "sip";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.usb.UsbManager，以访问 USB 设备（作为 USB 主机）并控制此设备作为 USB 设备的行为。
+    pub const USB_SERVICE: &'static str = "usb";
+
+    /// 与 getSystemService 一起使用来查询 android.debug.AdbManager 以访问 ADB 调试功能。
+    pub const ADB_SERVICE: &'static str = "adb";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.SerialManager 来访问串行端口。
+    pub const SERIAL_SERVICE: &'static str = "serial";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.hdmi.HdmiControlManager 来控制和管理 HDMI-CEC 协议。
+    pub const HDMI_CONTROL_SERVICE: &'static str = "hdmi_control";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.input.InputManager 以便与输入设备交互。
+    pub const INPUT_SERVICE: &'static str = "input";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.display.DisplayManager 以便与显示设备交互。
+    pub const DISPLAY_SERVICE: &'static str = "display";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.display.ColorDisplayManager 来控制颜色转换。
+    pub const COLOR_DISPLAY_SERVICE: &'static str = "color_display";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.UserManager，以便在支持多用户的设备上管理用户。
+    pub const USER_SERVICE: &'static str = "user";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.content.pm.LauncherApps，以便查询和监控用户配置文件中可启动的应用程序。
+    pub const LAUNCHER_APPS_SERVICE: &'static str = "launcherapps";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.content.RestrictionsManager，以查询应用程序限制并请求受限操作的权限。
+    pub const RESTRICTIONS_SERVICE: &'static str = "restrictions";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.app.AppopsManager，以跟踪设备上的应用程序操作。
+    pub const APP_OPS_SERVICE: &'static str = "appops";
+
+    /// 与 getSystemService(String) 一起使用来查询用于管理角色的 android.app.role.RoleManager。
+    pub const ROLE_SERVICE: &'static str = "role";
+
+    /**
+     * 与 getSystemService(String) 一起使用来查询 android.hardware.camera2.CameraManager 以便与相机设备交互。
+     * @see android.hardware.camera2.CameraManager
+     * */
+    pub const CAMERA_SERVICE: &'static str = "camera";
+
+    /// android.print.PrintManager用于打印和管理打印机和打印任务。
+    pub const PRINT_SERVICE: &'static str = "print";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.companion.CompanionDeviceManager 来管理配套设备
+    pub const COMPANION_DEVICE_SERVICE: &'static str = "companiondevice";
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 与 getSystemService(String) 一起使用来查询用于管理虚拟设备的 android.companion.virtual.VirtualDeviceManager。
+     * 在没有 PackageManager#FEATURE_COMPANION_DEVICE_SETUP 系统功能的设备上，getSystemService(String) 将返回“ ”.
+     * */
+    pub const VIRTUAL_DEVICE_SERVICE: &'static str = "virtualdevice";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.ConsumerIrManager，以便从设备传输红外信号。
+    pub const CONSUMER_IR_SERVICE: &'static str = "consumer_ir";
+
+    /// android.app.trust.TrustManager 用于管理信任代理。
+    pub const TRUST_SERVICE: &'static str = "trust";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.tv.interactive.TvInteractiveAppManager，以便与设备上的电视交互应用程序进行交互。
+    pub const TV_INTERACTIVE_APP_SERVICE: &'static str = "tv_interactive_app";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.tv.TvInputManager，以便与设备上的电视输入进行交互。
+    pub const TV_INPUT_SERVICE: &'static str = "tv_input";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.tv.TunerResourceManager，以便与设备上的电视调谐器资源进行交互。
+    pub const TV_TUNER_RESOURCE_MGR_SERVICE: &'static str = "tv_tuner_resource_mgr";
+
+    /// android.net.NetworkScoreManager 用于管理网络得分。
+    #[deprecated(note = "请参阅 Wi-Fi 建议 API 来了解建议 WiFi 网络的替代 API。")]
+    pub const NETWORK_SCORE_SERVICE: &'static str = "network_score";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.usage.UsageStatsManager 来查询设备使用情况统计信息。
+    pub const USAGE_STATS_SERVICE: &'static str = "usagestats";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.app.job.JobScheduler实例，以管理偶尔的背景任务。
+    pub const JOB_SCHEDULER_SERVICE: &'static str = "jobscheduler";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.tare.EconomyManager 实例以了解经济状况。
+    pub const RESOURCE_ECONOMY_SERVICE: &'static str = "tare";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.service.persistentdata.PersistentDatablockManager实例，以与跨工厂重置的存储设备进行交互。
+    pub const PERSISTENT_DATA_BLOCK_SERVICE: &'static str = "persistent_data_block";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于管理 OEM 锁的 android.service.oemlock.OemLockManager 实例。
+    pub const OEM_LOCK_SERVICE: &'static str = "oem_lock";
+
+    /// 与 getSystemService(String) 一起使用来查询用于管理媒体投影会话的 android.media.projection.MediaProjectionManager 实例。
+    pub const MEDIA_PROJECTION_SERVICE: &'static str = "media_projection";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.midi.MidiManager 来访问 MIDI 服务。
+    pub const MIDI_SERVICE: &'static str = "midi";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.radio.RadioManager 以访问广播电台服务。
+    pub const RADIO_SERVICE: &'static str = "broadcastradio";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.HardwarePropertiesManager 来访问硬件属性服务。
+    pub const HARDWARE_PROPERTIES_SERVICE: &'static str = "hardware_properties";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.ThermalService 以访问热服务。
+    pub const THERMAL_SERVICE: &'static str = "thermalservice";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.PerformanceHintManager 以访问性能提示服务。
+    pub const PERFORMANCE_HINT_SERVICE: &'static str = "performance_hint";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.content.pm.ShortcutManager 以访问启动器快捷方式服务。
+    pub const SHORTCUT_SERVICE: &'static str = "shortcut";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.hardware.location.ContextHubManager 来访问上下文中心。
+    pub const CONTEXTHUB_SERVICE: &'static str = "contexthub";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.health.SystemHealthManager，以访问系统健康（电池、电源、内存等）指标。
+    pub const SYSTEM_HEALTH_SERVICE: &'static str = "systemhealth";
+
+    /// 守门人 服务。
+    pub const GATEKEEPER_SERVICE: &'static str = "android.service.gatekeeper.IGateKeeperService";
+
+    /// 定义访问设备标识符的策略的服务。
+    pub const DEVICE_IDENTIFIERS_SERVICE: &'static str = "device_identifiers";
+
+    /// 报告系统健康“事件”的服务
+    pub const INCIDENT_SERVICE: &'static str = "incident";
+
+    //noinspection SpellCheckingInspection
+    /// 协助 incident 和 dumpstated 向用户报告状态并确认授权进行事件报告或错误报告的服务
+    pub const INCIDENT_COMPANION_SERVICE: &'static str = "incidentcompanion";
+
+    //noinspection SpellCheckingInspection
+    /// 协助位于系统服务器中的 android.app.StatsManager 的服务。
+    pub const STATS_MANAGER_SERVICE: &'static str = "statsmanager";
+
+    //noinspection SpellCheckingInspection
+    /// 协助 statsd 获取一般统计数据的服务。
+    pub const STATS_COMPANION_SERVICE: &'static str = "statscompanion";
+
+    //noinspection SpellCheckingInspection
+    /// 协助 statsd 从引导原子记录原子的服务。
+    pub const STATS_BOOTSTRAP_ATOM_SERVICE: &'static str = "statsbootstrap";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.StatsManager。
+    pub const STATS_MANAGER: &'static str = "stats";
+
+    /// 与 android.os.ServiceManager.getService() 一起使用来查询 IPlatformCompat IBinder，以便与平台兼容服务进行通信。
+    pub const PLATFORM_COMPAT_SERVICE: &'static str = "platform_compat";
+
+    /// 与 android.os.ServiceManager.getService() 一起使用来查询与平台兼容服务通信的本机代码的 IPlatformCompatNative IBinder。
+    pub const PLATFORM_COMPAT_NATIVE_SERVICE: &'static str = "platform_compat_native";
+
+    /// 用于捕获错误报告的服务。
+    pub const BUGREPORT_SERVICE: &'static str = "bugreport";
+
+    //noinspection GrazieInspection
+    /// 与 getSystemService(String) 一起使用来查询用于管理覆盖包的 android.content.om.OverlayManager。
+    pub const OVERLAY_SERVICE: &'static str = "overlay";
+
+    /// 与 getSystemService(String) 一起使用来管理资源。
+    pub const RESOURCES_SERVICE: &'static str = "resources";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.IIdmap2 来管理 idmap 文件（由覆盖包使用）。
+    pub const IDMAP_SERVICE: &'static str = "idmap";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询用于访问 VR 服务的 VrManager。
+    pub const VR_SERVICE: &'static str = "vrmanager";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.content.pm.CrossProfileApps 以进行跨配置文件操作。
+    pub const CROSS_PROFILE_APPS_SERVICE: &'static str = "crossprofileapps";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService 一起使用来查询 android.se.omapi.ISecureElementService 以访问 SecureElementService。
+    pub const SECURE_ELEMENT_SERVICE: &'static str = "secure_element";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.timedetector.TimeDetector。
+    pub const TIME_DETECTOR_SERVICE: &'static str = "time_detector";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.timezonedetector.TimeZoneDetector。
+    pub const TIME_ZONE_DETECTOR_SERVICE: &'static str = "time_zone_detector";
+
+    /// 与 getSystemService(String) 一起使用来查询 TimeManager。
+    pub const TIME_MANAGER_SERVICE: &'static str = "time_manager";
+
+    /// AppBindingService 的 Binder 服务名称。
+    pub const APP_BINDING_SERVICE: &'static str = "app_binding";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.ims.ImsManager。
+    pub const TELEPHONY_IMS_SERVICE: &'static str = "telephony_ims";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.SystemConfigManager。
+    pub const SYSTEM_CONFIG_SERVICE: &'static str = "system_config";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.ims.RcsMessageManager。
+    pub const TELEPHONY_RCS_MESSAGE_SERVICE: &'static str = "ircsmessage";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.image.DynamicSystemManager。
+    pub const DYNAMIC_SYSTEM_SERVICE: &'static str = "dynamic_system";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.blob.BlobStoreManager，以便从系统维护的 Blob 存储中贡献和访问数据 Blob。
+    pub const BLOB_STORE_SERVICE: &'static str = "blob_store";
+
+    /// 与 getSystemService(String) 一起使用来查询 TelephonyRegistryManager。
+    pub const TELEPHONY_REGISTRY_SERVICE: &'static str = "telephony_registry";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.os.BatteryStatsManager。
+    pub const BATTERY_STATS_SERVICE: &'static str = "batterystats";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.appsearch.AppSearchManager，以便索引和查询系统管理的应用程序数据。
+    pub const APP_SEARCH_SERVICE: &'static str = "app_search";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.content.integrity.AppIntegrityManager。
+    pub const APP_INTEGRITY_SERVICE: &'static str = "app_integrity";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.content.pm.DataLoaderManager。
+    pub const DATA_LOADER_MANAGER_SERVICE: &'static str = "dataloader_manager";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.os.incremental.IncrementalManager。
+    pub const INCREMENTAL_SERVICE: &'static str = "incremental";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.security.attestationverification.AttestationVerificationManager。
+    pub const ATTESTATION_VERIFICATION_SERVICE: &'static str = "attestation_verification";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.security.FileIntegrityManager。
+    pub const FILE_INTEGRITY_SERVICE: &'static str = "file_integrity";
+
+    /// 用于远程密钥配置的绑定服务。
+    pub const REMOTE_PROVISIONING_SERVICE: &'static str = "remote_provisioning";
+
+    /// 与 getSystemService(String) 一起使用来查询用于控制设备灯的 android.hardware.lights.LightsManager。
+    pub const LIGHTS_SERVICE: &'static str = "lights";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.uwb.UwbManager。
+    pub const UWB_SERVICE: &'static str = "uwb";
+
+    /// 与 getSystemService(String) 一起使用来查询用于控制梦境状态的 android.app.DreamManager。
+    pub const DREAM_SERVICE: &'static str = "dream";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.SmsManager 来访问短信功能。
+    pub const SMS_SERVICE: &'static str = "sms";
+
+    /// 与 getSystemService(String) 一起使用来访问 PeopleManager 来与您发布的对话进行交互。
+    pub const PEOPLE_SERVICE: &'static str = "people";
+
+    /// 与 getSystemService(String) 一起使用来访问设备状态服务。
+    pub const DEVICE_STATE_SERVICE: &'static str = "device_state";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.media.metrics.MediaMetricsManager，以便与设备上的媒体指标进行交互。
+    pub const MEDIA_METRICS_SERVICE: &'static str = "media_metrics";
+
+    /// 与 getSystemService(String) 一起使用来访问系统语音识别服务。
+    pub const SPEECH_RECOGNITION_SERVICE: &'static str = "speech_recognition";
+
+    /// 与 getSystemService(String) 一起使用来查询 GameManager。
+    pub const GAME_SERVICE: &'static str = "game";
+
+    /// 与 getSystemService(String) 一起使用来访问 android.content.pm.verify.domain.DomainVerificationManager 来查询已声明的 Web 域的批准和用户状态。
+    pub const DOMAIN_VERIFICATION_SERVICE: &'static str = "domain_verification";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来访问 android.view.displayhash.DisplayHashManager 来处理显示哈希。
+    pub const DISPLAY_HASH_SERVICE: &'static str = "display_hash";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.LocaleManager。
+    pub const LOCALE_SERVICE: &'static str = "locale";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.safetycenter.SafetyCenterManager 实例，以便与安全中心进行交互。
+    pub const SAFETY_CENTER_SERVICE: &'static str = "safety_center";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.nearby.NearbyManager 来发现附近的设备。
+    pub const NEARBY_SERVICE: &'static str = "nearby";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.app.ambientcontext.AmbientContextManager。
+    pub const AMBIENT_CONTEXT_SERVICE: &'static str = "ambient_context";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.app.wearable.WearableSensingManager。
+    pub const WEARABLE_SENSING_SERVICE: &'static str = "wearable_sensing";
+
+    //noinspection SpellCheckingInspection
+    /// 与GetSystemService(String)一起查询android.health.connect.HealthConnectManager。
+    pub const HEALTHCONNECT_SERVICE: &'static str = "healthconnect";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.credentials.CredentialManager 来向您的应用程序验证用户身份。
+    pub const CREDENTIAL_SERVICE: &'static str = "credential";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.devicelock.DeviceLockManager。
+    pub const DEVICE_LOCK_SERVICE: &'static str = "device_lock";
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 与 getSystemService(String) 一起使用来查询 android.system.virtualmachine.VirtualMachineManager。
+     * 在没有 PackageManager#FEATURE_VIRTUALIZATION_FRAMEWORK 系统功能的设备上，getSystemService(String) 将返回“ ”。
+     * */
+    pub const VIRTUALIZATION_SERVICE: &'static str = "virtualization";
+
+    /// 与 getSystemService(String) 一起使用来查询 GrammaticalInflectionManager。
+    pub const GRAMMATICAL_INFLECTION_SERVICE: &'static str = "grammatical_inflection";
+
+    /// 与 getSystemService(String) 一起使用来查询 android.telephony.satellite.SatelliteManager 来访问卫星功能。
+    pub const SATELLITE_SERVICE: &'static str = "satellite";
+
+    //noinspection SpellCheckingInspection
+    /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.sharedconnectivity.app.SharedConnectivityManager 来访问共享连接服务。
+    pub const SHARED_CONNECTIVITY_SERVICE: &'static str = "shared_connectivity";
+
+    /**
+     * 返回可用于查询此包中的类的类加载器。
      * */
     #[java_method]
     pub fn get_class_loader(&self) -> ClassLoader {}
@@ -82,6 +827,70 @@ impl Context {
      * */
     #[java_method]
     pub fn get_package_code_path(&self) -> String {}
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 按名称返回系统级服务的句柄。返回对象的类因请求的名称而异。当前可用的名称为：
+     * WINDOW_SERVICE ("window")
+     * 您可以在顶级窗口管理器中放置自定义窗口。返回的对象是 WindowManager。只能从可视上下文（例如 Activity 或使用 createWindowContext(int, Bundle) 创建的上下文）中获取，这些上下文会根据屏幕区域的配置和可视边界进行调整。
+     * LAYOUT_INFLATER_SERVICE ("layout_inflater")
+     * android.view.LayoutInflater 用于在此上下文中填充布局资源。只能从可视上下文（例如 Activity 或使用 createWindowContext(int, Bundle) 创建的上下文）获取，这些上下文会根据屏幕区域的配置和可视边界进行调整。
+     * ACTIVITY_SERVICE ("activity")
+     * 用于与系统全局活动状态交互的 ActivityManager。
+     * WALLPAPER_SERVICE ("wallpaper")
+     * android.service.wallpaper.WallpaperService 用于在此上下文中访问壁纸。只能从可视上下文（例如 Activity 或使用 createWindowContext(int, Bundle) 创建的上下文）获取，这些上下文会根据屏幕区域的配置和可视边界进行调整。
+     * POWER_SERVICE ("power")
+     * 一个用于控制电源管理的android.os.PowerManager。
+     * ALARM_SERVICE ("alarm")
+     * 一个 Android 应用程序 AlarmManager，用于在您选择的时间接收意图。
+     * NOTIFICATION_SERVICE ("notification")
+     * android.app.NotificationManager，用于通知用户后台事件。
+     * KEYGUARD_SERVICE ("keyguard")
+     * 一个用于控制键盘锁的 android.app.KeyguardManager。
+     * LOCATION_SERVICE ("location")
+     * android.location.LocationManager 用于控制位置（例如 GPS）更新。
+     * SEARCH_SERVICE ("search")
+     * 一个用于处理搜索的android.app.SearchManager。
+     * VIBRATOR_MANAGER_SERVICE ("vibrator_manager")
+     * android.os.VibratorManager，用于访问设备振动器、与各个振动器交互以及在多个振动器上播放同步效果。
+     * VIBRATOR_SERVICE ("vibrator")
+     * 一个android.os.Vibrator，用于与振动器硬件进行交互。
+     * CONNECTIVITY_SERVICE ("connectivity")
+     * 用于处理网络连接管理的 ConnectivityManager。
+     * IPSEC_SERVICE ("ipsec")
+     * IpSecManager 用于管理套接字和网络上的 IPSec。
+     * WIFI_SERVICE ("wifi")
+     * 用于管理 Wi-Fi 连接的 WifiManager。在 Android 7 之前的版本中，应仅从应用上下文中获取它，而不能从任何其他派生上下文中获取它，以避免调用过程中出现内存泄漏。
+     * WIFI_AWARE_SERVICE ("wifiaware")
+     * WifiAwareManager 用于管理 Wi-Fi Aware 发现和连接。
+     * WIFI_P2P_SERVICE ("wifip2p")
+     * WifiP2pManager 用于管理 Wi-Fi Direct 连接。
+     * INPUT_METHOD_SERVICE ("input_method")
+     * 用于管理输入方法的 InputMethodManager。
+     * UI_MODE_SERVICE ("uimode")
+     * 一个用于控制 UI 模式的 android.app.UiModeManager。
+     * DOWNLOAD_SERVICE ("download")
+     * 用于请求 HTTP 下载的 android.app.DownloadManager
+     * BATTERY_SERVICE ("batterymanager")
+     * 用于管理电池状态的 android.os.BatteryManager
+     * JOB_SCHEDULER_SERVICE ("taskmanager")
+     * 一个用于管理计划任务的android.app.job.JobScheduler
+     * NETWORK_STATS_SERVICE ("netstats")
+     * 用于查询网络使用情况统计数据的 NetworkStatsManager。
+     * HARDWARE_PROPERTIES_SERVICE ("hardware_properties")
+     * 用于访问硬件属性的 android.os.HardwarePropertiesManager。
+     * DOMAIN_VERIFICATION_SERVICE ("domain_verification")
+     * android.content.pm.verify.domain.DomainVerificationManager，用于访问 Web 域批准状态。
+     * DISPLAY_HASH_SERVICE ("display_hash")
+     * android.view.displayhash.DisplayHashManager 用于管理显示哈希。
+     * 注意：通过此 API 获取的系统服务可能与获取它们的上下文密切相关。一般来说，不要在各种不同的上下文（活动、应用程序、服务、提供商等）之间共享服务对象。
+     * 注意：PackageManager.isInstantApp() 返回 true 的免安装应用无法访问以下系统服务：DEVICE_POLICY_SERVICE、FINGERPRINT_SERVICE、KEYGUARD_SERVICE、SHORTCUT_SERVICE、USB_SERVICE、WALLPAPER_SERVICE、WIFI_P2P_SERVICE、WIFI_SERVICE、WIFI_AWARE_SERVICE。对于这些服务，此方法将返回 null。通常，如果您以免安装应用的形式运行，则应始终检查此方法的结果是否为 null。
+     * 注意：在实现此方法时，请记住可以在较新的 Android 版本中添加新服务，因此如果您只是在寻找上面提到的明确名称，请确保在您无法识别该名称时返回 null — 如果您抛出 RuntimeException 异常，您的应用可能会在新的 Android 版本上中断。
+     * 返回：如果名称不存在则返回 null。
+     * `name` 所需服务的名称。
+     * */
+    #[java_method]
+    pub fn get_system_service(&self, name: String) -> Option<Object> {}
 }
 
 /**
@@ -92,7 +901,7 @@ pub struct ContextWrapper;
 
 impl ContextWrapper {
     /**
-     * 返回可用于检索此包中的类的类加载器。
+     * 返回可用于查询此包中的类的类加载器。
      * */
     pub fn get_class_loader(&self) -> ClassLoader {
         self._based.get_class_loader()
@@ -133,7 +942,7 @@ impl ContextWrapper {
  * 意图解析
  * 您将使用两种主要形式的意图。显式意图已指定组件（通过 setComponent 或 setClass），该组件提供要运行的确切类。通常，这些不会包含任何其他信息，只是应用程序在用户与应用程序交互时启动其拥有的各种内部活动的一种方式。隐式意图未指定组件；相反，它们必须包含足够的信息，以便系统确定哪个可用组件最适合运行该意图。当使用隐式意图时，给定这样一个任意意图，我们需要知道如何处理它。这是由意图解析过程处理的，它将意图映射到可以处理它的活动、广播接收器或 android.app.service（有时是两个或更多活动/接收器）。
  * 意图解析机制基本上围绕将意图与已安装的应用程序包中的所有 描述进行匹配。 （此外，对于广播，任何 BroadcastReceiver 对象都明确注册到 Context.registerReceiver。）有关此内容的更多详细信息，请参阅 IntentFilter 类的文档。
- * Intent 中有三部分信息用于解析：操作、类型和类别。使用这些信息，在 PackageManager 上查询可以处理该意图的组件。根据 AndroidManifest.xml 文件中提供的意图信息确定适当的组件，如下所示：如果给出了操作，则组件必须将其列为其处理的操作。如果 Intent 中尚未提供类型，则从 Intent 的数据中检索类型。与操作一样，如果意图中包含某种类型（在其数据中明确或隐式地包含），则组件必须将其列为其处理的类型。对于不是 content: URI 的数据，并且 Intent 中未包含明确类型，则将考虑意图数据的方案（例如 http: 或 mailto:）。同样，与操作一样，如果我们要匹配一个方案，则组件必须将其列为可以处理的方案。如果提供了类别，则活动必须将其全部列为其处理的类别。也就是说，如果您包括类别 CATEGORY_LAUNCHER 和 CATEGORY_ALTERNATIVE，那么您将只解析具有列出这两个类别的意图的组件。
+ * Intent 中有三部分信息用于解析：操作、类型和类别。使用这些信息，在 PackageManager 上查询可以处理该意图的组件。根据 AndroidManifest.xml 文件中提供的意图信息确定适当的组件，如下所示：如果给出了操作，则组件必须将其列为其处理的操作。如果 Intent 中尚未提供类型，则从 Intent 的数据中查询类型。与操作一样，如果意图中包含某种类型（在其数据中明确或隐式地包含），则组件必须将其列为其处理的类型。对于不是 content: URI 的数据，并且 Intent 中未包含明确类型，则将考虑意图数据的方案（例如 http: 或 mailto:）。同样，与操作一样，如果我们要匹配一个方案，则组件必须将其列为可以处理的方案。如果提供了类别，则活动必须将其全部列为其处理的类别。也就是说，如果您包括类别 CATEGORY_LAUNCHER 和 CATEGORY_ALTERNATIVE，那么您将只解析具有列出这两个类别的意图的组件。
  * 活动通常需要支持 CATEGORY_DEFAULT，以便 Context.startActivity() 可以找到它们。例如，考虑 Note Pad 示例应用程序，它允许用户浏览笔记数据列表并查看有关各个项目的详细信息。斜体文本表示您将用特定于您自己的包的名称替换名称的位置。
  * ```xml
  * <manifest xmlns:android="http:// schemas. android. com/ apk/ res/ android"
@@ -210,7 +1019,7 @@ impl ContextWrapper {
  * <data android:mimeType="vnd. android. cursor. dir/vnd. google. note" />
  * </ intent-filter>
  * ```
- * 这声明了活动可以对便笺目录执行的操作。所支持的类型由 标记指定，其中 vnd.android.cursor.dir/vnd.google.note 是一个 URI，可从中检索包含我们的记事本数据 (vnd.google.note) 的零个或多个项目的 Cursor (vnd.android.cursor.dir)。该活动允许用户查看或编辑数据目录 (通过 VIEW 和 EDIT 操作)，或选择特定便笺并将其返回给调用者 (通过 PICK 操作)。还请注意此处提供的 DEFAULT 类别：当未明确指定组件名称时，Context.startActivity 方法需要此类别来解析您的活动。
+ * 这声明了活动可以对便笺目录执行的操作。所支持的类型由 标记指定，其中 vnd.android.cursor.dir/vnd.google.note 是一个 URI，可从中查询包含我们的记事本数据 (vnd.google.note) 的零个或多个项目的 Cursor (vnd.android.cursor.dir)。该活动允许用户查看或编辑数据目录 (通过 VIEW 和 EDIT 操作)，或选择特定便笺并将其返回给调用者 (通过 PICK 操作)。还请注意此处提供的 DEFAULT 类别：当未明确指定组件名称时，Context.startActivity 方法需要此类别来解析您的活动。
  * ```xml
  * <intent-filter>
  * <action android:name="android. intent. action. GET_CONTENT" />
@@ -218,7 +1027,7 @@ impl ContextWrapper {
  * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
  * </ intent-filter>
  * ```
- * 此过滤器描述了向调用者返回用户选择的注释而无需知道注释来自何处的能力。数据类型 vnd.android.cursor.item/vnd.google.note 是一个 URI，可以从中检索一个包含我们的记事本数据 (vnd.google.note) 的项 (vnd.android.cursor.item)。GET_CONTENT 操作类似于 PICK 操作，其中活动将向其调用者返回用户选择的一段数据。但是，在这里，调用者指定他们想要的数据类型，而不是用户将从中选择的数据类型。鉴于这些功能，以下意图将解析为 NotesList 活动：
+ * 此过滤器描述了向调用者返回用户选择的注释而无需知道注释来自何处的能力。数据类型 vnd.android.cursor.item/vnd.google.note 是一个 URI，可以从中查询一个包含我们的记事本数据 (vnd.google.note) 的项 (vnd.android.cursor.item)。GET_CONTENT 操作类似于 PICK 操作，其中活动将向其调用者返回用户选择的一段数据。但是，在这里，调用者指定他们想要的数据类型，而不是用户将从中选择的数据类型。鉴于这些功能，以下意图将解析为 NotesList 活动：
  * { action=android.app.action.MAIN } 匹配所有可用作应用程序顶级入口点的活动。
  * { action=android.app.action.MAIN, category=android.app.category.LAUNCHER } 是启动器用来填充其顶级列表的实际意图。
  * { action=android.intent.action.VIEW data=content://com.google.provider.NotePad/notes } 显示“content://com.google.provider.NotePad/notes”下的所有笔记的列表，用户可以浏览并查看其详细信息。
@@ -300,7 +1109,7 @@ impl Intent {
 
     /**
      * 活动操作：向用户显示数据。这是对数据执行的最常见操作 - 它是您可以对一段数据使用的通用操作，以使最合理的事情发生。例如，当用于联系人条目时，它将查看该条目；当用于 mailto: URI 时，它将弹出一个包含 URI 提供的信息的撰写窗口；当与 tel: URI 一起使用时，它将调用拨号器。
-     * 输入：getData 是从中检索数据的 URI。
+     * 输入：getData 是从中查询数据的 URI。
      * 输出：无。
      * */
     pub const ACTION_VIEW: &'static str = "android.intent.action.VIEW";
@@ -420,7 +1229,7 @@ impl Intent {
      * 使用此操作的主要方法有两种：如果您想要特定类型的数据（例如个人联系人），则可以将 MIME 类型设置为所需的数据类型，然后使用 Context.startActivity(Intent) 启动它。然后系统将启动最佳应用程序来为您选择该类型的数据。
      * 您可能还对用户可以选择的一组内容类型感兴趣。例如，想要允许用户向电子邮件消息添加附件的电子邮件应用程序可以使用此操作来显示用户可以附加的所有内容类型的列表。在这种情况下，您应该使用选择器（通过 createChooser）包装 GET_CONTENT 意图，这将为用户提供适当的界面来选择如何发送数据，并允许您指定提示以表明他们正在做什么。您通常会指定广泛的 MIME 类型（例如 image/* 或 */*），从而产生广泛的内容类型供用户选择。使用如此广泛的 GET_CONTENT 操作时，通常希望仅从可以表示为流的数据中进行选择。这可以通过在 Intent 中要求 CATEGORY_OPENABLE 来实现。
      * 调用者可以选择指定 EXTRA_LOCAL_ONLY 以请求启动的内容选择器仅返回表示设备上本地可用的数据的结果。例如，如果将此 extra 设置为 true，则图像选择器不应显示任何可从远程服务器获得但尚未在本地设备上的图片（因此要求在打开时下载它们）。如果调用者可以处理多个返回的项目（用户执行多项选择），则可以指定 EXTRA_ALLOW_MULTIPLE 来指示这一点。
-     * 输入：getType 是要检索的所需 MIME 类型。请注意，意图中未提供任何 URI，因为对返回数据的原始来源没有任何限制。如果您只能接受可以作为流打开的数据，您还可以包括 CATEGORY_OPENABLE。您可以使用 EXTRA_LOCAL_ONLY 将内容选择限制为本地数据。您可以使用 EXTRA_ALLOW_MULTIPLE 允许用户选择多个项目。
+     * 输入：getType 是要查询的所需 MIME 类型。请注意，意图中未提供任何 URI，因为对返回数据的原始来源没有任何限制。如果您只能接受可以作为流打开的数据，您还可以包括 CATEGORY_OPENABLE。您可以使用 EXTRA_LOCAL_ONLY 将内容选择限制为本地数据。您可以使用 EXTRA_ALLOW_MULTIPLE 允许用户选择多个项目。
      * 输出：所选项目的 URI。这必须是 content: URI，以便任何接收者都可以访问它。
      * */
     pub const ACTION_GET_CONTENT: &'static str = "android.intent.action.GET_CONTENT";
@@ -479,14 +1288,14 @@ impl Intent {
 
     /**
      * 活动操作：向其他人提供一些数据。数据要被传送给谁尚未指定；由该操作的接收者询问用户应该将数据发送到哪里。启动 SEND 意图时，您通常应该将其包装在选择器中（通过 createChooser），这将为用户提供适当的界面来选择如何发送数据，并允许您指定提示以表明他们正在做什么。
-     * 输入：getType 是要发送的数据的 MIME 类型。get*Extra 可以具有 EXTRA_TEXT 或 EXTRA_STREAM 字段，其中包含要发送的数据。如果使用 EXTRA_TEXT，MIME 类型应为“text/plain”；否则它应该是 EXTRA_STREAM 中数据的 MIME 类型。如果 MIME 类型未知，请使用 *\/\*（这将仅允许能够处理通用数据流的发送者）。如果使用 EXTRA_TEXT，您还可以选择提供 EXTRA_HTML_TEXT 以便客户端检索具有 HTML 格式的文本。截至 Build。 VERSION_CODES。JELLY_BEAN，发送的数据可通过 setClipData(ClipData) 提供。这允许您在共享内容时使用 FLAG_GRANT_READ_URI_PERMISSION：URI 和 ClipData 的其他高级功能。如果使用此方法，您仍必须通过下面描述的 EXTRA_TEXT 或 EXTRA_STREAM 字段提供相同的数据，以便与旧应用程序兼容。如果您未设置 ClipData，则在调用 Context.startActivity(Intent) 时会将其复制到那里。从 Build 开始。VERSION_CODES。O，如果传递了 CATEGORY_TYPED_OPENABLE，则在 EXTRA_STREAM 中或通过 setClipData(ClipData) 传递的 Uris 可能只能使用 ContentResolver.openTypedAssetFileDescriptor(Uri, String, Bundle) 作为资产类型文件打开。可选的标准附加功能（某些收件人可能会对其进行适当解释）包括：EXTRA_EMAIL、EXTRA_CC、EXTRA_BCC、EXTRA_SUBJECT。
+     * 输入：getType 是要发送的数据的 MIME 类型。get*Extra 可以具有 EXTRA_TEXT 或 EXTRA_STREAM 字段，其中包含要发送的数据。如果使用 EXTRA_TEXT，MIME 类型应为“text/plain”；否则它应该是 EXTRA_STREAM 中数据的 MIME 类型。如果 MIME 类型未知，请使用 *\/\*（这将仅允许能够处理通用数据流的发送者）。如果使用 EXTRA_TEXT，您还可以选择提供 EXTRA_HTML_TEXT 以便客户端查询具有 HTML 格式的文本。截至 Build。 VERSION_CODES。JELLY_BEAN，发送的数据可通过 setClipData(ClipData) 提供。这允许您在共享内容时使用 FLAG_GRANT_READ_URI_PERMISSION：URI 和 ClipData 的其他高级功能。如果使用此方法，您仍必须通过下面描述的 EXTRA_TEXT 或 EXTRA_STREAM 字段提供相同的数据，以便与旧应用程序兼容。如果您未设置 ClipData，则在调用 Context.startActivity(Intent) 时会将其复制到那里。从 Build 开始。VERSION_CODES。O，如果传递了 CATEGORY_TYPED_OPENABLE，则在 EXTRA_STREAM 中或通过 setClipData(ClipData) 传递的 Uris 可能只能使用 ContentResolver.openTypedAssetFileDescriptor(Uri, String, Bundle) 作为资产类型文件打开。可选的标准附加功能（某些收件人可能会对其进行适当解释）包括：EXTRA_EMAIL、EXTRA_CC、EXTRA_BCC、EXTRA_SUBJECT。
      * 输出：无。
      * */
     pub const ACTION_SEND: &'static str = "android.intent.action.SEND";
 
     /**
      * 活动操作：向其他人提供多个数据。与 ACTION_SEND 类似，但数据是多个。
-     * 输入：getType 是发送的数据的 MIME 类型。get*ArrayListExtra 可以具有 EXTRA_TEXT 或 EXTRA_STREAM 字段，其中包含要发送的数据。如果使用 EXTRA_TEXT，您还可以选择提供 EXTRA_HTML_TEXT，以便客户端检索具有 HTML 格式的文本。支持多种类型，接收方应尽可能处理混合类型。接收方检查它们的正确方法是在每个 URI 上使用内容解析器。意图发送者应尝试将最具体的 MIME 类型放入意图类型中，但它可以根据需要回退到 /* 或 */*。例如，如果您发送 image/jpg 和 image/jpg，则意图的类型可以是 image/jpg，但如果您发送 image/jpg 和 image/png，则意图的类型应为 image/\*。截至 Build。VERSION_CODES。 JELLY_BEAN，发送的数据可通过 setClipData(ClipData) 提供。这样，您可以在共享内容时使用 FLAG_GRANT_READ_URI_PERMISSION：URI 和 ClipData 的其他高级功能。如果使用此方法，您仍必须通过下面描述的 EXTRA_TEXT 或 EXTRA_STREAM 字段提供相同的数据，以便与旧应用程序兼容。如果您未设置 ClipData，则在调用 Context.startActivity(Intent) 时，它将被复制到那里。从 Build 开始。VERSION_CODES。O，如果传递了 CATEGORY_TYPED_OPENABLE，则在 EXTRA_STREAM 中或通过 setClipData(ClipData) 传递的 Uris 可能只能使用 ContentResolver.openTypedAssetFileDescriptor(Uri, String, Bundle) 作为资产类型文件打开。可选的标准附加功能（某些收件人可能会对其进行适当解释）包括：EXTRA_EMAIL、EXTRA_CC、EXTRA_BCC、EXTRA_SUBJECT。
+     * 输入：getType 是发送的数据的 MIME 类型。get*ArrayListExtra 可以具有 EXTRA_TEXT 或 EXTRA_STREAM 字段，其中包含要发送的数据。如果使用 EXTRA_TEXT，您还可以选择提供 EXTRA_HTML_TEXT，以便客户端查询具有 HTML 格式的文本。支持多种类型，接收方应尽可能处理混合类型。接收方检查它们的正确方法是在每个 URI 上使用内容解析器。意图发送者应尝试将最具体的 MIME 类型放入意图类型中，但它可以根据需要回退到 /* 或 */*。例如，如果您发送 image/jpg 和 image/jpg，则意图的类型可以是 image/jpg，但如果您发送 image/jpg 和 image/png，则意图的类型应为 image/\*。截至 Build。VERSION_CODES。 JELLY_BEAN，发送的数据可通过 setClipData(ClipData) 提供。这样，您可以在共享内容时使用 FLAG_GRANT_READ_URI_PERMISSION：URI 和 ClipData 的其他高级功能。如果使用此方法，您仍必须通过下面描述的 EXTRA_TEXT 或 EXTRA_STREAM 字段提供相同的数据，以便与旧应用程序兼容。如果您未设置 ClipData，则在调用 Context.startActivity(Intent) 时，它将被复制到那里。从 Build 开始。VERSION_CODES。O，如果传递了 CATEGORY_TYPED_OPENABLE，则在 EXTRA_STREAM 中或通过 setClipData(ClipData) 传递的 Uris 可能只能使用 ContentResolver.openTypedAssetFileDescriptor(Uri, String, Bundle) 作为资产类型文件打开。可选的标准附加功能（某些收件人可能会对其进行适当解释）包括：EXTRA_EMAIL、EXTRA_CC、EXTRA_BCC、EXTRA_SUBJECT。
      * 输出：无。
      * */
     pub const ACTION_SEND_MULTIPLE: &'static str = "android.intent.action.SEND_MULTIPLE";
@@ -716,7 +1525,7 @@ impl Intent {
 
     /**
      * 活动操作：启动应用程序安装程序。
-     * 输入：数据必须是 content: URI，可从中检索应用程序。从 Build. VERSION_CODES. JELLY_BEAN_MR1 开始，您还可以使用“package: ”为当前用户安装已为其他用户安装的应用程序。您可以选择提供 EXTRA_INSTALLER_PACKAGE_NAME、EXTRA_NOT_UNKNOWN_SOURCE、EXTRA_ALLOW_REPLACE 和 EXTRA_RETURN_RESULT。
+     * 输入：数据必须是 content: URI，可从中查询应用程序。从 Build. VERSION_CODES. JELLY_BEAN_MR1 开始，您还可以使用“package: ”为当前用户安装已为其他用户安装的应用程序。您可以选择提供 EXTRA_INSTALLER_PACKAGE_NAME、EXTRA_NOT_UNKNOWN_SOURCE、EXTRA_ALLOW_REPLACE 和 EXTRA_RETURN_RESULT。
      * 输出：如果为 EXTRA_RETURN_RESULT，则返回安装是否成功。
      * 注意：如果您的应用针对的 API 级别高于 25，则需要持有 Manifest.permission.REQUEST_INSTALL_PACKAGES 才能启动应用程序安装程序。
      * */
@@ -757,7 +1566,7 @@ impl Intent {
     /// 用作 ACTION_INSTALL_PACKAGE 和 ACTION_VIEW 的 URI 额外字段，以指示 Intent 数据字段中的本地 APK 源自的 URI。
     pub const EXTRA_ORIGINATING_URI: &'static str = "android.intent.extra.ORIGINATING_URI";
 
-    /// 此 extra 可与用于启动活动的任何 Intent 一起使用，提供有关谁在启动该活动的信息。此字段包含一个 Uri 对象，通常是引荐来源网站的 http: 或 https: URI；它还可以使用 android-app: 方案来标识它来自的本机应用程序。要在客户端中检索此值，请使用 Activity.getReferrer，而不是直接检索 extra。对于应用程序来说，在只能创建字符串而不是 Uri 的情况下，提供 EXTRA_REFERRER_NAME 也是有效的；但是，如果提供了此处的字段，则该字段将始终优先。
+    /// 此 extra 可与用于启动活动的任何 Intent 一起使用，提供有关谁在启动该活动的信息。此字段包含一个 Uri 对象，通常是引荐来源网站的 http: 或 https: URI；它还可以使用 android-app: 方案来标识它来自的本机应用程序。要在客户端中查询此值，请使用 Activity.getReferrer，而不是直接查询 extra。对于应用程序来说，在只能创建字符串而不是 Uri 的情况下，提供 EXTRA_REFERRER_NAME 也是有效的；但是，如果提供了此处的字段，则该字段将始终优先。
     pub const EXTRA_REFERRER: &'static str = "android.intent.extra.REFERRER";
 
     /// EXTRA_REFERRER 的替代版本，以字符串而非 Uri 对象的形式提供 URI。仅适用于无法创建 Uri 对象的情况，尤其是当通过 intent: 或 android-app: 方案提供 Intent extra 时。
@@ -1293,7 +2102,7 @@ impl Intent {
         "android.intent.action.ACTION_PREFERRED_ACTIVITY_CHANGED";
 
     /**
-     * 广播动作：当前系统壁纸已更改。请参阅 android.app.WallpaperManager 以检索新壁纸。这只应用于确定壁纸何时更改以向用户显示新壁纸。您绝对不应该为了响应此消息而更改壁纸或其其他属性（例如建议尺寸）。那会出乎意料，对吧？您会导致各种循环，尤其是当其他应用程序也在做类似的事情时，对吧？当然。所以请不要这样做。
+     * 广播动作：当前系统壁纸已更改。请参阅 android.app.WallpaperManager 以查询新壁纸。这只应用于确定壁纸何时更改以向用户显示新壁纸。您绝对不应该为了响应此消息而更改壁纸或其其他属性（例如建议尺寸）。那会出乎意料，对吧？您会导致各种循环，尤其是当其他应用程序也在做类似的事情时，对吧？当然。所以请不要这样做。
      * */
     #[deprecated(
         note = "现代应用程序应该使用 android.view.WindowManager.LayoutParams#FLAG_SHOW_WALLPAPER WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER 在其 UI 后面显示壁纸，而不是监视此广播并自行渲染壁纸。"
@@ -2187,7 +2996,7 @@ impl Intent {
     #[deprecated]
     pub const EXTRA_LTE_EARFCN_RSRP_BOOST: &'static str = "LteEarfcnRsrpBoost";
 
-    /// 用于定义要处理的文本的额外名称，为 CharSequence。请注意，这可能是样式化的 CharSequence，因此您必须使用 Bundle#getCharSequence(String) Bundle.getCharSequence() 来检索它。
+    /// 用于定义要处理的文本的额外名称，为 CharSequence。请注意，这可能是样式化的 CharSequence，因此您必须使用 Bundle#getCharSequence(String) Bundle.getCharSequence() 来查询它。
     pub const EXTRA_PROCESS_TEXT: &'static str = "android.intent.extra.PROCESS_TEXT";
 
     /// 用于定义已处理文本是否将用作只读的布尔附加名称。
@@ -2464,7 +3273,7 @@ impl Intent {
     /// 放置在新创建记录中的初始数据。与 ACTION_INSERT 一起使用。此处的数据是一个 Map，其中包含与提供给底层 ContentProvider.insert() 调用的相同字段。
     pub const EXTRA_TEMPLATE: &'static str = "android.intent.extra.TEMPLATE";
 
-    /// 与 Intent 关联的常量 CharSequence，与 ACTION_SEND 一起使用以提供要发送的文字数据。请注意，这可能是样式化的 CharSequence，因此您必须使用 Bundle#getCharSequence(String) Bundle.getCharSequence() 来检索它。
+    /// 与 Intent 关联的常量 CharSequence，与 ACTION_SEND 一起使用以提供要发送的文字数据。请注意，这可能是样式化的 CharSequence，因此您必须使用 Bundle#getCharSequence(String) Bundle.getCharSequence() 来查询它。
     pub const EXTRA_TEXT: &'static str = "android.intent.extra.TEXT";
 
     /// 与 Intent 关联的常量字符串，与 ACTION_SEND 一起使用，以 HTML 格式的文本提供 EXTRA_TEXT 的替代方案。请注意，您还必须提供 EXTRA_TEXT。
@@ -2491,7 +3300,7 @@ impl Intent {
     /// 一个表示要使用的用户 ID 的 int。
     pub const EXTRA_USER_ID: &'static str = "android.intent.extra.USER_ID";
 
-    /// 表示要检索的任务 ID 的 int。当最近启动被另一个操作（例如凭证确认）拦截时使用此 ID，以记住完成后应恢复哪个任务。
+    /// 表示要查询的任务 ID 的 int。当最近启动被另一个操作（例如凭证确认）拦截时使用此 ID，以记住完成后应恢复哪个任务。
     pub const EXTRA_TASK_ID: &'static str = "android.intent.extra.TASK_ID";
 
     /**
@@ -3225,4 +4034,6 @@ pub fn test() {
 
     context.send_broadcast(&intent);
     context.start_activity(&intent);
+    let am = context.get_system_service(Context::AUDIO_SERVICE.to_string());
+    assert!(am.is_some());
 }

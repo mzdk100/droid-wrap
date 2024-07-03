@@ -9,13 +9,20 @@ edition.workspace = true
 readme.workspace = true
 repository.workspace = true
 
-[lib]
+[[example]]
+name = "activity-example"
 crate-type = ["dylib"]
+path = "src/activity.rs"
+
+[[example]]
+name = "java-example"
+crate-type = ["dylib"]
+path = "src/java.rs"
 
 [dependencies]
 mobile-entry-point = "0.1.1"
 ndk-glue = "0.7.0"
 
 [dependencies.droid-wrap]
-features = ["android_app"]
+features = ["android_app", "android_content", "android_widget"]
 path = ".."

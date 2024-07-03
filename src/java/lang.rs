@@ -43,6 +43,21 @@ impl Object {
     pub fn hash_code(&self) -> i32 {}
 }
 
+pub trait ObjectExt {
+    fn cast<T: JType>(&self) -> T
+    where
+        <T as JObjNew>::Fields: Default;
+}
+
+impl ObjectExt for Object {
+    fn cast<T: JType>(&self) -> T
+    where
+        <T as JObjNew>::Fields: Default,
+    {
+        T::_new(self.as_ref(), Default::default())
+    }
+}
+
 impl JObjRef for String {
     fn java_ref(&self) -> GlobalRef {
         vm_attach(|env| {
@@ -100,6 +115,12 @@ impl<'a> CharSequenceExt for &'a str {
 pub struct Integer;
 
 impl Integer {
+    /// 具有-231的常数保持最小值。
+    pub const MIN_VALUE: u32 = 0x80000000;
+
+    /// 一个常数，保存 int 可以拥有的最大值 231-1。
+    pub const MAX_VALUE: u32 = 0x7fffffff;
+
     /**
      * 构造一个新分配的 Integer 对象，该对象表示指定的 int 值。
      * `value` Integer 对象要表示的值。

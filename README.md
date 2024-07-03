@@ -37,7 +37,8 @@
    ```shell
    git clone https://gitcode.net/mzdk100/droid-wrap.git
    cd droid-wrap
-   cargo apk run -p droid-wrap-example
+   cargo apk run -p droid-wrap-example --example activity-example
+   cargo apk run -p droid-wrap-example --example java-example
    ```
 4. 运行测试
    ```shell

@@ -11,18 +11,20 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap::android::app::Activity;
-use droid_wrap::java::lang::{CharSequence, Integer, System};
+use droid_wrap::{
+    android::app::Activity,
+    java::lang::{Float, Integer, System},
+};
+use mobile_entry_point::mobile_entry_point;
 
-#[mobile_entry_point::mobile_entry_point]
+#[mobile_entry_point]
 fn main() {
-    let act = Activity::fetch();
-    act.finish();
-    let cs = CharSequence::from("hello");
-    dbg!(&cs);
-    act.set_title(cs);
-    dbg!(act);
-    let num = Integer::new(6);
-    dbg!(num);
+    Activity::fetch().finish();
+    let num = Integer::value_of(6);
+    let _ = dbg!(num);
+    let num = Float::value_of(6f32);
+    let _ = dbg!(num);
     dbg!(System::current_time_millis());
+    System::gc();
+    System::exit(0).unwrap();
 }

@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_constructor, java_method};
+use droid_wrap_derive::{java_class, java_constructor, java_field, java_method};
 
 use crate::{android::content::Context, java::lang::CharSequence, JObjNew, JObjRef, JType};
 
@@ -194,12 +194,98 @@ impl Button {
     pub fn new(context: &Context) -> Self {}
 }
 
+/**
+ * 将其他视图水平排列在一列中或垂直排列在一行中的布局。
+ * 以下代码片段展示了如何在布局 XML 文件中包含线性布局：
+ * ```xml
+ * <LinearLayout xmlns:android="http:// schemas. android. com/ apk/ res/ android"
+ *     android:layout_width="match_parent"
+ *     android:layout_height="match_parent"
+ *     android:paddingLeft="16dp"
+ *     android:paddingRight="16dp"
+ *     android:orientation="horizontal"
+ *     android:gravity="center">
+ *     <!-- 在此处添加其他小部件或布局标签。这些标签被视为线性布局的“子视图”或“子项” -->
+ *   </ LinearLayout>
+ * ```
+ * 设置 android:orientation 以指定子视图是否显示在行或列中。要控制线性布局如何对齐其包含的所有视图，请为 android:gravity 设置一个值。例如，上面的代码片段将 android:gravity 设置为“center”。
+ * 您设置的值会影响单行或单列内所有子视图的水平和垂直对齐。您可以在各个子视图上设置 android:layout_weight 以指定线性布局如何在其包含的视图之间划分剩余空间。有关示例，请参阅线性布局指南。请参阅 LinearLayout.LayoutParams 以了解您可以在子视图上设置的其他属性，以影响其在包含的线性布局中的位置和大小。
+ * */
+#[java_class(name = "android/widget/LinearLayout", extends=super::view::ViewGroup)]
+pub struct LinearLayout;
+
+impl LinearLayout {
+    pub const HORIZONTAL: i32 = 0;
+    pub const VERTICAL: i32 = 1;
+
+    #[java_constructor]
+    pub fn new(context: &Context) -> Self {}
+
+    /**
+     * 布局应该是一列还是一行。
+     * `orientation` 传递水平或垂直。默认值为水平。
+     * */
+    #[java_method]
+    pub fn set_orientation(&self, orientation: i32) {}
+
+    /**
+     * 返回当前方向。
+     * 返回：水平或垂直
+     * */
+    #[java_method]
+    pub fn get_orientation(&self) -> i32 {}
+}
+
+/**
+ * 与 ViewLinearLayout 相关的每个子布局信息。
+ * */
+#[java_class(name = "android/widget/LinearLayout$LayoutParams", extends=super::view::MarginLayoutParams)]
+pub struct LayoutParams;
+
+impl LayoutParams {
+    /// 指示 LinearLayout 中有多少额外空间将分配给与这些 LayoutParams 关联的视图。如果视图不应拉伸，请指定 0。否则，额外的像素将在权重大于 0 的所有视图之间按比例分配。
+    #[java_field]
+    pub fn get_weight(&self) -> f32 {}
+
+    /// 指示 LinearLayout 中有多少额外空间将分配给与这些 LayoutParams 关联的视图。如果视图不应拉伸，请指定 0。否则，额外的像素将在权重大于 0 的所有视图之间按比例分配。
+    #[java_field]
+    pub fn set_weight(&self, value: f32) {}
+
+    /// 与这些 LayoutParams 关联的视图的重力。
+    #[java_field]
+    pub fn get_gravity(&self) -> i32 {}
+
+    /// 与这些 LayoutParams 关联的视图的重力。
+    #[java_field]
+    pub fn set_gravity(&self, value: i32) {}
+
+    #[java_constructor]
+    pub fn new(width: i32, height: i32) -> Self {}
+
+    /**
+     * 创建一组具有指定宽度、高度和权重的新布局参数。
+     * `width` 宽度，可以是 MATCH_PARENT、WRAP_CONTENT 或固定大小（以像素为单位）
+     * `height` 高度，可以是 MATCH_PARENT、WRAP_CONTENT 或固定大小（以像素为单位）
+     * `weight` 权重
+     * */
+    #[java_constructor]
+    pub fn new_with_weight(width: i32, height: i32, weight: f32) -> Self {}
+
+    #[allow(unused_qualifications)]
+    #[java_constructor]
+    pub fn from_layout_params(p: &super::view::LayoutParams) -> Self {}
+
+    #[java_constructor]
+    pub fn from_margin_layout_params(source: &super::view::MarginLayoutParams) -> Self {}
+}
+
 #[cfg(feature = "test_android_widget")]
 pub fn test() {
     use crate::{
         android::{
             app::Activity,
             text::{InputType, InputTypeImpl},
+            view::LayoutParams as VLP,
         },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
@@ -224,4 +310,9 @@ pub fn test() {
     assert_eq!(InputTypeImpl::TYPE_CLASS_DATETIME, text.get_input_type());
     let button = Button::new(&context);
     button.set_text(Some("测试按钮".to_char_sequence::<CharSequenceImpl>()));
+    let layout = LinearLayout::new(&context);
+    layout.set_orientation(LinearLayout::VERTICAL);
+    assert_eq!(LinearLayout::VERTICAL, layout.get_orientation());
+    let params = LayoutParams::new_with_weight(VLP::MATCH_PARENT, VLP::MATCH_PARENT, 1.0);
+    assert_eq!(1.0, params.get_weight());
 }

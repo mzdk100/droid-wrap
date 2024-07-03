@@ -18,8 +18,8 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     token::SelfValue,
-    Attribute, Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Stmt,
-    Token, Type, TypeReference,
+    Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token, Type,
+    TypeReference,
 };
 
 pub(crate) struct ClassMetadata {
@@ -275,18 +275,18 @@ pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, To
     (opt, ret_type_sig, is_result_type)
 }
 
-pub(crate) fn get_attrs_token(attrs: &[Attribute]) -> TokenStream {
-    let mut attrs2 = TokenStream::new();
-    for i in attrs.iter() {
-        attrs2.extend(i.to_token_stream());
+pub(crate) fn get_result_token(is_result_type: bool, ret_value: &TokenStream) -> TokenStream {
+    if is_result_type {
+        quote! {
+            match ret {
+                Ok(ret) => {#ret_value}
+                Err(e) => Err(e)
+            }
+        }
+    } else {
+        quote! {
+            let ret = ret.unwrap();
+            #ret_value
+        }
     }
-    attrs2
-}
-
-pub(crate) fn get_stmts_token(stmts: &[Stmt]) -> TokenStream {
-    let mut stmts2 = TokenStream::new();
-    for i in stmts.iter() {
-        stmts2.extend(i.to_token_stream());
-    }
-    stmts2
 }

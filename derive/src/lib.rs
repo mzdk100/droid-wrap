@@ -25,7 +25,7 @@ use syn::{
 };
 
 use crate::utils::{
-    get_attrs_token, get_object_return_value_token, get_return_value_token, get_stmts_token,
+    get_object_return_value_token, get_result_token, get_return_value_token,
     parse_function_signature, ClassMetadata, InterfaceMetadata,
 };
 
@@ -283,39 +283,27 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
-    let attrs = get_attrs_token(&item.attrs);
-    let stmts = get_stmts_token(&item.block.stmts);
+    let attrs = item.attrs.clone();
+    let stmts = item.block.stmts.clone();
     let name = item.sig.ident.to_string().to_lower_camel_case();
     let vis = item.vis.clone();
     let sig = item.sig.clone();
 
-    let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig);
+    let (self_, _, arg_types_sig, fmt, arg_values, ret_type) = parse_function_signature(&sig);
     let (ret_value, ret_type_sig, is_result_type) = get_return_value_token(&ret_type);
 
-    let ret_value = if is_result_type {
-        quote! {
-            match ret {
-                Ok(ret) => {#ret_value}
-                Err(e) => Err(e)
-            }
-        }
-    } else {
-        quote! {
-            let ret = ret.unwrap();
-            #ret_value
-        }
-    };
+    let ret_value = get_result_token(is_result_type, &ret_value);
 
     if self_.is_none() {
         quote! {
-            #attrs
+            #(#attrs)*
             #vis #sig {
-                #stmts
+                #(#stmts)*
                 droid_wrap_utils::vm_attach(|env| {
                     let ret = env.call_static_method(
                         Self::CLASS,
                         #name,
-                        format!(#fmt, #arg_types #ret_type_sig).as_str(),
+                        format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
                         &[#arg_values],
                     );
                     #ret_value
@@ -324,13 +312,13 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
         }
     } else {
         quote! {
-            #attrs
+            #(#attrs)*
             #vis #sig {
                 droid_wrap_utils::vm_attach(|env| {
                     let ret = env.call_method(
                         #self_.java_ref(),
                         #name,
-                        format!(#fmt, #arg_types #ret_type_sig).as_str(),
+                        format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
                         &[#arg_values],
                     );
                     #ret_value
@@ -363,10 +351,10 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemFn);
-    let attrs = get_attrs_token(&item.attrs);
+    let attrs = item.attrs.clone();
     let vis = item.vis.clone();
     let sig = item.sig.clone();
-    let stmts = get_stmts_token(&item.block.stmts);
+    let stmts = item.block.stmts.clone();
     let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig);
 
     if !self_.is_none() {
@@ -386,9 +374,9 @@ pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
     let (ret_value, _) = get_object_return_value_token(&ret_type);
 
     let stream = quote! {
-        #attrs
+        #(#attrs)*
         #vis #sig {
-            #stmts
+            #(#stmts)*
             droid_wrap_utils::vm_attach(|env| {
                 let obj = env.new_object(
                     <Self as JType>::CLASS,
@@ -585,5 +573,98 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    stream.into()
+}
+
+/// 实现java类的字段，将此属性标记在带有get或set的fn函数上，可以自动实现访问java字段的能力，可以自动识别静态字段（如果参数中没有“self”）。
+///
+/// # Arguments
+///
+/// * `_`: 未使用。
+/// * `input`: 函数输入。
+///
+/// returns: TokenStream
+///
+/// # Examples
+///
+/// ```
+/// use droid_wrap_derive::java_field;
+///
+/// pub struct LayoutParams;
+///
+/// impl LayoutParams {
+///     #[java_field]
+///     pub fn get_width(&self) -> i32 {}
+///
+///     #[java_field]
+///     pub fn set_width(&self, value: i32) {}
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
+    let item = parse_macro_input!(input as ItemFn);
+    let attrs = item.attrs.clone();
+    let stmts = item.block.stmts.clone();
+    let name = item.sig.ident.to_string().to_lower_camel_case();
+    let vis = item.vis.clone();
+    let sig = item.sig.clone();
+
+    let (is_set, name) = if name.starts_with("get") {
+        (false, name.trim_start_matches("get").to_lower_camel_case())
+    } else if name.starts_with("set") {
+        (true, name.trim_start_matches("set").to_lower_camel_case())
+    } else {
+        panic!("Field name `{}` must start with get or set.", name);
+    };
+
+    let (self_, arg_types, arg_types_sig, _, arg_values, ret_type) = parse_function_signature(&sig);
+    if is_set {
+        if arg_types.len() != 1 {
+            panic!(
+                "The number of setter arguments for the field `{}` must be one.",
+                name
+            )
+        }
+    } else {
+        if !arg_types.is_empty() {
+            panic!("The getter field `{}` cannot provide any arguments.", name)
+        }
+    }
+
+    let (ret_value, ret_type_sig, is_result_type) = get_return_value_token(&ret_type);
+
+    let ret_value = get_result_token(is_result_type, &ret_value);
+
+    let opt = if is_set {
+        if self_.is_none() {
+            quote! {
+                let ret = env.set_static_field(Self::CLASS, #name, #arg_types_sig #arg_values);
+            }
+        } else {
+            quote! {
+                let ret = env.set_field(#self_.java_ref(), #name, #arg_types_sig #arg_values);
+            }
+        }
+    } else {
+        if self_.is_none() {
+            quote! {
+                let ret = env.get_static_field(Self::CLASS, #name, #ret_type_sig);
+            }
+        } else {
+            quote! {
+                let ret = env.get_field(#self_.java_ref(), #name, #ret_type_sig);
+            }
+        }
+    };
+    let stream = quote! {
+        #(#attrs)*
+        #vis #sig {
+            #(#stmts)*
+            droid_wrap_utils::vm_attach(|env| {
+                #opt
+                #ret_value
+            })
+        }
+    };
     stream.into()
 }
