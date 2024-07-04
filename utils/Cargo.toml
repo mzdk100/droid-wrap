@@ -17,7 +17,7 @@ rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 [dependencies]
 jni = "0.21.1"
 ndk-context = "0.1.1"
-log = "0.4.21"
+log = "0.4.22"
 
 [build-dependencies]
 android-build = "0.1.0"
