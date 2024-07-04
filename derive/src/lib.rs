@@ -290,7 +290,8 @@ pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
     let sig = item.sig.clone();
 
     let (self_, _, arg_types_sig, fmt, arg_values, ret_type) = parse_function_signature(&sig);
-    let (ret_value, ret_type_sig, is_result_type) = get_return_value_token(&ret_type);
+    let (ret_value, ret_type_sig, is_result_type) =
+        get_return_value_token(&ret_type, &sig.generics);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 
@@ -631,7 +632,8 @@ pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
 
-    let (ret_value, ret_type_sig, is_result_type) = get_return_value_token(&ret_type);
+    let (ret_value, ret_type_sig, is_result_type) =
+        get_return_value_token(&ret_type, &sig.generics);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 

@@ -13,7 +13,14 @@
 
 use droid_wrap_derive::{java_class, java_constructor, java_field, java_method};
 
-use crate::{android::content::Context, java::lang::CharSequence, JObjNew, JObjRef, JType};
+use crate::{
+    android::{
+        content::Context,
+        view::{ViewGroup, ViewGroup_LayoutParams, ViewGroup_MarginLayoutParams},
+    },
+    java::lang::CharSequence,
+    JObjNew, JObjRef, JType,
+};
 
 /**
  * 用于输入和修改文本的用户界面元素。定义编辑文本小部件时，必须指定 android.R.styleable.TextView_inputType 属性。例如，对于纯文本输入，将 inputType 设置为“text”：
@@ -211,7 +218,7 @@ impl Button {
  * 设置 android:orientation 以指定子视图是否显示在行或列中。要控制线性布局如何对齐其包含的所有视图，请为 android:gravity 设置一个值。例如，上面的代码片段将 android:gravity 设置为“center”。
  * 您设置的值会影响单行或单列内所有子视图的水平和垂直对齐。您可以在各个子视图上设置 android:layout_weight 以指定线性布局如何在其包含的视图之间划分剩余空间。有关示例，请参阅线性布局指南。请参阅 LinearLayout.LayoutParams 以了解您可以在子视图上设置的其他属性，以影响其在包含的线性布局中的位置和大小。
  * */
-#[java_class(name = "android/widget/LinearLayout", extends=super::view::ViewGroup)]
+#[java_class(name = "android/widget/LinearLayout", extends=ViewGroup)]
 pub struct LinearLayout;
 
 impl LinearLayout {
@@ -239,10 +246,11 @@ impl LinearLayout {
 /**
  * 与 ViewLinearLayout 相关的每个子布局信息。
  * */
-#[java_class(name = "android/widget/LinearLayout$LayoutParams", extends=super::view::MarginLayoutParams)]
-pub struct LayoutParams;
+#[allow(non_camel_case_types)]
+#[java_class(name = "android/widget/LinearLayout$LayoutParams", extends=ViewGroup_MarginLayoutParams)]
+pub struct LinearLayout_LayoutParams;
 
-impl LayoutParams {
+impl LinearLayout_LayoutParams {
     /// 指示 LinearLayout 中有多少额外空间将分配给与这些 LayoutParams 关联的视图。如果视图不应拉伸，请指定 0。否则，额外的像素将在权重大于 0 的所有视图之间按比例分配。
     #[java_field]
     pub fn get_weight(&self) -> f32 {}
@@ -273,10 +281,10 @@ impl LayoutParams {
 
     #[allow(unused_qualifications)]
     #[java_constructor]
-    pub fn from_layout_params(p: &super::view::LayoutParams) -> Self {}
+    pub fn from_layout_params(p: &ViewGroup_LayoutParams) -> Self {}
 
     #[java_constructor]
-    pub fn from_margin_layout_params(source: &super::view::MarginLayoutParams) -> Self {}
+    pub fn from_margin_layout_params(source: &ViewGroup_MarginLayoutParams) -> Self {}
 }
 
 #[cfg(feature = "test_android_widget")]
@@ -285,7 +293,6 @@ pub fn test() {
         android::{
             app::Activity,
             text::{InputType, InputTypeImpl},
-            view::LayoutParams as VLP,
         },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
@@ -313,6 +320,10 @@ pub fn test() {
     let layout = LinearLayout::new(&context);
     layout.set_orientation(LinearLayout::VERTICAL);
     assert_eq!(LinearLayout::VERTICAL, layout.get_orientation());
-    let params = LayoutParams::new_with_weight(VLP::MATCH_PARENT, VLP::MATCH_PARENT, 1.0);
+    let params = LinearLayout_LayoutParams::new_with_weight(
+        ViewGroup_LayoutParams::MATCH_PARENT,
+        ViewGroup_LayoutParams::MATCH_PARENT,
+        1.0,
+    );
     assert_eq!(1.0, params.get_weight());
 }

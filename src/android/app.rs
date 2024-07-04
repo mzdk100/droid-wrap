@@ -15,7 +15,7 @@ use droid_wrap_derive::{java_class, java_method};
 use droid_wrap_utils::{android_context, vm_attach};
 
 use crate::{
-    android::view::View,
+    android::view::{View, WindowManager},
     java::lang::{CharSequence, Runnable},
     JObjNew, JObjRef, JType,
 };
@@ -196,6 +196,14 @@ impl Activity {
     #[java_method]
     pub fn run_on_ui_thread<R: Runnable>(&self, action: &R) {}
 
+    /// 查询用于显示自定义窗口的窗口管理器。
+    #[java_method]
+    pub fn get_window_manager<WM: WindowManager>(&self) -> WM
+    where
+        <WM as JObjNew>::Fields: Default,
+    {
+    }
+
     /**
      * 获取实例。
      * */
@@ -209,7 +217,7 @@ impl Activity {
 #[cfg(feature = "test_android_app")]
 pub fn test() {
     use crate::{
-        android::widget::EditText,
+        android::{view::WindowManagerImpl, widget::EditText},
         java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
     };
     let act = std::sync::Arc::new(Activity::fetch());
@@ -224,4 +232,6 @@ pub fn test() {
         act2.set_content_view(&edit);
     });
     act.run_on_ui_thread(runnable.as_ref());
+    let wm: WindowManagerImpl = act.get_window_manager();
+    assert!(wm.to_string().starts_with("android.view.WindowManagerImpl"));
 }

@@ -18,8 +18,8 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     token::SelfValue,
-    Expr, FnArg, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token, Type,
-    TypeReference,
+    Expr, FnArg, Generics, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token,
+    Type, TypeReference,
 };
 
 pub(crate) struct ClassMetadata {
@@ -82,7 +82,7 @@ fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
     (unwrapped, ty.to_token_stream())
 }
 
-fn get_type_descriptor_token(ty: &TokenStream) -> TokenStream {
+fn get_type_descriptor_token(ty: &TokenStream, generics: &Generics) -> TokenStream {
     let ty_str = ty.to_string();
     if ty_str == "i8" || ty_str == "u8" {
         quote! {"B"}
@@ -103,6 +103,15 @@ fn get_type_descriptor_token(ty: &TokenStream) -> TokenStream {
     } else if ty_str == "()" {
         quote! {"V"}
     } else {
+        let ty = if let Some(gt) = generics
+            .type_params()
+            .find(|i| i.ident.to_string() == ty.to_string())
+        {
+            let gt = gt.bounds.first();
+            quote! {<#ty as #gt>}
+        } else {
+            ty.clone()
+        };
         quote! {#ty::get_object_sig()}
     }
 }
@@ -150,7 +159,7 @@ pub(crate) fn parse_function_signature(
                     quote! {#v.java_ref().as_obj().into()}
                 };
 
-                let arg_sig = get_type_descriptor_token(&unwrapped_ty);
+                let arg_sig = get_type_descriptor_token(&unwrapped_ty, &sig.generics);
                 arg_types.push(unwrapped_ty);
                 arg_types_sig.extend(quote!(#arg_sig,));
                 arg_values.push(Expr::Verbatim(v));
@@ -204,9 +213,12 @@ pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> (TokenStr
     (value, is_result_type)
 }
 
-pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, TokenStream, bool) {
+pub(crate) fn get_return_value_token(
+    ret_type: &TokenStream,
+    generics: &Generics,
+) -> (TokenStream, TokenStream, bool) {
     let (unwrapped_ty, ty) = unwrap_type(ret_type);
-    let ret_type_sig = get_type_descriptor_token(&unwrapped_ty);
+    let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics);
 
     if ret_type_sig.to_string().contains("get_object_sig") {
         let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);
@@ -215,7 +227,7 @@ pub(crate) fn get_return_value_token(ret_type: &TokenStream) -> (TokenStream, To
                 let obj = ret.l().unwrap();
                 #ret_value
             },
-            quote! {#unwrapped_ty::get_object_sig()},
+            ret_type_sig,
             is_result_type,
         );
     }

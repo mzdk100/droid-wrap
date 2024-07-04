@@ -15,8 +15,10 @@ use droid_wrap::{
     android::{
         app::Activity,
         content::Context,
-        view::LayoutParams as VLP,
-        widget::{LayoutParams, LinearLayout, TextView},
+        view::{
+            ViewGroup_LayoutParams, ViewManager, WindowManagerImpl, WindowManager_LayoutParams,
+        },
+        widget::{LinearLayout, LinearLayout_LayoutParams, TextView},
     },
     java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
 };
@@ -32,21 +34,29 @@ fn main() {
     dbg!(&act);
     let act = Arc::new(act);
     let context: Context = act.as_ref().into();
+    let text_view = TextView::new(&context);
+    text_view.set_text(Some(
+        "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
+    ));
     let act2 = act.clone();
     act.run_on_ui_thread(
         RunnableImpl::from_fn(move || {
-            let text_view = TextView::new(&context);
-            text_view.set_text(Some(
-                "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
-            ));
+            let params = LinearLayout_LayoutParams::new_with_weight(
+                ViewGroup_LayoutParams::MATCH_PARENT,
+                ViewGroup_LayoutParams::MATCH_PARENT,
+                1.0,
+            );
             let layout = LinearLayout::new(&context);
             layout.set_orientation(LinearLayout::VERTICAL);
-            layout.add_view(&text_view);
+            // layout.add_view(&text_view);
             layout.set_content_description(Some("容器".to_char_sequence::<CharSequenceImpl>()));
-            let params = LayoutParams::new_with_weight(VLP::MATCH_PARENT, VLP::MATCH_PARENT, 1.0);
             layout.set_layout_params(&params);
 
             act2.set_content_view(&layout);
+
+            let wm: WindowManagerImpl = act2.get_window_manager();
+            let params = WindowManager_LayoutParams::new();
+            wm.add_view(&text_view, &params);
         })
         .as_ref(),
     );

@@ -75,13 +75,23 @@ android.speech.tts.TextToSpeech的API等。
 
 android.view.View的API等（包括点击监听器的实现）。
 
+1. android.view.View;
+2. android.view.ViewGroup;
+3. android.view.View_OnClickListener;
+4. android.view.ViewGroup_LayoutParams;
+5. android.view.ViewGroup_MarginLayoutParams;
+6. android.view.ViewManager;
+7. android.view.WindowManager;
+
 ### 安卓小部件(android_widget)
 
 常用的一些UI小部件：
 
 1. android.widget.TextView;
 2. android.widget.EditText;
-3. android.widget.Button。
+3. android.widget.Button;
+4. android.widget.LinearLayout;
+5. android.widget.LinearLayout_LayoutParams;
 
 ## java功能(java)
 

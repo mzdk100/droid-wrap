@@ -101,7 +101,7 @@ impl TextToSpeech {
      * `listener` 当 TextToSpeech 引擎初始化时将调用 TextToSpeech.OnInitListener。如果发生故障，可能会在 TextToSpeech 实例完全构造之前立即调用侦听器。
      * */
     #[java_constructor]
-    pub fn new<L: OnInitListener>(context: &Context, listener: &L) -> Self {}
+    pub fn new<L: TextToSpeech_OnInitListener>(context: &Context, listener: &L) -> Self {}
 
     /**
      * 中断当前话语（无论是播放还是渲染到文件）并丢弃队列中的其他话语。
@@ -200,8 +200,9 @@ impl TextToSpeech {
 /**
  * 调用回调接口定义，指示 TextToSpeech 引擎初始化完成。
  * */
+#[allow(non_camel_case_types)]
 #[java_interface(name = "android/speech/tts/TextToSpeech$OnInitListener")]
-pub trait OnInitListener {
+pub trait TextToSpeech_OnInitListener {
     /**
      * 调用以表示 TextToSpeech 引擎初始化完成。
      * `status` 成功或错误。
@@ -217,15 +218,16 @@ pub fn test() {
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
     let context: Context = (&Activity::fetch()).into();
+    #[allow(non_camel_case_types)]
     #[java_class(name = "rs/TtsListener")]
-    struct OnInitListenerImpl;
+    struct TextToSpeech_OnInitListenerImpl;
     #[java_implement]
-    impl OnInitListener for OnInitListenerImpl {
+    impl TextToSpeech_OnInitListener for TextToSpeech_OnInitListenerImpl {
         fn on_init(&self, status: i32) {
             println!("Tts is initialized status: {}.", status)
         }
     }
-    let a = OnInitListenerImpl::new(());
+    let a = TextToSpeech_OnInitListenerImpl::new(());
     let tts = TextToSpeech::new(&context, a.as_ref());
     assert!(tts
         .to_string()
