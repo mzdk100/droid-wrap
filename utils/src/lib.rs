@@ -17,7 +17,7 @@ pub use jni::{
     sys::{jboolean, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
     AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
-use log::{debug, warn};
+use log::{debug, error, warn};
 use std::{
     collections::HashMap,
     fmt::Debug,
@@ -42,6 +42,7 @@ static HOOK_OBJECTS: RwLock<
 > = RwLock::new(None);
 // Rust 代理对象的哈希值映射到 Java 被代理的对象的哈希值
 static HOOK_OBJECTS_OTHER: RwLock<Option<HashMap<u64, i32>>> = RwLock::new(None);
+// 当某个代理对象在rust层被Drop时，延迟释放HOOK_OBJECTS表中的对象，这样不至于本地闭包函数无法被调用，同时还解决了RwLock可能死锁的问题
 static HOOK_DROP_CHANNEL: OnceLock<(Sender<u64>, Recv)> = OnceLock::new();
 
 struct Recv(Receiver<u64>);
@@ -83,7 +84,7 @@ macro_rules! import {
          * */
         pub trait JObjNew {
             /// 字段类型
-            type Fields;
+            type Fields: Default;
 
             /**
              * 从java对象创建本地对象。
@@ -516,6 +517,7 @@ fn load_rust_call_method_hook_class<'a>() -> &'a GlobalRef {
     })
 }
 
+//noinspection SpellCheckingInspection
 unsafe extern "C" fn rust_callback<'a>(
     mut env: JNIEnv<'a>,
     this: JObject<'a>,
@@ -527,7 +529,41 @@ unsafe extern "C" fn rust_callback<'a>(
         .call_method(&this, "hashCode", "()I", &[])
         .unwrap()
         .i()
-        .unwrap();
+        .unwrap_or(0);
+
+    let name = match env.call_method(&method, "getName", "()Ljava/lang/String;", &[]) {
+        Ok(name) => name.l(),
+        Err(e) => {
+            error!("{}", e);
+            return JObject::null()
+        }
+    };
+    let name = match name {
+        Ok(name) => name,
+        Err(e) => {
+            error!("{}", e);
+            return JObject::null()
+        }
+    };
+    let name = match env.get_string((&name).into()) {
+        Ok(name) => name,
+        Err(e) => {
+            error!("{}", e);
+            return JObject::null()
+        }
+    };
+    match name.to_str() {
+        Ok(name) => match name {
+            "toString" => return env.new_string(format!("Proxy@{:x}", hash_code).as_str()).unwrap().into(),
+            "equals" | "hashCode" => return env.call_method(&method, "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", &[(&this).into(), (&args).into()]).unwrap().l().unwrap(),
+            _ => ()
+        }
+        Err(e) => {
+            error!("{}", e);
+            return JObject::null()
+        }
+    }
+
     let lock = HOOK_OBJECTS.read().unwrap();
     if let Some(map) = lock.as_ref() {
         if let Some(f) = map.get(&hash_code) {

@@ -176,11 +176,7 @@ impl Activity {
      * 获取与此活动关联的标题。
      * */
     #[java_method]
-    pub fn get_title<CS: CharSequence>(&self) -> CS
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_title<CS: CharSequence>(&self) -> CS {}
 
     /**
      * 将活动内容设置为显式视图。此视图直接放入活动的视图层次结构中。它本身可以是一个复杂的视图层次结构。调用此方法时，将忽略指定视图的布局参数。视图的宽度和高度默认设置为 ViewGroup.LayoutParams.MATCH_PARENT。要使用您自己的布局参数，请改为调用 setContentView(View, ViewGroup.LayoutParams)。
@@ -198,11 +194,7 @@ impl Activity {
 
     /// 查询用于显示自定义窗口的窗口管理器。
     #[java_method]
-    pub fn get_window_manager<WM: WindowManager>(&self) -> WM
-    where
-        <WM as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_window_manager<WM: WindowManager>(&self) -> WM {}
 
     /**
      * 获取实例。

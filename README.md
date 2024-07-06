@@ -71,6 +71,14 @@ android.os.Bundle。
 
 android.speech.tts.TextToSpeech的API等。
 
+### 安卓文本(android_text)
+
+已经实现下列接口：
+
+1. android.text.Editable;
+2. android.text.InputType;
+3. android.text.TextWatcher;
+
 ### 安卓视图(android_view)
 
 android.view.View的API等（包括点击监听器的实现）。
@@ -82,6 +90,8 @@ android.view.View的API等（包括点击监听器的实现）。
 5. android.view.ViewGroup_MarginLayoutParams;
 6. android.view.ViewManager;
 7. android.view.WindowManager;
+8. android.view.Display;
+9. android.view.inputmethod.InputMethodManager;
 
 ### 安卓小部件(android_widget)
 

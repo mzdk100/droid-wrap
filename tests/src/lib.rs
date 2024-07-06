@@ -13,6 +13,7 @@
 
 use droid_wrap::android::app::Activity;
 
+//noinspection SpellCheckingInspection
 #[mobile_entry_point::mobile_entry_point]
 fn main() {
     #[cfg(feature = "android_app")]
@@ -30,6 +31,11 @@ fn main() {
         droid_wrap::android::os::test();
         println!("Test android.os successfully.");
     }
+    #[cfg(feature = "android_text")]
+    {
+        droid_wrap::android::text::test();
+        println!("Test android.text successfully.");
+    }
     #[cfg(feature = "android_speech_tts")]
     {
         droid_wrap::android::speech::tts::test();
@@ -39,6 +45,11 @@ fn main() {
     {
         droid_wrap::android::view::test();
         println!("Test android.view successfully.");
+    }
+    #[cfg(feature = "android_view_inputmethod")]
+    {
+        droid_wrap::android::view::inputmethod::test();
+        println!("Test android.view.inputmethod successfully.");
     }
     #[cfg(feature = "android_widget")]
     {

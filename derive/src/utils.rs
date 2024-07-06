@@ -10,7 +10,6 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
@@ -66,6 +65,38 @@ impl Parse for InterfaceMetadata {
     }
 }
 
+pub(crate) struct MethodMetadata {
+    pub(crate) type_bounds: Vec<(TokenStream, TokenStream)>,
+    pub(crate) overload: Option<Expr>,
+}
+
+impl Parse for MethodMetadata {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let attrs = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+        let mut type_bounds = Vec::new();
+        let mut overload = None;
+        for item in attrs.iter() {
+            if item.path.is_ident("type_bound") {
+                match item.value {
+                    Expr::Tuple(ref t) => {
+                        type_bounds.push((
+                            t.elems.first().to_token_stream(),
+                            t.elems.iter().nth(1).to_token_stream(),
+                        ));
+                    }
+                    _ => {}
+                }
+            } else if item.path.is_ident("overload") {
+                overload = Some(item.value.clone());
+            }
+        }
+        Ok(Self {
+            type_bounds,
+            overload,
+        })
+    }
+}
+
 fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
     let res = parse2::<PathSegment>(ty.clone());
 
@@ -82,7 +113,11 @@ fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
     (unwrapped, ty.to_token_stream())
 }
 
-fn get_type_descriptor_token(ty: &TokenStream, generics: &Generics) -> TokenStream {
+fn get_type_descriptor_token(
+    ty: &TokenStream,
+    generics: &Generics,
+    type_bounds: &Vec<(TokenStream, TokenStream)>,
+) -> TokenStream {
     let ty_str = ty.to_string();
     if ty_str == "i8" || ty_str == "u8" {
         quote! {"B"}
@@ -109,6 +144,12 @@ fn get_type_descriptor_token(ty: &TokenStream, generics: &Generics) -> TokenStre
         {
             let gt = gt.bounds.first();
             quote! {<#ty as #gt>}
+        } else if let Some(it) = type_bounds
+            .iter()
+            .find(|i| i.0.to_string() == ty.to_string())
+        {
+            let tt = it.1.clone();
+            quote! {<#ty as #tt>}
         } else {
             ty.clone()
         };
@@ -118,6 +159,7 @@ fn get_type_descriptor_token(ty: &TokenStream, generics: &Generics) -> TokenStre
 
 pub(crate) fn parse_function_signature(
     sig: &Signature,
+    type_bounds: &Vec<(TokenStream, TokenStream)>,
 ) -> (
     Option<SelfValue>,
     Vec<TokenStream>,
@@ -159,7 +201,7 @@ pub(crate) fn parse_function_signature(
                     quote! {#v.java_ref().as_obj().into()}
                 };
 
-                let arg_sig = get_type_descriptor_token(&unwrapped_ty, &sig.generics);
+                let arg_sig = get_type_descriptor_token(&unwrapped_ty, &sig.generics, &type_bounds);
                 arg_types.push(unwrapped_ty);
                 arg_types_sig.extend(quote!(#arg_sig,));
                 arg_values.push(Expr::Verbatim(v));
@@ -216,9 +258,10 @@ pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> (TokenStr
 pub(crate) fn get_return_value_token(
     ret_type: &TokenStream,
     generics: &Generics,
+    type_bounds: &Vec<(TokenStream, TokenStream)>,
 ) -> (TokenStream, TokenStream, bool) {
     let (unwrapped_ty, ty) = unwrap_type(ret_type);
-    let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics);
+    let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics, &type_bounds);
 
     if ret_type_sig.to_string().contains("get_object_sig") {
         let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);

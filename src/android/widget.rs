@@ -16,6 +16,7 @@ use droid_wrap_derive::{java_class, java_constructor, java_field, java_method};
 use crate::{
     android::{
         content::Context,
+        text::TextWatcher,
         view::{ViewGroup, ViewGroup_LayoutParams, ViewGroup_MarginLayoutParams},
     },
     java::lang::CharSequence,
@@ -100,43 +101,27 @@ impl TextView {
      * `text` 要显示的文本
      * */
     #[java_method]
-    pub fn set_text<CS: CharSequence>(&self, text: Option<CS>)
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn set_text<CS: CharSequence>(&self, text: Option<CS>) {}
 
     /**
      * 返回 TextView 正在显示的文本。如果使用 BufferType.SPANNABLE 或 BufferType.EDITABLE 参数调用 setText(CharSequence)，则可以将此方法的返回值分别转换为 Spannable 或 Editable。返回值的内容不应修改。如果您想要一个可修改的内容，您应该先制作自己的副本。
      * 返回：文本视图显示的文本。
      * */
     #[java_method]
-    pub fn get_text<CS: CharSequence>(&self) -> Option<CS>
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_text<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
      * 设置 TextView 的文本为空时显示的文本。Null 表示使用普通的空文本。Hint 目前不参与确定视图的大小。
      * `hint` 要显示的提示文字。
      * */
     #[java_method]
-    pub fn set_hint<CS: CharSequence>(&self, hint: Option<CS>)
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn set_hint<CS: CharSequence>(&self, hint: Option<CS>) {}
 
     /**
      * 返回TextView的文本为空时显示的提示。
      * */
     #[java_method]
-    pub fn get_hint<CS: CharSequence>(&self) -> Option<CS>
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_hint<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
      * 子类会重写此功能以指定它们默认具有 KeyListener，即使在 XML 选项中没有特别调用。
@@ -157,6 +142,21 @@ impl TextView {
      * */
     #[java_method]
     pub fn get_input_type(&self) -> i32 {}
+
+    /**
+     * 将 TextWatcher 添加到此 TextView 的文本发生变化时调用其方法的列表中。
+     * 在 1.0 中，TextWatcher.afterTextChanged 方法在 setText 调用后被错误地未调用。现在，如果有任何文本更改侦听器执行 setText 会强制缓冲区类型为可编辑（否则不会为可编辑）并调用此方法。
+     * `watcher` 文字监视器。
+     * */
+    #[java_method]
+    pub fn add_text_changed_listener<TW: TextWatcher>(&self, watcher: &TW) {}
+
+    /**
+     * 从TextView的文本改变时会被调用其方法的TextWatcher列表中移除指定的TextWatcher。
+     * `watcher` 文字监视器。
+     * */
+    #[java_method]
+    pub fn remove_text_changed_listener<TW: TextWatcher>(&self, watcher: &TW) {}
 }
 
 /**
@@ -292,7 +292,7 @@ pub fn test() {
     use crate::{
         android::{
             app::Activity,
-            text::{InputType, InputTypeImpl},
+            text::{InputType, InputTypeImpl, TextWatcherImpl},
         },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
@@ -326,4 +326,7 @@ pub fn test() {
         1.0,
     );
     assert_eq!(1.0, params.get_weight());
+    let watcher = TextWatcherImpl::from_fn(None, None, None);
+    button.add_text_changed_listener(watcher.as_ref());
+    button.remove_text_changed_listener(watcher.as_ref());
 }

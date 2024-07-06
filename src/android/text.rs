@@ -11,8 +11,12 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{JObjNew, JObjRef, JType};
-use droid_wrap_derive::{java_class, java_interface};
+use crate::{
+    java::lang::{CharSequence, CharSequenceImpl},
+    JObjNew, JObjRef, JProxy, JType,
+};
+use droid_wrap_derive::{java_class, java_implement, java_interface, java_method};
+use std::sync::Arc;
 
 #[java_interface(name = "android/text/InputType")]
 pub trait InputType {
@@ -147,3 +151,215 @@ pub trait InputType {
 pub struct InputTypeImpl;
 
 impl InputType for InputTypeImpl {}
+
+/**
+ * 这是文本的接口，其内容和标记可以更改（与字符串等不可变文本相反）。如果您创建可编辑的 DynamicLayout，则布局将随着文本的更改而重新排列。
+ * */
+#[java_interface(name = "android/text/Editable")]
+pub trait Editable: CharSequence {
+    type Cs: CharSequence;
+    type E: Editable;
+
+    /**
+     * 用源切片 start…end 的副本替换此 Editable 中指定范围 (st…en) 的文本。目标切片可能为空，在这种情况下操作为插入；源切片可能为空，在这种情况下操作为删除。
+     * 在提交更改之前，使用 setFilters 设置的每个过滤器都有机会修改源文本。如果源是 Spanned，则来自源的跨度将保留到 Editable 中。Editable 中完全覆盖替换范围的现有跨度将被保留，但严格在替换范围内的任何跨度将被删除。
+     * 如果源包含带有 Spanned.SPAN_PARAGRAPH 标志的跨度，并且它不满足段落边界约束，则不会保留它。作为特殊情况，即使替换了光标所在的整个范围，光标位置也会保留。
+     * 返回：对此对象的引用。
+     * */
+    fn replace(&self, st: i32, en: i32, source: Self::Cs, start: i32, end: i32) -> Self::E;
+
+    /**
+     * 方便 replace(st, en, text, 0, text.length())
+     * */
+    fn replace_convenience(&self, st: i32, en: i32, text: Self::Cs) -> Self::E;
+
+    /**
+     * 方便 replace(where, where, text, start, end)
+     * */
+    fn insert(&self, r#where: i32, text: Self::Cs, start: i32, end: i32) -> Self::E;
+
+    /**
+     * 方便 replace(where, where, text, 0, text.length());
+     * */
+    fn insert_convenience(&self, r#where: i32, text: Self::Cs) -> Self::E;
+
+    /**
+     * 方便 replace(st, en, "", 0, 0)
+     * */
+    fn delete(&self, st: i32, en: i32) -> Self::E;
+
+    /// 方便 replace(length(), length(), text, 0, text.length())
+    fn append_convenience(&self, text: Self::Cs) -> Self::E;
+
+    /// 方便 replace(length(), length(), text, start, end)
+    fn append(&self, text: Self::Cs, start: i32, end: i32) -> Self::E;
+
+    /// 方便 append(String.valueOf(text))
+    fn append_char(&self, text: char) -> Self::E;
+
+    /// 方便 replace(0, length(), "", 0, 0).
+    /// 请注意，这将清除文本，而不是跨度；如果需要，请使用 clearSpans。
+    fn clear(&self);
+
+    /// 从可编辑对象中移除所有跨度，就像在每个跨度上调用 removeSpan 一样。
+    fn clear_spans(&self);
+}
+
+#[java_class(name = "android/text/EditableImpl", extends=CharSequenceImpl)]
+pub struct EditableImpl;
+
+impl CharSequence for EditableImpl {
+    fn length(&self) -> i32 {
+        self._based.length()
+    }
+
+    fn char_at(&self, index: i32) -> Result<char, droid_wrap_utils::Error> {
+        self._based.char_at(index)
+    }
+}
+
+#[java_implement]
+impl Editable for EditableImpl {
+    type Cs = CharSequenceImpl;
+    type E = Self;
+
+    #[java_method(type_bound=(<Self as Editable>::Cs, CharSequence), type_bound=(Self::E, Editable))]
+    fn replace(
+        &self,
+        st: i32,
+        en: i32,
+        source: <Self as Editable>::Cs,
+        start: i32,
+        end: i32,
+    ) -> Self::E {
+    }
+
+    #[java_method(overload=replace, type_bound=(<Self as Editable>::Cs, CharSequence), type_bound=(Self::E, Editable))]
+    fn replace_convenience(&self, st: i32, en: i32, text: <Self as Editable>::Cs) -> Self::E {}
+
+    #[java_method(type_bound=(<Self as Editable>::Cs, CharSequence), type_bound=(Self::E, Editable))]
+    fn insert(&self, r#where: i32, text: <Self as Editable>::Cs, start: i32, end: i32) -> Self::E {}
+
+    #[java_method(overload=insert, type_bound=(<Self as Editable>::Cs, CharSequence), type_bound=(Self::E, Editable))]
+    fn insert_convenience(&self, r#where: i32, text: <Self as Editable>::Cs) -> Self::E {}
+
+    #[java_method(type_bound=(Self::E, Editable))]
+    fn delete(&self, st: i32, en: i32) -> Self::E {}
+
+    #[java_method(overload=append, type_bound=(<Self as Editable>::Cs, CharSequence),type_bound=(Self::E, Editable))]
+    fn append_convenience(&self, text: <Self as Editable>::Cs) -> Self::E {}
+
+    #[java_method(type_bound=(<Self as Editable>::Cs, CharSequence),type_bound=(Self::E, Editable))]
+    fn append(&self, text: <Self as Editable>::Cs, start: i32, end: i32) -> Self::E {}
+
+    #[java_method(type_bound=(Self::E, Editable))]
+    fn append_char(&self, text: char) -> Self::E {}
+
+    #[java_method]
+    fn clear(&self) {}
+
+    #[java_method]
+    fn clear_spans(&self) {}
+}
+
+/**
+ * 当此类型的对象附加到 Editable 时，其方法将在文本改变时被调用。
+ * */
+#[java_interface(name = "android/text/TextWatcher")]
+pub trait TextWatcher {
+    type Cs: CharSequence;
+    type E: Editable;
+
+    /// 调用此方法是为了通知您，在 s 中，从 start 开始的 count 个字符即将被长度为 after 的新文本替换。
+    /// 尝试从此回调更改 s 是错误的。
+    fn before_text_changed(&self, s: Self::Cs, start: i32, count: i32, after: i32);
+
+    /// 调用此方法是为了通知您，在 s 中，从 start 开始的 count 个字符刚刚替换了之前长度为 before 的旧文本。
+    /// 尝试通过此回调更改 s 是错误的。
+    fn on_text_changed(&self, s: Self::Cs, start: i32, before: i32, count: i32);
+
+    /// 调用此方法是为了通知您，在 s 中的某个地方，文本已发生更改。从此回调对 s 进行进一步更改是合法的，但请注意不要陷入无限循环，因为您所做的任何更改都会导致此方法再次递归调用。
+    /// （您不会被告知更改发生的位置，因为其他 afterTextChanged() 方法可能已经进行了其他更改并使偏移量无效。但如果您需要在此处知道，您可以在 onTextChanged 中使用 Spannable.setSpan 来标记您的位置，然后从此处查找 span 结束的位置。
+    fn after_text_changed(&self, s: Self::E);
+}
+
+#[java_class(name = "android/text/TextWatcherImpl")]
+pub struct TextWatcherImpl {
+    before_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32)>,
+    on_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32)>,
+    after_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::E)>,
+}
+
+impl TextWatcherImpl {
+    pub fn from_fn(
+        before_text_changed: Option<
+            fn(
+                /* s */ <Self as TextWatcher>::Cs,
+                /* start */ i32,
+                /* count */ i32,
+                /* after */ i32,
+            ),
+        >,
+        on_text_changed: Option<
+            fn(
+                /* s */ <Self as TextWatcher>::Cs,
+                /* start */ i32,
+                /* before */ i32,
+                /* count */ i32,
+            ),
+        >,
+        after_text_changed: Option<fn(/* s */ <Self as TextWatcher>::E)>,
+    ) -> Arc<Self> {
+        Self::new(TextWatcherImplDefault {
+            before_text_changed,
+            on_text_changed,
+            after_text_changed,
+        })
+    }
+}
+
+impl Default for TextWatcherImplDefault {
+    fn default() -> Self {
+        Self {
+            before_text_changed: None,
+            on_text_changed: None,
+            after_text_changed: None,
+        }
+    }
+}
+
+#[java_implement]
+impl TextWatcher for TextWatcherImpl {
+    type Cs = CharSequenceImpl;
+    type E = EditableImpl;
+
+    fn before_text_changed(
+        &self,
+        s: <Self as TextWatcher>::Cs,
+        start: i32,
+        count: i32,
+        after: i32,
+    ) {
+        if let Some(ref f) = self.before_text_changed {
+            f(s, start, count, after)
+        }
+    }
+
+    fn on_text_changed(&self, s: <Self as TextWatcher>::Cs, start: i32, before: i32, count: i32) {
+        if let Some(ref f) = self.on_text_changed {
+            f(s, start, before, count)
+        }
+    }
+
+    fn after_text_changed(&self, s: <Self as TextWatcher>::E) {
+        if let Some(ref f) = self.after_text_changed {
+            f(s)
+        }
+    }
+}
+
+#[cfg(feature = "test_android_text")]
+pub fn test() {
+    let watcher = TextWatcherImpl::from_fn(Some(|_s, _start, _count, _after| ()), None, None);
+    dbg!(watcher);
+}

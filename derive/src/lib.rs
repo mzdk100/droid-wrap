@@ -26,7 +26,7 @@ use syn::{
 
 use crate::utils::{
     get_object_return_value_token, get_result_token, get_return_value_token,
-    parse_function_signature, ClassMetadata, InterfaceMetadata,
+    parse_function_signature, ClassMetadata, InterfaceMetadata, MethodMetadata,
 };
 
 //noinspection SpellCheckingInspection
@@ -256,6 +256,12 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
 
+        impl #generics Into<droid_wrap_utils::GlobalRef> for &#name #generics {
+            fn into(self) -> droid_wrap_utils::GlobalRef {
+                self.java_ref()
+            }
+        }
+
         #impl_based_deref
     };
     stream.into()
@@ -265,7 +271,7 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// # Arguments
 ///
-/// * `_`: 未使用。
+/// * `attrs`: 属性输入。
 /// * `input`: 函数输入。
 ///
 /// returns: TokenStream
@@ -281,17 +287,26 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn java_method(_: TokenStream, input: TokenStream) -> TokenStream {
+pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
+    let attrs: MethodMetadata = parse2(Into::<TokenStream2>::into(attrs)).unwrap();
+    let type_bounds = attrs.type_bounds;
+    let overload = attrs.overload;
     let item = parse_macro_input!(input as ItemFn);
     let attrs = item.attrs.clone();
     let stmts = item.block.stmts.clone();
-    let name = item.sig.ident.to_string().to_lower_camel_case();
+    let name = if overload.is_none() {
+        item.sig.ident.to_string()
+    } else {
+        overload.unwrap().to_token_stream().to_string()
+    }
+    .to_lower_camel_case();
     let vis = item.vis.clone();
     let sig = item.sig.clone();
 
-    let (self_, _, arg_types_sig, fmt, arg_values, ret_type) = parse_function_signature(&sig);
+    let (self_, _, arg_types_sig, fmt, arg_values, ret_type) =
+        parse_function_signature(&sig, &type_bounds);
     let (ret_value, ret_type_sig, is_result_type) =
-        get_return_value_token(&ret_type, &sig.generics);
+        get_return_value_token(&ret_type, &sig.generics, &type_bounds);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 
@@ -356,7 +371,7 @@ pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
     let vis = item.vis.clone();
     let sig = item.sig.clone();
     let stmts = item.block.stmts.clone();
-    let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig);
+    let (self_, _, arg_types, fmt, arg_values, ret_type) = parse_function_signature(&sig, &vec![]);
 
     if !self_.is_none() {
         panic!(
@@ -493,7 +508,8 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                     continue;
                 }
                 let name_camel = f.sig.ident.to_string().to_lower_camel_case();
-                let (self_, arg_types, _, _, _, ret_type) = parse_function_signature(&f.sig);
+                let (self_, arg_types, _, _, _, ret_type) =
+                    parse_function_signature(&f.sig, &vec![]);
                 if self_.is_none() {
                     continue;
                 }
@@ -618,7 +634,8 @@ pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
         panic!("Field name `{}` must start with get or set.", name);
     };
 
-    let (self_, arg_types, arg_types_sig, _, arg_values, ret_type) = parse_function_signature(&sig);
+    let (self_, arg_types, arg_types_sig, _, arg_values, ret_type) =
+        parse_function_signature(&sig, &vec![]);
     if is_set {
         if arg_types.len() != 1 {
             panic!(
@@ -633,7 +650,7 @@ pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let (ret_value, ret_type_sig, is_result_type) =
-        get_return_value_token(&ret_type, &sig.generics);
+        get_return_value_token(&ret_type, &sig.generics, &vec![]);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 

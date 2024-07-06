@@ -11,6 +11,15 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+//noinspection SpellCheckingInspection
+/**
+ * 视图和输入法（如软键盘）之间交互的框架类。
+ * */
+#[cfg(feature = "android_view_inputmethod")]
+#[cfg_attr(docsrs, doc(cfg(feature = "android_view_inputmethod")))]
+#[cfg(feature = "android_view_inputmethod")]
+pub mod inputmethod;
+
 use crate::{
     android::content::Context,
     java::lang::{CharSequence, Integer},
@@ -41,6 +50,15 @@ impl View {
 
     /// 赋予不属于活动的视图的最后一个 ID。
     pub const LAST_APP_AUTOFILL_ID: i32 = i32::MAX / 2;
+
+    /// 此视图可见。与 setVisibility 和 ` ` 一起使用。
+    pub const VISIBLE: i32 = 0x00000000;
+
+    /// 此视图不可见，但出于布局目的它仍占用空间。与 setVisibility 和 ` ` 一起使用。
+    pub const INVISIBLE: i32 = 0x00000004;
+
+    /// 此视图是看不见的，并且没有任何空间用于布局目的。与setVisibility一起使用。
+    pub const GONE: i32 = 0x00000008;
 
     /**
      * 从代码创建视图时使用的简单构造函数。
@@ -150,22 +168,14 @@ impl View {
      * 返回：内容描述
      * */
     #[java_method]
-    pub fn get_content_description<CS: CharSequence>(&self) -> Option<CS>
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_content_description<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
      * 设置视图的内容描述。内容描述简要描述视图，主要用于辅助功能支持，以确定应如何向用户呈现视图。对于没有文本表示的视图（如 android.widget.ImageButton），有用的内容描述会解释视图的作用。例如，用于拨打电话的带有电话图标的图像按钮可以使用“呼叫”作为其内容描述。用于保存文件的软盘图像可以使用“保存”。这应该省略角色或状态。角色是指视图的用户界面元素类型，例如按钮或复选框。状态是指视图经常变化的属性，例如按钮的开/关状态或音量滑块的音频级别。内容描述更新并不频繁，并且在元素的语义内容（而不是状态）发生变化时使用。例如，在音乐播放期间，播放按钮可能会更改为暂停按钮。
      * `content_description` 内容描述。
      * */
     #[java_method]
-    pub fn set_content_description<CS: CharSequence>(&self, content_description: Option<CS>)
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn set_content_description<CS: CharSequence>(&self, content_description: Option<CS>) {}
 
     /**
      * 设置此视图的标识符。标识符在此视图的层次结构中不必唯一。标识符应为正数。
@@ -202,6 +212,20 @@ impl View {
      * */
     #[java_method]
     pub fn set_layout_params(&self, params: &ViewGroup_LayoutParams) {}
+
+    /**
+     * 设置此视图的可见性状态。
+     * `visibility` VISIBLE、INVISIBLE 或 GONE 之一。
+     * */
+    #[java_method]
+    pub fn set_visibility(&self, visibility: i32) {}
+
+    /**
+     * 返回此视图的可见性状态。
+     * 返回：VISIBLE、INVISIBLE 或 GONE 之一。
+     * */
+    #[java_method]
+    pub fn get_visibility(&self) -> i32 {}
 }
 
 /// 当视图被点击时调用的回调的接口定义。
@@ -263,6 +287,15 @@ pub trait WindowManager: ViewManager {
      * `view` 要删除的视图。
      * */
     fn remove_view_immediate(&self, view: &View);
+
+    /**
+     * 返回此WindowManager实例将创建新窗口的显示器。尽管有此方法的名称，但返回的显示器不一定是系统的主要显示器（请参见Display.DEFAULT_DISPLAY）。
+     * 返回的显示可能是此窗口管理器实例正在管理的辅助显示。将其视为此WindowManager实例默认使用的显示。要在其他显示器上创建窗口，您需要为该显示器获得一个WindowManager。 （有关更多信息，请参见WindowManager类文档。）
+     * 返回：此窗口管理器正在管理的显示器。
+     * */
+    #[deprecated(note = "改用 Context.getDisplay()。")]
+    #[java_method]
+    fn get_default_display(&self) -> Display {}
 }
 
 #[java_class(name = "android/view/WindowManagerImpl")]
@@ -1405,11 +1438,7 @@ impl WindowManager_LayoutParams {
 
     /// 窗口标题与标题栏中显示的内容不同步，因此我们单独跟踪当前显示的标题以提供可访问性。
     #[java_field]
-    pub fn get_accessibility_title<CS: CharSequence>(&self) -> CS
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_accessibility_title<CS: CharSequence>(&self) -> CS {}
 
     /// 窗口标题与标题栏中显示的内容不同步，因此我们单独跟踪当前显示的标题以提供可访问性。
     #[java_field]
@@ -1525,18 +1554,10 @@ impl WindowManager_LayoutParams {
     pub fn new() -> Self {}
 
     #[java_method]
-    pub fn set_title<CS: CharSequence>(&self, title: Option<CS>)
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn set_title<CS: CharSequence>(&self, title: Option<CS>) {}
 
     #[java_method]
-    pub fn get_title<CS: CharSequence>(&self) -> Option<CS>
-    where
-        <CS as JObjNew>::Fields: Default,
-    {
-    }
+    pub fn get_title<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
      * 根据输入视图的高度（视觉 z 位置）设置表面插图。
@@ -1600,6 +1621,442 @@ impl WindowManager_LayoutParams {
     pub fn is_modal(&self) -> bool {}
 }
 
+/**
+ * 提供有关逻辑显示器的大小和密度的信息。显示区域有两种不同的描述方式。应用程序显示区域指定可能包含应用程序窗口的显示器部分，不包括系统装饰。应用程序显示区域可能小于实际显示区域，因为系统减去了状态栏等装饰元素所需的空间。
+ * 使用 WindowMetrics.getBounds() 查询应用程序窗口边界。实际显示区域指定应用程序在当前系统状态下可访问的显示器部分。在某些情况下，实际显示区域可能小于显示器的物理尺寸。使用 WindowManager.getCurrentWindowMetrics() 确定活动窗口的当前大小。
+ * 与 UI 相关的工作（例如选择 UI 布局）应依赖于 WindowMetrics.getBounds()。有关详细信息，请参阅 getRealSize / getRealMetrics。逻辑显示器不一定代表特定的物理显示设备，例如内部显示器或外部显示器。
+ * 根据当前连接的设备以​​及是否启用镜像，逻辑显示器的内容可能会显示在一个或多个物理显示器上。
+ * */
+#[java_class(name = "android/view/Display")]
+pub struct Display;
+
+impl Display {
+    /// 默认的 Display ID，假设有一个主显示器，则为主显示器的 ID。
+    pub const DEFAULT_DISPLAY: i32 = 0;
+
+    /// 无效的显示 ID。
+    pub const INVALID_DISPLAY: i32 = -1;
+
+    /// 分辨率宽度无效。
+    pub const INVALID_DISPLAY_WIDTH: i32 = -1;
+
+    /// 分辨率高度无效。
+    pub const INVALID_DISPLAY_HEIGHT: i32 = -1;
+
+    /// 刷新率无效。
+    pub const INVALID_DISPLAY_REFRESH_RATE: f32 = 0.0;
+
+    /// 默认显示组 ID，假设有一个主显示器，则为主显示器的显示组 ID。
+    pub const DEFAULT_DISPLAY_GROUP: i32 = 0;
+
+    /// 显示组 ID 无效。
+    pub const INVALID_DISPLAY_GROUP: i32 = -1;
+
+    /// 显示标志：表示显示器支持合成存储在受保护图形缓冲区中的内容。如果设置了此标志，则显示设备支持合成受保护缓冲区。如果未设置此标志，则显示设备可能不支持合成受保护缓冲区；用户可能会在屏幕上看到空白区域而不是受保护的内容。安全 (DRM) 视频解码器可以分配受保护的图形缓冲区，以请求在视频解码器和外部显示接收器之间提供受硬件保护的路径。
+    /// 如果没有可用的硬件保护路径，则可能无法合成存储在受保护图形缓冲区中的内容。应用程序可以使用此标志的缺失作为提示，表示它不应该为此显示使用受保护的缓冲区，因为内容可能不可见。例如，如果未设置标志，则应用程序可以选择不在此显示器上显示内容、显示信息性错误消息、选择备用内容流或采用不依赖受保护缓冲区的不同内容解码策略。
+    pub const FLAG_SUPPORTS_PROTECTED_BUFFERS: i32 = 1 << 0;
+
+    /// 显示标志：表示显示器具有安全的视频输出并支持合成安全表面。如果设置了此标志，则显示设备具有安全的视频输出并能够显示安全表面。它也可能能够显示 FLAG_SUPPORTS_PROTECTED_BUFFERS 受保护的缓冲区。如果未设置此标志，则显示设备可能没有安全的视频输出；用户可能会在屏幕上看到空白区域，而不是安全表面或受保护缓冲区的内容。
+    /// 安全表面用于防止应用程序渲染到这些表面的内容出现在屏幕截图中或在非安全显示器上查看。安全视频解码器使用受保护的缓冲区来实现类似目的。应用程序通过指定 WindowManager.LayoutParams#FLAG_SECURE 窗口标志来创建具有安全表面的窗口。同样，应用程序通过在将安全视图附加到其包含窗口之前调用 SurfaceView#setSecure 来创建具有安全表面的 SurfaceView。应用程序可以使用此标志的缺失来提示它不应在此显示器上创建安全表面或受保护的缓冲区，因为内容可能不可见。例如，如果未设置该标志，则应用程序可以选择不在此显示器上显示内容，显示信息性错误消息，选择备用内容流或采用不依赖安全表面或受保护缓冲区的其他策略来解码内容。
+    pub const FLAG_SECURE: i32 = 1 << 1;
+
+    /// 显示标志：表示该显示是私有的。只有拥有该显示的应用和已经在该显示上的应用才能在该显示上创建窗口。
+    pub const FLAG_PRIVATE: i32 = 1 << 2;
+
+    /// 显示标志：表示该显示器是演示显示器。此标志标识适合用作演示显示器的辅助显示器，例如外部或无线显示器。应用程序可以自动将其内容投影到演示显示器，以提供更丰富的第二屏幕体验。
+    pub const FLAG_PRESENTATION: i32 = 1 << 3;
+
+    /// 显示标志：表示显示屏为圆形。此标志标识显示屏为圆形、椭圆形或其他形状，不允许用户看到显示屏的所有逻辑角落。
+    pub const FLAG_ROUND: i32 = 1 << 4;
+
+    /// 显示标志：表示在显示非安全键盘保护时，显示器可以显示其内容。此标志标识如果无需输入凭据即可关闭键盘保护，则辅助显示器将继续显示内容。使用的一个示例是虚拟显示器，其内容显示在系统无法直接看到的外部硬件显示器上。
+    /// TODO (b/114338689): 删除该标志并使用 IWindowManager#shouldShowWithInsecureKeyguard
+    pub const FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD: i32 = 1 << 5;
+
+    /// 显示标志：表示显示应显示系统装饰。此标志标识应显示系统装饰的辅助显示，例如状态栏、导航栏、主页活动或 IME。请注意，如果没有 FLAG_TRUSTED，此标志不起作用
+    /// TODO (b/114338689): 删除该标志并使用 IWindowManager#setShouldShowSystemDecors
+    pub const FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS: i32 = 1 << 6;
+
+    /// 标志：信任该显示器可以显示系统装饰并接收输入，无需用户触摸。
+    pub const FLAG_TRUSTED: i32 = 1 << 7;
+
+    /// 标志：表示显示器不应该成为默认 DisplayGroup 的一部分，而应该成为新 DisplayGroup 的一部分。
+    pub const FLAG_OWN_DISPLAY_GROUP: i32 = 1 << 8;
+
+    /// 标志：表示显示屏应始终解锁。仅在未在默认显示组中的虚拟显示上有效。
+    pub const FLAG_ALWAYS_UNLOCKED: i32 = 1 << 9;
+
+    /// 标志：表示当用户触摸屏幕时，显示器不应播放音效或执行触觉反馈。
+    pub const FLAG_TOUCH_FEEDBACK_DISABLED: i32 = 1 << 10;
+
+    /**
+     * 标志：表示显示器维持自己的焦点和触摸模式。
+     * 此标志在行为上与 com.android.internal.R.bool.config_perDisplayFocusEnabled 类似，但仅适用于特定显示器，而不是系统范围的所有显示器。
+     * 注意：必须信任显示器才能拥有自己的焦点。
+     * */
+    pub const FLAG_OWN_FOCUS: i32 = 1 << 11;
+
+    /**
+     * 标志：表示显示器不应通过从另一个显示器窃取顶部焦点而成为顶部焦点显示器。
+     * 结果是只有目标输入事件（输入事件的 displayId 与显示器的 displayId 匹配）才能到达此显示器。如果系统仅由一个显示器组成，或者所有显示器都设置了此标志，则设置了此标志的显示器仍可成为顶部聚焦显示器。在这两种情况下，默认显示器都会成为顶部聚焦显示器。
+     * 注意：如果显示器是顶部聚焦显示器，或者显示器管理自己的焦点（通过 FLAG_OWN_FOCUS）或所有显示器管理自己的焦点（通过 ` ` 标志），则显示器仅具有聚焦窗口。如果显示器没有聚焦窗口，则不会向其发送任何输入事件。因此，此标志仅与 FLAG_OWN_FOCUS 一起使用才有用，如果未设置，将被忽略。
+     * 注意：框架仅支持顶部聚焦显示屏上的 IME（b/262520411）。因此，在显示屏上启用此标志会隐式禁用显示任何 IME。这不是预期的行为，但在实施 b/262520411 之前无法修复。如果您需要在显示屏上使用 IME，请不要设置此标志。
+     * */
+    pub const FLAG_STEAL_TOP_FOCUS_DISABLED: i32 = 1 << 12;
+
+    /// 显示器标志：表示显示器为后置显示器。此标志标识背对用户的互补显示器。
+    pub const FLAG_REAR: i32 = 1 << 13;
+
+    /// 显示标志：表示不应缩放显示内容以适应物理屏幕尺寸。仅用于开发以模拟具有较小物理屏幕的设备，同时保持密度。
+    pub const FLAG_SCALING_DISABLED: i32 = 1 << 30;
+
+    /// 显示类型：未知的显示类型。
+    pub const TYPE_UNKNOWN: i32 = 0;
+
+    /// 显示器类型：通过内部端口连接的物理显示器。
+    pub const TYPE_INTERNAL: i32 = 1;
+
+    /// 显示器类型：通过外部端口连接的物理显示器。
+    pub const TYPE_EXTERNAL: i32 = 2;
+
+    /// 显示类型：WiFi显示。
+    pub const TYPE_WIFI: i32 = 3;
+
+    /// 显示类型：覆盖显示。
+    pub const TYPE_OVERLAY: i32 = 4;
+
+    /// 显示类型：虚拟显示。
+    pub const TYPE_VIRTUAL: i32 = 5;
+
+    /// 显示状态：显示状态未知。
+    pub const STATE_UNKNOWN: i32 = 0;
+
+    /// 显示状态：显示屏关闭。
+    pub const STATE_OFF: i32 = 1;
+
+    /// 显示状态：显示屏亮。
+    pub const STATE_ON: i32 = 2;
+
+    /// 显示状态：显示器在低功耗状态下处于打瞌睡状态；它仍然处于开启状态，但针对在设备非交互时显示系统提供的内容进行了优化。
+    pub const STATE_DOZE: i32 = 3;
+
+    /// 显示状态：显示器处于挂起低功耗状态，处于休眠状态；它仍处于开启状态，但 CPU 不会更新它。这可以用于以下两种情况之一：在设备处于非交互状态时显示系统提供的静态内容，或允许“Sidekick”计算资源更新显示。因此，CPU 不得在此模式下控制显示器。
+    pub const STATE_DOZE_SUSPEND: i32 = 4;
+
+    /// 显示状态：显示屏已开启并针对 VR 模式进行了优化。
+    pub const STATE_VR: i32 = 5;
+
+    /// 显示状态：显示器处于挂起的全功率状态；它仍然打开，但 CPU 不会更新它。这可以以两种方式之一使用：在设备处于非交互状态时显示系统提供的静态内容，或允许“Sidekick”计算资源更新显示。因此，CPU 不得在此模式下控制显示器。
+    pub const STATE_ON_SUSPEND: i32 = 6;
+
+    /* 下面定义的颜色模式常量必须与 system/core/include/system/graphics-base.h 中的常量保持同步 */
+
+    /// 显示颜色模式：当前颜色模式未知或无效。
+    pub const COLOR_MODE_INVALID: i32 = -1;
+
+    /// 显示色彩模式：显示器的默认或原生色域。
+    pub const COLOR_MODE_DEFAULT: i32 = 0;
+
+    pub const COLOR_MODE_BT601_625: i32 = 1;
+
+    pub const COLOR_MODE_BT601_625_UNADJUSTED: i32 = 2;
+
+    pub const COLOR_MODE_BT601_525: i32 = 3;
+
+    pub const COLOR_MODE_BT601_525_UNADJUSTED: i32 = 4;
+
+    pub const COLOR_MODE_BT709: i32 = 5;
+
+    pub const COLOR_MODE_DCI_P3: i32 = 6;
+
+    pub const COLOR_MODE_SRGB: i32 = 7;
+
+    pub const COLOR_MODE_ADOBE_RGB: i32 = 8;
+
+    pub const COLOR_MODE_DISPLAY_P3: i32 = 9;
+
+    /// 表示当显示屏被移除时，其所有活动将移至主显示屏，并且最顶层的活动将成为焦点。
+    /// TODO (b/114338689): 删除该标志并使用 WindowManager#REMOVE_CONTENT_MODE_MOVE_TO_PRIMARY
+    pub const REMOVE_MODE_MOVE_CONTENT_TO_PRIMARY: i32 = 0;
+
+    /// 表示当display被移除时，其所有堆栈和任务都将被移除，所有活动将按照通常的生命周期被销毁。
+    /// TODO (b/114338689): 删除该标志并使用 WindowManager#REMOVE_CONTENT_MODE_DESTROY
+    pub const REMOVE_MODE_DESTROY_CONTENT: i32 = 1;
+
+    pub const DISPLAY_MODE_ID_FOR_FRAME_RATE_OVERRIDE: i32 = 0xFF;
+
+    /**
+     * 获取显示 ID。
+     * 每个逻辑显示都有一个唯一 ID。默认显示 ID 为 DEFAULT_DISPLAY。
+     * */
+    #[java_method]
+    pub fn get_display_id(&self) -> i32 {}
+
+    /**
+     * 获取显示器唯一 ID。
+     * 唯一 ID 与显示器 ID 不同，因为物理显示器在重新启动后具有稳定的唯一 ID。
+     * */
+    #[java_method]
+    pub fn get_unique_id(&self) -> Option<String> {}
+
+    /**
+     * 如果此显示仍然有效，则返回 true；如果显示已被移除，则返回 false。如果显示无效，则此类的方法将继续报告最近观察到的显示信息。但是，在显示消亡后继续使用 Display 对象是不明智的（而且毫无意义）。如果重新连接具有相同 ID 的显示，则之前无效的显示可能会再次有效。
+     * 返回：如果显示仍然有效，则返回 True。
+     * */
+    #[java_method]
+    pub fn is_valid(&self) -> bool {}
+
+    /**
+     * 获取显示器的层堆栈。每个显示器都有自己独立的层堆栈，表面放置在其上，由表面投射器进行管理。
+     * 返回：显示器的层堆栈编号。
+     * */
+    #[java_method]
+    pub fn get_layer_stack(&self) -> i32 {}
+
+    /**
+     * 返回描述显示器功能的标志组合。
+     * 返回：显示标志。
+     * */
+    #[java_method]
+    pub fn get_flags(&self) -> i32 {}
+
+    /**
+     * 获取显示类型。
+     * 返回：显示类型。
+     * */
+    #[java_method]
+    pub fn get_type(&self) -> i32 {}
+
+    /**
+     * 获取拥有此显示屏的应用程序的 UID，如果显示屏归系统所有，则获得零。如果显示屏是私有的，则只有所有者可以使用它。
+     * */
+    #[java_method]
+    pub fn get_owner_uid(&self) -> i32 {}
+
+    /**
+     * 获取拥有此显示屏的应用程序的软件包名称，如果显示屏归系统所有，则返回 null。如果显示屏是私有的，则只有所有者可以使用它。
+     * */
+    #[java_method]
+    pub fn get_owner_package_name(&self) -> Option<String> {}
+
+    /**
+     * 获取显示器的名称。请注意，某些显示器可能会被用户重命名。
+     * 返回：显示器的名称。
+     * */
+    #[java_method]
+    pub fn get_name(&self) -> String {}
+
+    /**
+     * 获取显示器配置的默认亮度。
+     * 返回：默认亮度介于 0.0-1.0 之间
+     * */
+    #[java_method]
+    pub fn get_brightness_default(&self) -> f32 {}
+
+    /**
+     * 返回将发生的最大屏幕尺寸。这主要用于壁纸。
+     * */
+    #[java_method]
+    pub fn get_maximum_size_dimension(&self) -> i32 {}
+
+    #[deprecated(note = "改用 WindowMetrics.getBounds.width()。")]
+    #[java_method]
+    pub fn get_width(&self) -> i32 {}
+
+    #[deprecated(note = "改用#height()。")]
+    #[java_method]
+    pub fn get_height(&self) -> i32 {}
+
+    /**
+     * 返回屏幕从其“自然”方向的旋转。返回值可能是 Surface.ROTATION_0（无旋转）、Surface.ROTATION_90、Surface.ROTATION_180 或 Surface.ROTATION_270。
+     * 例如，如果设备具有自然高大的屏幕，并且用户已将其侧放以进入横向方向，则此处返回的值可能是 Surface.ROTATION_90 或 Surface.ROTATION_270，具体取决于旋转的方向。角度是屏幕上绘制图形的旋转，与设备的物理旋转方向相反。例如，如果设备逆时针旋转 90 度，为了补偿渲染将顺时针旋转 90 度，因此此处返回的值将是 Surface.ROTATION_90。此旋转值将与 getMetrics 的结果相匹配：这意味着如果通过活动访问，旋转值将与活动相对应。
+     * */
+    #[java_method]
+    pub fn get_rotation(&self) -> i32 {}
+
+    /// 返回显示器的安装方向。
+    #[java_method]
+    pub fn get_install_orientation(&self) -> i32 {}
+
+    /// 返回：此显示的方向。
+    #[deprecated(note = "使用 getRotation")]
+    #[java_method]
+    pub fn get_orientation(&self) -> i32 {}
+
+    /**
+     * 获取显示器的像素格式。
+     * 返回：PixelFormat 中定义的常量之一。
+     * */
+    #[deprecated(note = "此方法不再受支持。结果始终为 PixelFormat。RGBA_8888。")]
+    #[java_method]
+    pub fn get_pixel_format(&self) -> i32 {}
+
+    /**
+     * 获取此显示器的刷新率（以每秒帧数为单位）。
+     * */
+    #[java_method]
+    pub fn get_refresh_rate(&self) -> f32 {}
+
+    /**
+     * 如果可以将连接的显示器切换到使用最小的后处理方式的模式，则返回true。如果显示器接收器通过HDMI连接，则如果显示屏支持自动低潜伏期模式或游戏内容类型，则此方法将返回true。如果显示器接收器具有内部连接或使用HDMI以外的其他协议，则如果可以将接收器切换到实现定义的低延迟图像处理模式，则此方法将返回true。
+     * 通过系统设置菜单中的用户设置，可以禁用使用最小后处理模式的模式的能力。在这种情况下，此方法返回false。
+     * */
+    #[java_method]
+    pub fn is_minimal_post_processing_supported(&self) -> bool {}
+
+    /**
+     * 请求显示器应用颜色模式。
+     * `color_mode` 颜色模式。
+     * */
+    #[java_method]
+    pub fn request_color_mode(&self, color_mode: i32) {}
+
+    /**
+     * 返回此显示的活跃颜色模式
+     * */
+    #[java_method]
+    pub fn get_color_mode(&self) -> i32 {}
+
+    /// 获取显示屏的当前移除模式 - 移除显示屏内容时应对其执行哪些操作。在这种情况下，公共显示屏的默认行为是将所有活动移至主显示屏并使其处于焦点状态。对于私人显示屏 - 销毁所有活动。
+    /// TODO (b/114338689): 删除方法并使用 IWindowManager#getRemoveContentMode
+    #[java_method]
+    pub fn get_remove_mode(&self) -> i32 {}
+
+    /**
+     * 返回此显示器是否支持任何 HDR 类型。
+     * */
+    #[java_method]
+    pub fn is_hdr(&self) -> bool {}
+
+    /**
+     * 显示器是否支持报告 hdr/sdr 比率。如果为 false，则 getHdrSdrRatio() 将始终为 1.0f
+     * */
+    #[java_method]
+    pub fn is_hdr_sdr_ratio_available(&self) -> bool {}
+
+    /**
+     * 删除显示器的用户首选显示模式。
+     * */
+    #[java_method]
+    pub fn clear_user_preferred_display_mode(&self) {}
+
+    /**
+     * 返回此显示器是否可用于显示广色域内容。这并不一定意味着设备本身可以渲染广色域内容。要确保可以生成广色域内容，请参阅 Configuration.isScreenWideColorGamut()。
+     * */
+    #[java_method]
+    pub fn is_wide_color_gamut(&self) -> bool {}
+
+    /**
+     * 获取应用 VSYNC 偏移量（以纳秒为单位）。这是一个正值，表示 Choreographer 提供的 VSYNC 事件相对于显示刷新的相位偏移量。
+     * 例如，如果 Choreographer 报告刷新发生在时间 N，则它实际上发生在 (N - appVsyncOffset)。应用通常不需要知道这一点。它仅适用于细粒度的 A/V 同步。
+     * */
+    #[java_method]
+    pub fn get_app_vsync_offset_nanos(&self) -> i64 {}
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 这是缓冲区必须提前多久排队等待在给定时间进行演示。如果您希望缓冲区在时间 N 出现在屏幕上，则必须在 (N - presentationDeadline) 之前提交缓冲区。
+     * 可以使用 android.opengl.EGLExt.eglPresentationTimeANDROID 设置 GLES 渲染所需的演示时间。对于视频解码，请使用 android.media.MediaCodec.releaseOutputBuffer(int, long)。时间以纳秒为单位表示，使用系统单调时钟 (System.nanoTime)。
+     * */
+    #[java_method]
+    pub fn get_presentation_deadline_nanos(&self) -> i64 {}
+
+    /**
+     * 确定是否应将 WindowConfiguration.getMaxBounds() 报告为显示尺寸。当应用需要沙盒化时，最大边界字段可能小于逻辑尺寸。取决于 com.android.server.wm.ConfigurationContainer.providesMaxBounds() 中设置的 WindowConfiguration.getMaxBounds()。
+     * 在大多数情况下，此值反映当前 DisplayArea 的大小。当应应用最大边界时，返回 true。
+     * */
+    #[java_method]
+    pub fn should_report_max_bounds(&self) -> bool {}
+
+    /**
+     * 获取显示器的状态，例如是打开还是关闭。
+     * 返回：显示器的状态：STATE_OFF、STATE_ON、STATE_DOZE、STATE_DOZE_SUSPEND、STATE_ON_SUSPEND 或 STATE_UNKNOWN 之一。
+     * */
+    #[java_method]
+    pub fn get_state(&self) -> i32 {}
+
+    /**
+     * 如果指定的 UID 有权访问此显示，则返回 true。
+     * `uid` UID。
+     * */
+    #[java_method]
+    pub fn has_access(&self, uid: i32) -> bool {}
+
+    /// 如果显示是公共演示文稿显示，则返回true。
+    #[java_method]
+    pub fn is_public_presentation(&self) -> bool {}
+
+    /// 如果显示器是受信任的显示器，则为 true。
+    #[java_method]
+    pub fn is_trusted(&self) -> bool {}
+
+    /// 如果显示器可以从另一个显示器窃取顶部焦点，则为 true。
+    #[java_method]
+    pub fn can_steal_top_focus(&self) -> bool {}
+
+    #[java_method]
+    pub fn type_to_string(r#type: i32) -> String {}
+
+    #[java_method]
+    pub fn state_to_string(state: i32) -> String {}
+
+    /**
+     * 如果在指定的显示器电源状态下可以暂停显示更新，则返回 true。在 SUSPEND 状态下，绝对禁止更新。
+     * `state` 状态。
+     * */
+    #[java_method]
+    pub fn is_suspended_state(state: i32) -> bool {}
+
+    /**
+     * 如果在指定的显示器电源状态下显示器可能处于降低的操作模式，则返回 true。
+     * `state` 状态。
+     * */
+    #[java_method]
+    pub fn is_doze_state(state: i32) {}
+
+    /**
+     * 如果显示器处于活动状态（例如 STATE_ON 或 STATE_VR），则返回 true。
+     * `state` 状态。
+     * */
+    #[java_method]
+    pub fn is_active_state(state: i32) {}
+
+    /**
+     * 如果显示器处于关闭状态（例如 STATE_OFF），则返回 true。
+     * `state` 状态。
+     * */
+    #[java_method]
+    pub fn is_off_state(state: i32) -> bool {}
+
+    /**
+     * 如果显示器处于开启状态（例如 STATE_ON 或 STATE_VR 或 STATE_ON_SUSPEND），则返回 true。
+     * `state` 状态。
+     * */
+    #[java_method]
+    pub fn is_on_state(state: i32) -> bool {}
+
+    /**
+     * 如果指定的宽度有效，则返回 true。
+     * `width` 宽度。
+     * */
+    #[java_method]
+    pub fn is_width_valid(width: i32) -> bool {}
+
+    /**
+     * 如果指定的高度有效，则返回 true。
+     * `height` 高度。
+     * */
+    #[java_method]
+    pub fn is_height_valid(height: i32) -> bool {}
+
+    /**
+     * 如果指定的刷新率有效，则返回 true。
+     * `refresh_rate` 刷新率。
+     * */
+    #[java_method]
+    pub fn is_refresh_rate_valid(refresh_rate: f32) -> bool {}
+}
+
 #[cfg(feature = "test_android_view")]
 pub fn test() {
     use crate::{
@@ -1631,6 +2088,9 @@ pub fn test() {
         println!("View is clicked.");
     });
     view.set_on_click_listener(l.as_ref());
+    view.set_visibility(View::GONE);
+    assert_eq!(View::GONE, view.get_visibility());
+
     let params = ViewGroup_LayoutParams::new(
         ViewGroup_LayoutParams::MATCH_PARENT,
         ViewGroup_LayoutParams::MATCH_PARENT,
