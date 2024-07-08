@@ -11,10 +11,10 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use std::sync::Arc;
 use droid_wrap_derive::{
     java_class, java_constructor, java_field, java_implement, java_interface, java_method,
 };
+use std::sync::Arc;
 
 use crate::{
     android::{
@@ -197,7 +197,11 @@ impl Default for TextView_OnEditorActionListenerImplDefault {
 
 impl TextView_OnEditorActionListenerImpl {
     pub fn from_fn(
-        func: fn(/* v */ TextView, /* action_id */ i32, /* event */ Option<KeyEvent>) -> bool,
+        func: fn(
+            /* v */ TextView,
+            /* action_id */ i32,
+            /* event */ Option<KeyEvent>,
+        ) -> bool,
     ) -> Arc<Self> {
         Self::new(TextView_OnEditorActionListenerImplDefault(Some(func)))
     }

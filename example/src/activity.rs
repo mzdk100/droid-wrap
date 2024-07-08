@@ -18,7 +18,10 @@ use droid_wrap::{
         view::{
             ViewGroup_LayoutParams, ViewManager, WindowManagerImpl, WindowManager_LayoutParams,
         },
-        widget::{LinearLayout, LinearLayout_LayoutParams, TextView},
+        widget::{
+            EditText, LinearLayout, LinearLayout_LayoutParams, TextView,
+            TextView_OnEditorActionListenerImpl,
+        },
     },
     java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
 };
@@ -38,6 +41,10 @@ fn main() {
     text_view.set_text(Some(
         "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
     ));
+    let edit = EditText::new(&context);
+    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
+    edit.set_on_editor_action_listener(editor_listener.as_ref());
+
     let act2 = act.clone();
     act.run_on_ui_thread(
         RunnableImpl::from_fn(move || {
@@ -57,6 +64,8 @@ fn main() {
             let wm: WindowManagerImpl = act2.get_window_manager();
             let params = WindowManager_LayoutParams::new();
             wm.add_view(&text_view, &params);
+            wm.remove_view(&text_view);
+            wm.add_view(&edit, &params);
         })
         .as_ref(),
     );

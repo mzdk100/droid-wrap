@@ -226,6 +226,61 @@ impl View {
      * */
     #[java_method]
     pub fn get_visibility(&self) -> i32 {}
+
+    /**
+     * 如果已定义，则调用此视图的 OnClickListener。执行与点击相关的所有常规操作：报告可访问性事件、播放声音等。
+     * 返回：如果已分配一个被调用的 OnClickListener，则返回 True，否则返回 false。
+     * */
+    #[java_method]
+    pub fn perform_click(&self) -> bool {}
+
+    /**
+     * 指示此视图是否对点击事件作出反应。如果视图可点击，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_clickable(&self) -> bool {}
+
+    /**
+     * 启用或禁用此视图的点击事件。当视图可点击时，每次点击时它的状态都会更改为“按下”。子类应将视图设置为可点击，以便对用户的点击做出视觉反应。
+     * `clickable` true 表示视图可点击，否则为 false
+     * */
+    #[java_method]
+    pub fn set_clickable(&self, clickable: bool) {}
+
+    /**
+     * 禁用时启用或禁用此视图的单击事件。
+     * `clickable_when_disabled` true使视图可单击，否则为false
+     * */
+    #[java_method]
+    pub fn set_allow_click_when_disabled(&self, clickable_when_disabled: bool) {}
+
+    /**
+     * 指示此视图是否对长按事件作出反应。
+     * 返回：如果视图可长按，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_long_clickable(&self) -> bool {}
+
+    /**
+     * 启用或禁用此视图的长按事件。当视图可长按时，它会对用户按住按钮的时间长于点击做出反应。此事件可以启动侦听器或上下文菜单。
+     * `long_clickable` true 表示视图可长按，否则为 false
+     * */
+    #[java_method]
+    pub fn set_long_clickable(&self, long_clickable: bool) {}
+
+    /**
+     * 指示此视图是否对上下文点击反应。
+     * 返回：如果视图是上下文可单击的，则为false，否则否则
+     * */
+    #[java_method]
+    pub fn is_context_clickable(&self) -> bool {}
+
+    /**
+     * 启用或禁用此视图的上下文点击。此事件可以启动侦听器。
+     * `context_clickable` true 表示使视图对上下文点击做出反应，否则为 false
+     * */
+    #[java_method]
+    pub fn set_context_clickable(&self, context_clickable: bool) {}
 }
 
 /// 当视图被点击时调用的回调的接口定义。
@@ -3795,6 +3850,14 @@ pub fn test() {
     view.set_on_click_listener(l.as_ref());
     view.set_visibility(View::GONE);
     assert_eq!(View::GONE, view.get_visibility());
+    view.set_context_clickable(true);
+    assert_eq!(true, view.is_context_clickable());
+    view.set_clickable(true);
+    assert_eq!(true, view.is_clickable());
+    view.set_long_clickable(true);
+    assert_eq!(true, view.is_long_clickable());
+    view.set_allow_click_when_disabled(true);
+    view.perform_click();
 
     let params = ViewGroup_LayoutParams::new(
         ViewGroup_LayoutParams::MATCH_PARENT,

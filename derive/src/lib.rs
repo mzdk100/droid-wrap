@@ -210,14 +210,13 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 if r.is_null() {
                     return false;
                 }
-                droid_wrap_utils::vm_attach(|env| {
-                    env.call_method(
-                        r.clone(),
-                        "equals",
-                        "(Ljava/lang/Object;)Z",
-                        &[t.as_obj().into()]
-                    ).unwrap().z().unwrap()
-                })
+                droid_wrap_utils::vm_attach!(mut env);
+                env.call_method(
+                    r.clone(),
+                    "equals",
+                    "(Ljava/lang/Object;)Z",
+                    &[t.as_obj().into()]
+                ).unwrap().z().unwrap()
             }
     }
 
@@ -227,20 +226,19 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 if r.is_null() {
                     return "null".to_string();
                 }
-                droid_wrap_utils::vm_attach(|env| {
-                    let s = match env.call_method(r.clone(), "toString", format!("()L{};", String::CLASS).as_str(), &[]) {
-                        Ok(s) => match s.l() {
-                            Ok(s) => s,
-                            Err(e) => return e.to_string()
-                        },
-                        Err(e) => return e.to_string()
-                    };
-                    let s = match env.get_string((&s).into()) {
+                droid_wrap_utils::vm_attach!(mut env);
+                let s = match env.call_method(r.clone(), "toString", format!("()L{};", String::CLASS).as_str(), &[]) {
+                    Ok(s) => match s.l() {
                         Ok(s) => s,
                         Err(e) => return e.to_string()
-                    };
-                    s.to_str().unwrap().to_string()
-                })
+                    },
+                    Err(e) => return e.to_string()
+                };
+                let s = match env.get_string((&s).into()) {
+                    Ok(s) => s,
+                    Err(e) => return e.to_string()
+                };
+                s.to_str().unwrap().to_string()
             }
         }
 
@@ -322,30 +320,28 @@ pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
             #(#attrs)*
             #vis #sig {
                 #(#stmts)*
-                droid_wrap_utils::vm_attach(|env| {
-                    let ret = env.call_static_method(
-                        #class_token,
-                        #name,
-                        format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
-                        &[#arg_values],
-                    );
-                    #ret_value
-                })
+                droid_wrap_utils::vm_attach!(mut env);
+                let ret = env.call_static_method(
+                    #class_token,
+                    #name,
+                    format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
+                    &[#arg_values],
+                );
+                #ret_value
             }
         }
     } else {
         quote! {
             #(#attrs)*
             #vis #sig {
-                droid_wrap_utils::vm_attach(|env| {
-                    let ret = env.call_method(
-                        #self_.java_ref(),
-                        #name,
-                        format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
-                        &[#arg_values],
-                    );
-                    #ret_value
-                })
+                droid_wrap_utils::vm_attach!(mut env);
+                let ret = env.call_method(
+                    #self_.java_ref(),
+                    #name,
+                    format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
+                    &[#arg_values],
+                );
+                #ret_value
             }
         }
     }
@@ -400,15 +396,14 @@ pub fn java_constructor(_: TokenStream, input: TokenStream) -> TokenStream {
         #(#attrs)*
         #vis #sig {
             #(#stmts)*
-            droid_wrap_utils::vm_attach(|env| {
-                let obj = env.new_object(
-                    <Self as JType>::CLASS,
-                    format!(#fmt, #arg_types "V").as_str(),
-                    &[#arg_values],
-                )
-                .unwrap();
-                #ret_value
-            })
+            droid_wrap_utils::vm_attach!(mut env);
+            let obj = env.new_object(
+                <Self as JType>::CLASS,
+                format!(#fmt, #arg_types "V").as_str(),
+                &[#arg_values],
+            )
+            .unwrap();
+            #ret_value
         }
     };
 
@@ -520,14 +515,17 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 if self_.is_none() {
                     continue;
                 }
+
                 let ret_token = match ret_type.to_string().as_str() {
-                    "()" => quote! {Self::null().java_ref()},
-                    "bool" => quote! {
-                        let v: droid_wrap_utils::JValueGen<droid_wrap_utils::JObject<'_>> = (ret as droid_wrap_utils::jboolean).into();
-                        env.new_global_ref(v.l().unwrap()).unwrap()
-                    },
-                    _ => quote! {(&ret).into()},
+                    "()" => quote! {droid_wrap_utils::null_value(env)},
+                    "bool" => quote! {droid_wrap_utils::wrapper_bool_value(ret, env)},
+                    "i32" => quote! {droid_wrap_utils::wrapper_integer_value(ret, env)},
+                    "u32" => quote! {droid_wrap_utils::wrapper_integer_value(ret as u32, env)},
+                    "i64" => quote! {droid_wrap_utils::wrapper_long_value(ret, env)},
+                    "u64" => quote! {droid_wrap_utils::wrapper_long_value(ret as u64, env)},
+                    _ => quote! {ret.java_ref()},
                 };
+
                 let mut arg_tokens = TokenStream2::new();
                 for i in 0..arg_types.len() {
                     let (unwrapped_ty, origin_ty) = &arg_types[i];
@@ -588,7 +586,7 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 let name = env.get_string((&name).into()).unwrap();
                 match name.to_str() {
                     #methods
-                    _ => Self::null().java_ref()
+                    _ => droid_wrap_utils::null_value(env)
                 }
             });
             ret
@@ -699,10 +697,9 @@ pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
         #(#attrs)*
         #vis #sig {
             #(#stmts)*
-            droid_wrap_utils::vm_attach(|env| {
-                #opt
-                #ret_value
-            })
+            droid_wrap_utils::vm_attach!(mut env);
+            #opt
+            #ret_value
         }
     };
     stream.into()

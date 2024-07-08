@@ -60,10 +60,9 @@ impl ObjectExt for Object {
 
 impl JObjRef for String {
     fn java_ref(&self) -> GlobalRef {
-        vm_attach(|env| {
-            let s = env.new_string(self.as_str()).unwrap();
-            env.new_global_ref(&s).unwrap()
-        })
+        vm_attach!(mut env);
+        let s = env.new_string(self.as_str()).unwrap();
+        env.new_global_ref(&s).unwrap()
     }
 }
 
@@ -74,12 +73,11 @@ impl JObjNew for String {
         if this.is_null() {
             return Self::default();
         }
-        vm_attach(|env| {
-            if let Ok(s) = env.get_string(this.as_obj().into()) {
-                return Self::from(s.to_str().unwrap());
-            }
-            Self::null()
-        })
+        vm_attach!(mut env);
+        if let Ok(s) = env.get_string(this.as_obj().into()) {
+            return Self::from(s.to_str().unwrap());
+        }
+        Self::null()
     }
 }
 
@@ -131,11 +129,10 @@ impl<'a> CharSequenceExt for &'a str {
     where
         <CS as JObjNew>::Fields: Default,
     {
-        vm_attach(|env| {
-            let s = env.new_string(*self).unwrap();
-            let s = env.new_global_ref(&s).unwrap();
-            CS::_new(&s, Default::default())
-        })
+        vm_attach!(mut env);
+        let s = env.new_string(*self).unwrap();
+        let s = env.new_global_ref(&s).unwrap();
+        CS::_new(&s, Default::default())
     }
 }
 

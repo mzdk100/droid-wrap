@@ -201,8 +201,12 @@ impl Activity {
      * */
     pub fn fetch() -> Self {
         let ctx = android_context();
-        let obj = vm_attach(|env| env.new_global_ref(&ctx).unwrap());
-        Self::_new(&obj, ())
+        vm_attach!(mut env);
+        if let Ok(obj) = env.new_global_ref(&ctx) {
+            Self::_new(&obj, ())
+        } else {
+            Self::null()
+        }
     }
 }
 
