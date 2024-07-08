@@ -11,16 +11,19 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_constructor, java_field, java_method};
+use std::sync::Arc;
+use droid_wrap_derive::{
+    java_class, java_constructor, java_field, java_implement, java_interface, java_method,
+};
 
 use crate::{
     android::{
         content::Context,
         text::TextWatcher,
-        view::{ViewGroup, ViewGroup_LayoutParams, ViewGroup_MarginLayoutParams},
+        view::{KeyEvent, ViewGroup, ViewGroup_LayoutParams, ViewGroup_MarginLayoutParams},
     },
     java::lang::CharSequence,
-    JObjNew, JObjRef, JType,
+    JObjNew, JObjRef, JProxy, JType,
 };
 
 /**
@@ -157,6 +160,57 @@ impl TextView {
      * */
     #[java_method]
     pub fn remove_text_changed_listener<TW: TextWatcher>(&self, watcher: &TW) {}
+
+    /**
+     * 设置一个特殊侦听器，在文本视图上执行操作时调用。当按下回车键或用户选择提供给 IME 的操作时，将调用此侦听器。
+     * 设置此项意味着普通硬键事件不会在文本视图中插入换行符，即使它是多行的；但是，按住 ALT 修饰键将允许用户插入换行符。
+     * */
+    #[java_method]
+    pub fn set_on_editor_action_listener<L: TextView_OnEditorActionListener>(&self, l: &L) {}
+}
+
+/**
+ * 在编辑器上执行操作时调用的回调的接口定义。
+ * */
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/widget/TextView$OnEditorActionListener")]
+pub trait TextView_OnEditorActionListener {
+    /**
+     * 执行操作时调用。
+     * 返回:如果您已使用该操作，则返回 true，否则为 false。
+     * `v` 被点击的视图。
+     * `action_id` 操作的标识符。这将是您提供的标识符，或 EditorInfo。如果由于按下 Enter 键而调用，则为 IME_NULL。从 Android 14 开始，如果输入限制为一行，则在由 Enter 键触发时还将包含操作标识符。
+     * `event` 如果由 Enter 键触发，则这是事件；否则，这是 null。
+     * */
+    fn on_editor_action(&self, v: TextView, action_id: i32, event: Option<KeyEvent>) -> bool;
+}
+
+#[allow(non_camel_case_types)]
+#[java_class(name = "android/widget/TextView$OnEditorActionListenerImpl")]
+pub struct TextView_OnEditorActionListenerImpl(Option<fn(TextView, i32, Option<KeyEvent>) -> bool>);
+
+impl Default for TextView_OnEditorActionListenerImplDefault {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+
+impl TextView_OnEditorActionListenerImpl {
+    pub fn from_fn(
+        func: fn(/* v */ TextView, /* action_id */ i32, /* event */ Option<KeyEvent>) -> bool,
+    ) -> Arc<Self> {
+        Self::new(TextView_OnEditorActionListenerImplDefault(Some(func)))
+    }
+}
+
+#[java_implement]
+impl TextView_OnEditorActionListener for TextView_OnEditorActionListenerImpl {
+    fn on_editor_action(&self, v: TextView, action_id: i32, event: Option<KeyEvent>) -> bool {
+        if let Some(ref f) = self.0 {
+            return f(v, action_id, event);
+        }
+        false
+    }
 }
 
 /**
@@ -301,6 +355,9 @@ pub fn test() {
     assert!(edit.to_string().starts_with("android.widget.EditText"));
     edit.select_all();
     // let _ = edit.set_selection(0,2);
+    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
+    edit.set_on_editor_action_listener(editor_listener.as_ref());
+
     let text = TextView::new(&context);
     assert!(text.to_string().starts_with("android.widget.TextView"));
     text.set_text(Some("你好".to_char_sequence::<CharSequenceImpl>()));

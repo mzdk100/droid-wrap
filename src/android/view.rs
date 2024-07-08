@@ -241,24 +241,26 @@ pub trait View_OnClickListener {
 
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/view/View$OnClickListenerImpl")]
-pub struct View_OnClickListenerImpl(Box<dyn Fn(View) + Sync + Send>);
+pub struct View_OnClickListenerImpl(Option<fn(View)>);
 
 impl View_OnClickListenerImpl {
-    pub fn from_fn(func: impl Fn(View) + Sync + Send + 'static) -> Arc<Self> {
-        Self::new(View_OnClickListenerImplDefault(Box::new(func)))
+    pub fn from_fn(func: fn(View)) -> Arc<Self> {
+        Self::new(View_OnClickListenerImplDefault(Some(func)))
     }
 }
 
 impl Default for View_OnClickListenerImplDefault {
     fn default() -> Self {
-        Self(Box::new(|_| ()))
+        Self(None)
     }
 }
 
 #[java_implement]
 impl View_OnClickListener for View_OnClickListenerImpl {
     fn on_click(&self, v: View) {
-        self.0(v)
+        if let Some(ref f) = self.0 {
+            f(v)
+        }
     }
 }
 
@@ -2057,6 +2059,1709 @@ impl Display {
     pub fn is_refresh_rate_valid(refresh_rate: f32) -> bool {}
 }
 
+/// 输入事件的通用基类。
+#[java_class(name = "android/view/InputEvent")]
+pub struct InputEvent;
+
+impl InputEvent {
+    /**
+     * 获取此事件所来自设备的 ID。ID 为零表示事件不是来自物理设备并映射到默认键盘映射。其他数字是任意的，您不应该依赖这些值。
+     * 返回：设备 ID。
+     * */
+    #[java_method]
+    pub fn get_device_id(&self) -> i32 {}
+
+    /**
+     * 获取事件源。
+     * 返回：事件源或输入设备。如果未知，则返回 SOURCE_UNKNOWN。
+     * */
+    #[java_method]
+    pub fn get_source(&self) -> i32 {}
+
+    /**
+     * 修改事件的来源。
+     * `source` 新来源。
+     * */
+    #[java_method]
+    pub fn set_source(&self, source: i32) {}
+
+    /**
+     * 确定事件是否来自给定的源。
+     * 返回：事件是否来自给定的源。
+     * `source` 要检查的输入源。这可以是特定的设备类型，例如 InputDevice.SOURCE_TOUCH_NAVIGATION，也可以是更通用的设备类，例如 InputDevice.SOURCE_CLASS_POINTER。
+     * */
+    #[java_method]
+    pub fn is_from_source(&self, source: i32) -> bool {}
+
+    /**
+     * 获取事件的显示 ID。
+     * 返回：与事件关联的显示 ID。
+     * */
+    #[java_method]
+    pub fn get_display_id(&self) -> i32 {}
+
+    /**
+     * 修改与事件关联的显示 ID
+     * `display_id`
+     * */
+    #[java_method]
+    pub fn set_display_id(&self, display_id: i32) {}
+
+    /**
+     * 回收事件。此方法仅应由系统使用，因为应用程序不希望回收 KeyEvent 对象，但可以回收 MotionEvent 对象。
+     * 有关详细信息，请参阅 KeyEvent.recycle()。
+     * */
+    #[java_method]
+    pub fn recycle(&self) {}
+
+    /**
+     * 在将事件分发给应用程序后，如果合适，则有条件地回收事件。如果事件是 MotionEvent，则回收该事件。如果事件是 KeyEvent，则不回收该事件，因为应用程序希望按键事件是不可变的，因此一旦将事件分发给应用程序，我们就不能再回收它了。
+     * */
+    #[java_method]
+    pub fn recycle_if_needed_after_dispatch(&self) {}
+
+    /**
+     * 获取一个私有标志，该标志指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
+     * 返回：如果此事件被污染，则返回 True。
+     * */
+    #[java_method]
+    pub fn is_tainted(&self) -> bool {}
+
+    /**
+     * 设置一个私有标志，指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
+     * `tainted` 如果此事件被污染，则为 True。
+     * */
+    #[java_method]
+    pub fn set_tainted(&self, tainted: bool) {}
+
+    /**
+     * 以 android.os.SystemClock.uptimeMillis 时间基准查询此事件发生的时间。
+     * 返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
+     * */
+    #[java_method]
+    pub fn get_event_time(&self) -> i64 {}
+
+    /**
+     * 查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
+     * 返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
+     * */
+    #[java_method]
+    pub fn get_event_time_nanos(&self) -> i64 {}
+
+    /**
+     * 将输入事件标记为已取消。
+     * */
+    #[java_method]
+    pub fn cancel(&self) {}
+
+    /**
+     * 获取此事件的唯一序列号。进程创建或接收的每个输入事件都有唯一的序列号。此外，每次回收事件对象时都会获得一个新的序列号。序列号仅保证在进程内本地唯一。打包事件时不会保留序列号。
+     * 返回：此事件的唯一序列号。
+     * */
+    #[java_method]
+    pub fn get_sequence_number(&self) -> i32 {}
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 获取此事件的 ID。此 ID 在事件创建时生成，并保存到事件的最后阶段。它不会因为事件跨越进程边界而改变，但在进行修改复制时应该会改变。为了避免将应用程序使用情况暴露给其他进程，此 ID 由 CSPRNG 生成。因此，虽然 ID 冲突的可能性相当低，但不能 100% 保证此 ID 的唯一性。经验法则是不要依赖生产逻辑的唯一性，而要依赖跟踪事件（例如日志记录和分析）的良好来源。
+     * 返回：此事件的 ID。
+     * */
+    #[java_method]
+    pub fn get_id(&self) -> i32 {}
+
+    #[java_method]
+    pub fn describe_contents(&self) -> i32 {}
+}
+
+//noinspection SpellCheckingInspection
+/**
+ * 用于报告按键和按钮事件的对象。每次按键都由一系列按键事件描述。按键以 ACTION_DOWN 按键事件开始。如果按键保持的时间足够长，以至于重复，则初始按下之后是其他按键事件，其中 ACTION_DOWN 和非零 getRepeatCount() 值。最后一个按键事件是按键弹起的 ACTION_UP。
+ * 如果取消按键，则按键弹起事件将设置 FLAG_CANCELED 标志。按键事件通常伴随着按键代码 (getKeyCode())、扫描代码 (getScanCode()) 和元状态 (getMetaState())。按键代码常量在此类中定义。扫描代码常量是从操作系统获得的原始设备特定代码，因此除非使用 KeyCharacterMap 进行解释，否则通常对应用程序没有意义。
+ * 元状态描述按键修饰符（如 META_SHIFT_ON 或 META_ALT_ON）的按下状态。按键代码通常与输入设备上的各个按键一一对应。许多按键和按键组合在不同的输入设备上具有完全不同的功能，因此在解释它们时必须小心谨慎。将按键映射到字符时，请始终使用与输入设备关联的 KeyCharacterMap。
+ * 请注意，可能同时有多个按键输入设备处于活动状态，并且每个设备都有自己的按键字符映射。由于软输入法可以使用多种创新的文本输入方式，因此无法保证软键盘上的任何按键都会生成按键事件：这由 IME 自行决定，实际上不鼓励发送此类事件。您永远不应该依赖于接收软输入法上任何按键的 KeyEvent。
+ * 特别是，默认软件键盘永远不会向任何针对 Jelly Bean 或更高版本的应用程序发送任何按键事件，并且只会向针对 Ice Cream Sandwich 或更早版本的应用程序发送某些删除和返回键按下事件。请注意，其他软件输入法可能永远不会发送按键事件，无论版本如何。考虑使用编辑器操作，如 android.view.inputmethod.EditorInfo。
+ * 如果您需要与软件键盘进行特定交互，则可以使用 IME_ACTION_DONE，因为它可以让用户更清楚地了解您的应用程序如何对按键做出反应。与 IME 交互时，框架可能会使用特殊操作 ACTION_MULTIPLE 传递按键事件，该操作指定单个重复的按键代码或要插入的字符序列。一般来说，框架无法保证它传递给视图的按键事件始终构成完整的按键序列，因为某些事件可能会在传递之前被包含视图删除或修改。视图实现应该准备好处理 FLAG_CANCELED，并且应该容忍异常情况，例如在没有先收到上一次按键的 ACTION_UP 的情况下收到新的 ACTION_DOWN。
+ * 有关不同类型的输入设备和源如何表示按键和按钮的更多信息，请参阅 InputDevice。
+ * */
+#[java_class(name = "android/view/KeyEvent", extends=InputEvent)]
+pub struct KeyEvent;
+
+impl KeyEvent {
+    /// 键码常量：未知键码。
+    pub const KEYCODE_UNKNOWN: i32 = 0;
+
+    /// 键码常量：软左键。通常位于手机显示屏下方，用作多功能特征键，用于选择显示在显示屏左下角的软件定义功能。
+    pub const KEYCODE_SOFT_LEFT: i32 = 1;
+
+    /// 键码常量：软右键。通常位于手机显示屏下方，用作多功能特征键，用于选择显示在显示屏右下角的软件定义功能。
+    pub const KEYCODE_SOFT_RIGHT: i32 = 2;
+
+    /// 键码常量：主页键。此键由框架处理，永远不会传递给应用程序。
+    pub const KEYCODE_HOME: i32 = 3;
+
+    /// 键码常量：返回键。
+    pub const KEYCODE_BACK: i32 = 4;
+
+    /// 键码常量：呼叫键。
+    pub const KEYCODE_CALL: i32 = 5;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：结束呼叫键。
+    pub const KEYCODE_ENDCALL: i32 = 6;
+
+    /// 键码常量：'0'键。
+    pub const KEYCODE_0: i32 = 7;
+
+    /// 键码常量：'1'键。
+    pub const KEYCODE_1: i32 = 8;
+
+    /// 键码常量：'2'键。
+    pub const KEYCODE_2: i32 = 9;
+
+    /// 键码常量：'3'键。
+    pub const KEYCODE_3: i32 = 10;
+
+    /// 键码常量：'4'键。
+    pub const KEYCODE_4: i32 = 11;
+
+    /// 键码常量：'5'键。
+    pub const KEYCODE_5: i32 = 12;
+
+    /// 键码常量：'6'键。
+    pub const KEYCODE_6: i32 = 13;
+
+    /// 键码常量：'7'键。
+    pub const KEYCODE_7: i32 = 14;
+
+    /// 键码常量：'8'键。
+    pub const KEYCODE_8: i32 = 15;
+
+    /// 键码常量：'9'键。
+    pub const KEYCODE_9: i32 = 16;
+
+    /// 键码常量：'*'键。
+    pub const KEYCODE_STAR: i32 = 17;
+
+    /// 键码常量：'#'键。
+    pub const KEYCODE_POUND: i32 = 18;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键向上键。也可以从轨迹球运动合成。
+    pub const KEYCODE_DPAD_UP: i32 = 19;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键向下键。也可以从轨迹球运动合成。
+    pub const KEYCODE_DPAD_DOWN: i32 = 20;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键左键。也可以从轨迹球运动合成。
+    pub const KEYCODE_DPAD_LEFT: i32 = 21;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键右键。也可以从轨迹球运动合成。
+    pub const KEYCODE_DPAD_RIGHT: i32 = 22;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键中心键。也可以从轨迹球运动合成。
+    pub const KEYCODE_DPAD_CENTER: i32 = 23;
+
+    /// 键码常量：音量向上键。调整扬声器音量。
+    pub const KEYCODE_VOLUME_UP: i32 = 24;
+
+    /// 键码常量：音量减键。调整扬声器音量减小。
+    pub const KEYCODE_VOLUME_DOWN: i32 = 25;
+
+    /// 键码常量：电源键。
+    pub const KEYCODE_POWER: i32 = 26;
+
+    /// 键码常量：相机键。用于启动相机应用程序或拍照。
+    pub const KEYCODE_CAMERA: i32 = 27;
+
+    /// 键码常量：清除键。
+    pub const KEYCODE_CLEAR: i32 = 28;
+
+    /// 键码常量：'A'键。
+    pub const KEYCODE_A: i32 = 29;
+
+    /// 键码常量：'B'键。
+    pub const KEYCODE_B: i32 = 30;
+
+    /// 键码常量：'C'键。
+    pub const KEYCODE_C: i32 = 31;
+
+    /// 键码常量：'D'键。
+    pub const KEYCODE_D: i32 = 32;
+
+    /// 键码常量：'E'键。
+    pub const KEYCODE_E: i32 = 33;
+
+    /// 键码常量：'F'键。
+    pub const KEYCODE_F: i32 = 34;
+
+    /// 键码常量：'G'键。
+    pub const KEYCODE_G: i32 = 35;
+
+    /// 键码常量：'H'键。
+    pub const KEYCODE_H: i32 = 36;
+
+    /// 键码常量：'I'键。
+    pub const KEYCODE_I: i32 = 37;
+
+    /// 键码常量：'J'键。
+    pub const KEYCODE_J: i32 = 38;
+
+    /// 键码常量：'K'键。
+    pub const KEYCODE_K: i32 = 39;
+
+    /// 键码常量：'L'键。
+    pub const KEYCODE_L: i32 = 40;
+
+    /// 键码常量：'M'键。
+    pub const KEYCODE_M: i32 = 41;
+
+    /// 键码常量：'N'键。
+    pub const KEYCODE_N: i32 = 42;
+
+    /// 键码常量：'O'键。
+    pub const KEYCODE_O: i32 = 43;
+
+    /// 键码常量：'P'键。
+    pub const KEYCODE_P: i32 = 44;
+
+    /// 键码常量：'Q'键。
+    pub const KEYCODE_Q: i32 = 45;
+
+    /// 键码常量：'R'键。
+    pub const KEYCODE_R: i32 = 46;
+
+    /// 键码常量：'S'键。
+    pub const KEYCODE_S: i32 = 47;
+
+    /// 键码常量：'T'键。
+    pub const KEYCODE_T: i32 = 48;
+
+    /// 键码常量：'U'键。
+    pub const KEYCODE_U: i32 = 49;
+
+    /// 键码常量：'V'键。
+    pub const KEYCODE_V: i32 = 50;
+
+    /// 键码常量：'W'键。
+    pub const KEYCODE_W: i32 = 51;
+
+    /// 键码常量：'X'键。
+    pub const KEYCODE_X: i32 = 52;
+
+    /// 键码常量：'Y'键。
+    pub const KEYCODE_Y: i32 = 53;
+
+    /// 键码常量：'Z'键。
+    pub const KEYCODE_Z: i32 = 54;
+
+    /// 键码常量：','键。
+    pub const KEYCODE_COMMA: i32 = 55;
+
+    /// 键码常量：'.'键。
+    pub const KEYCODE_PERIOD: i32 = 56;
+
+    /// 键码常量：左Alt修饰键。
+    pub const KEYCODE_ALT_LEFT: i32 = 57;
+
+    /// 键码常量：右Alt修饰键。
+    pub const KEYCODE_ALT_RIGHT: i32 = 58;
+
+    /// 键码常量：左Shift修饰键。
+    pub const KEYCODE_SHIFT_LEFT: i32 = 59;
+
+    /// 键码常量：右Shift修饰键。
+    pub const KEYCODE_SHIFT_RIGHT: i32 = 60;
+
+    /// 键码常量：Tab键。
+    pub const KEYCODE_TAB: i32 = 61;
+
+    /// 键码常量：空格键。
+    pub const KEYCODE_SPACE: i32 = 62;
+
+    /// 键码常量：符号修饰键。用于输入替代符号。
+    pub const KEYCODE_SYM: i32 = 63;
+
+    /// 键码常量：资源管理器特殊功能键。用于启动浏览器应用程序。
+    pub const KEYCODE_EXPLORER: i32 = 64;
+
+    /// 键码常量：信封特殊功能键。用于启动邮件应用程序。
+    pub const KEYCODE_ENVELOPE: i32 = 65;
+
+    /// 键码常量：Enter键。
+    pub const KEYCODE_ENTER: i32 = 66;
+
+    /// 键码常量：退格键。删除插入点前的字符，与KEYCODE_FORWARD_DEL不同。
+    pub const KEYCODE_DEL: i32 = 67;
+
+    /// 键码常量：'`'（反引号）键。
+    pub const KEYCODE_GRAVE: i32 = 68;
+
+    /// 键码常量：'-'。
+    pub const KEYCODE_MINUS: i32 = 69;
+
+    /// 键码常量：'='键。
+    pub const KEYCODE_EQUALS: i32 = 70;
+
+    /// 键码常量：'[' 键。
+    pub const KEYCODE_LEFT_BRACKET: i32 = 71;
+
+    /// 键码常量：']'键。
+    pub const KEYCODE_RIGHT_BRACKET: i32 = 72;
+
+    /// 键码常量：'\'键。
+    pub const KEYCODE_BACKSLASH: i32 = 73;
+
+    /// 键码常量：';'键。
+    pub const KEYCODE_SEMICOLON: i32 = 74;
+
+    /// 键码常量：'''（单引号）键。
+    pub const KEYCODE_APOSTROPHE: i32 = 75;
+
+    /// 键码常量：'/'键。
+    pub const KEYCODE_SLASH: i32 = 76;
+
+    /// 键码常量：'@'键。
+    pub const KEYCODE_AT: i32 = 77;
+
+    /// 键码常量：数字修饰键。用于输入数字符号。这个键不是Num Lock；它更像是KEYCODE_ALT_LEFT，并被android.text.method.MetaKeyKeyListener解释为ALT键。
+    pub const KEYCODE_NUM: i32 = 78;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：耳机钩键。用于挂断电话并停止媒体。
+    pub const KEYCODE_HEADSETHOOK: i32 = 79;
+
+    /// 键码常量：相机对焦键。用于对焦相机。
+    pub const KEYCODE_FOCUS: i32 = 80;
+
+    /// 键码常量：'+'键。
+    pub const KEYCODE_PLUS: i32 = 81;
+
+    /// 键码常量：菜单键。
+    pub const KEYCODE_MENU: i32 = 82;
+
+    /// 键码常量：通知键。
+    pub const KEYCODE_NOTIFICATION: i32 = 83;
+
+    /// 键码常量：搜索键。
+    pub const KEYCODE_SEARCH: i32 = 84;
+
+    /// 键码常量：媒体播放/暂停键。
+    pub const KEYCODE_MEDIA_PLAY_PAUSE: i32 = 85;
+
+    /// 键码常量：媒体停止键。
+    pub const KEYCODE_MEDIA_STOP: i32 = 86;
+
+    /// 键码常量：媒体播放下一曲键。
+    pub const KEYCODE_MEDIA_NEXT: i32 = 87;
+
+    /// 键码常量：媒体播放上一曲键。
+    pub const KEYCODE_MEDIA_PREVIOUS: i32 = 88;
+
+    /// 键码常量：媒体倒带键。
+    pub const KEYCODE_MEDIA_REWIND: i32 = 89;
+
+    /// 键码常量：媒体快进键。
+    pub const KEYCODE_MEDIA_FAST_FORWARD: i32 = 90;
+
+    /// 键码常量：静音键。用于麦克风的静音键（不同于KEYCODE_VOLUME_MUTE，那是扬声器静音键）。
+    pub const KEYCODE_MUTE: i32 = 91;
+
+    /// 键码常量：Page Up键。
+    pub const KEYCODE_PAGE_UP: i32 = 92;
+
+    /// 键码常量：Page Down键。
+    pub const KEYCODE_PAGE_DOWN: i32 = 93;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：图片符号修饰键。用于切换符号集（表情符号、颜文字）。
+    pub const KEYCODE_PICTSYMBOLS: i32 = 94;
+
+    //noinspection SpellCheckingInspection
+    /// 切换符号集（表情符号、颜文字）
+    /// 键码常量：切换字符集修饰键。用于切换字符集（汉字、片假名）。
+    pub const KEYCODE_SWITCH_CHARSET: i32 = 95; // 切换字符集（汉字、片假名）
+
+    /// 键码常量：A按钮键。在游戏控制器上，A按钮应为标有A的按钮或控制器按钮底部行的第一个按钮。
+    pub const KEYCODE_BUTTON_A: i32 = 96;
+
+    /// 键码常量：B按钮键。在游戏控制器上，B按钮应为标有B的按钮或控制器按钮底部行的第二个按钮。
+    pub const KEYCODE_BUTTON_B: i32 = 97;
+
+    /// 键码常量：C按钮键。在游戏控制器上，C按钮应为标有C的按钮或控制器按钮底部行的第三个按钮。
+    pub const KEYCODE_BUTTON_C: i32 = 98;
+
+    /// 键码常量：X按钮键。在游戏控制器上，X按钮应为标有X的按钮或控制器按钮顶部行的第一个按钮。
+    pub const KEYCODE_BUTTON_X: i32 = 99;
+
+    /// 键码常量：Y按钮键。在游戏控制器上，Y按钮应为标有Y的按钮或控制器按钮顶部行的第二个按钮。
+    pub const KEYCODE_BUTTON_Y: i32 = 100;
+
+    /// 键码常量：Z按钮键。在游戏控制器上，Z按钮应为标有Z的按钮或控制器按钮顶部行的第三个按钮。
+    pub const KEYCODE_BUTTON_Z: i32 = 101;
+
+    /// 键码常量：L1按钮键。在游戏控制器上，L1按钮应为标有L1（或L）的按钮或左上角的触发器按钮。
+    pub const KEYCODE_BUTTON_L1: i32 = 102;
+
+    /// 键码常量：R1按钮键。在游戏控制器上，R1按钮应为标有R1（或R）的按钮或右上角的触发器按钮。
+    pub const KEYCODE_BUTTON_R1: i32 = 103;
+
+    /// 键码常量：L2按钮键。在游戏控制器上，L2按钮应为标有L2的按钮或左下角的触发器按钮。
+    pub const KEYCODE_BUTTON_L2: i32 = 104;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：左拇指按钮键。在游戏控制器上，左拇指按钮表示按下左（或唯一）操纵杆。
+    pub const KEYCODE_BUTTON_THUMBL: i32 = 106;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：右拇指按钮键。在游戏控制器上，右拇指按钮表示按下了右操纵杆。
+    pub const KEYCODE_BUTTON_THUMBR: i32 = 107;
+
+    /// 键码常量：R2 按钮键。在游戏控制器上，R2 按钮应该是标有 R2 的按钮或右下角触发器按钮。
+    pub const KEYCODE_BUTTON_R2: i32 = 105;
+
+    /// 键码常量：开始按钮键。在游戏控制器上，标有“开始”的按钮。
+    pub const KEYCODE_BUTTON_START: i32 = 108;
+
+    /// 键码常量：选择按钮键。在游戏控制器上，标有“选择”的按钮。
+    pub const KEYCODE_BUTTON_SELECT: i32 = 109;
+
+    /// 键码常量：模式按钮键。在游戏控制器上，标有“模式”的按钮。
+    pub const KEYCODE_BUTTON_MODE: i32 = 110;
+
+    /// 键码常量：Esc 键。
+    pub const KEYCODE_ESCAPE: i32 = 111;
+
+    /// 键码常量：向前删除键。与 KEYCODE_DEL 不同，它删除插入点前面的字符。
+    pub const KEYCODE_FORWARD_DEL: i32 = 112;
+
+    /// 键码常量：左 Control 修饰键。
+    pub const KEYCODE_CTRL_LEFT: i32 = 113;
+
+    /// 键码常量：右 Control 修饰键。
+    pub const KEYCODE_CTRL_RIGHT: i32 = 114;
+
+    /// 键码常量：大写锁定键。
+    pub const KEYCODE_CAPS_LOCK: i32 = 115;
+
+    /// 键码常量：滚动锁定键。
+    pub const KEYCODE_SCROLL_LOCK: i32 = 116;
+
+    /// 键码常量：左 Meta 修饰键。
+    pub const KEYCODE_META_LEFT: i32 = 117;
+
+    /// 键码常量：右 Meta 修饰键。
+    pub const KEYCODE_META_RIGHT: i32 = 118;
+
+    /// 键码常量：功能修饰键。
+    pub const KEYCODE_FUNCTION: i32 = 119;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：系统请求/打印屏幕键。
+    pub const KEYCODE_SYSRQ: i32 = 120;
+
+    /// 键码常量：Break / Pause 键。
+    pub const KEYCODE_BREAK: i32 = 121;
+
+    /// 键码常量：Home 移动键。用于滚动或移动光标到 行 的开始或列表的顶部。
+    pub const KEYCODE_MOVE_HOME: i32 = 122;
+
+    /// 键码常量：End 移动键。用于滚动或移动光标到 行 的末尾或列表的底部。
+    pub const KEYCODE_MOVE_END: i32 = 123;
+
+    /// 键码常量：Insert 键。切换插入/覆盖编辑模式。
+    pub const KEYCODE_INSERT: i32 = 124;
+
+    /// 键码常量：前进键。在历史堆栈中向前导航。与 KEYCODE_BACK 互补。
+    pub const KEYCODE_FORWARD: i32 = 125;
+
+    /// 键码常量：播放媒体键。
+    pub const KEYCODE_MEDIA_PLAY: i32 = 126;
+
+    /// 键码常量：暂停媒体键。
+    pub const KEYCODE_MEDIA_PAUSE: i32 = 127;
+
+    /// 键码常量：关闭媒体键。例如，可用于关闭 CD 托盘。
+    pub const KEYCODE_MEDIA_CLOSE: i32 = 128;
+
+    /// 键码常量：弹出媒体键。例如，可用于弹出 CD 托盘。
+    pub const KEYCODE_MEDIA_EJECT: i32 = 129;
+
+    /// 键码常量：录制媒体键。
+    pub const KEYCODE_MEDIA_RECORD: i32 = 130;
+
+    /// 键码常量：F1 键。
+    pub const KEYCODE_F1: i32 = 131;
+
+    /// 键码常量：F2 键。
+    pub const KEYCODE_F2: i32 = 132;
+
+    /// 键码常量：F3 键。
+    pub const KEYCODE_F3: i32 = 133;
+
+    /// 键码常量：F4 键。
+    pub const KEYCODE_F4: i32 = 134;
+
+    /// 键码常量：F5 键。
+    pub const KEYCODE_F5: i32 = 135;
+
+    /// 键码常量：F6 键。
+    pub const KEYCODE_F6: i32 = 136;
+
+    /// 键码常量：F7 键。
+    pub const KEYCODE_F7: i32 = 137;
+
+    /// 键码常量：F8 键。
+    pub const KEYCODE_F8: i32 = 138;
+
+    /// 键码常量：F9 键。
+    pub const KEYCODE_F9: i32 = 139;
+
+    /// 键码常量：F10 键。
+    pub const KEYCODE_F10: i32 = 140;
+
+    /// 键码常量：F11 键。
+    pub const KEYCODE_F11: i32 = 141;
+
+    /// 键码常量：数字键盘'('键
+    pub const KEYCODE_NUMPAD_LEFT_PAREN: i32 = 162;
+
+    /// 键码常量：数字键盘')'键。
+    pub const KEYCODE_NUMPAD_RIGHT_PAREN: i32 = 163;
+
+    /// 键码常量：F12 键。
+    pub const KEYCODE_F12: i32 = 142;
+
+    /// 键码常量：Num Lock 键。这是 Num Lock 键，与 KEYCODE_NUM 不同。此键会改变数字键盘上其他键的行为。
+    pub const KEYCODE_NUM_LOCK: i32 = 143;
+
+    /// 键码常量：数字键盘 '0' 键。
+    pub const KEYCODE_NUMPAD_0: i32 = 144;
+
+    /// 键码常量：数字键盘 '1' 键。
+    pub const KEYCODE_NUMPAD_1: i32 = 145;
+
+    /// 键码常量：数字键盘 '2' 键。
+    pub const KEYCODE_NUMPAD_2: i32 = 146;
+
+    /// 键码常量：数字键盘 '3' 键。
+    pub const KEYCODE_NUMPAD_3: i32 = 147;
+
+    /// 键码常量：数字键盘 '4' 键。
+    pub const KEYCODE_NUMPAD_4: i32 = 148;
+
+    /// 键码常量：数字键盘 '5' 键。
+    pub const KEYCODE_NUMPAD_5: i32 = 149;
+
+    /// 键码常量：数字键盘 '6' 键。
+    pub const KEYCODE_NUMPAD_6: i32 = 150;
+
+    /// 键码常量：数字键盘 '7' 键。
+    pub const KEYCODE_NUMPAD_7: i32 = 151;
+
+    /// 键码常量：数字键盘 '8' 键。
+    pub const KEYCODE_NUMPAD_8: i32 = 152;
+
+    /// 键码常量：数字键盘 '9' 键。
+    pub const KEYCODE_NUMPAD_9: i32 = 153;
+
+    /// 键码常量：数字键盘 '/' 键（用于除法）。
+    pub const KEYCODE_NUMPAD_DIVIDE: i32 = 154;
+
+    /// 键码常量：数字键盘 '*' 键（用于乘法）。
+    pub const KEYCODE_NUMPAD_MULTIPLY: i32 = 155;
+
+    /// 键码常量：数字键盘 '-' 键（用于减法）。
+    pub const KEYCODE_NUMPAD_SUBTRACT: i32 = 156;
+
+    /// 键码常量：数字键盘 '+' 键（用于加法）。
+    pub const KEYCODE_NUMPAD_ADD: i32 = 157;
+
+    /// 键码常量：数字键盘 '.' 键（用于小数或数字分组）。
+    pub const KEYCODE_NUMPAD_DOT: i32 = 158;
+
+    /// 键码常量：数字键盘 ',' 键（用于小数或数字分组）。
+    pub const KEYCODE_NUMPAD_COMMA: i32 = 159;
+
+    /// 键码常量：数字键盘 Enter 键。
+    pub const KEYCODE_NUMPAD_ENTER: i32 = 160;
+
+    /// 键码常量：绿色“可编程”键。在电视遥控器上，用作上下文/可编程键。
+    pub const KEYCODE_PROG_GREEN: i32 = 184;
+
+    /// 键码常量：数字键盘 '=' 键。
+    pub const KEYCODE_NUMPAD_EQUALS: i32 = 161;
+
+    /// 键码常量：音量静音键。用于扬声器的静音键（与 KEYCODE_MUTE 不同，后者是麦克风的静音键）。此键通常应实现为切换键，即第一次按下时静音扬声器，第二次按下时恢复原始音量。
+    pub const KEYCODE_VOLUME_MUTE: i32 = 164;
+
+    /// 键码常量：信息键。通常在电视遥控器上，用于显示与当前正在查看的内容相关的附加信息。
+    pub const KEYCODE_INFO: i32 = 165;
+
+    /// 键码常量：频道上键。在电视遥控器上，用于增加电视频道。
+    pub const KEYCODE_CHANNEL_UP: i32 = 166;
+
+    /// 键码常量：频道下键。在电视遥控器上，用于减少电视频道。
+    pub const KEYCODE_CHANNEL_DOWN: i32 = 167;
+
+    /// 键码常量：放大键。
+    pub const KEYCODE_ZOOM_IN: i32 = 168;
+
+    /// 键码常量：缩小键。
+    pub const KEYCODE_ZOOM_OUT: i32 = 169;
+
+    /// 键码常量：电视键。在电视遥控器上，切换到观看直播电视。
+    pub const KEYCODE_TV: i32 = 170;
+
+    /// 键码常量：窗口键。在电视遥控器上，切换画中画模式或其他窗口功能。在 Android Wear 设备上，触发显示偏移。
+    pub const KEYCODE_WINDOW: i32 = 171;
+
+    /// 键码常量：指南键。在电视遥控器上，显示节目指南。
+    pub const KEYCODE_GUIDE: i32 = 172;
+
+    /// 键码常量：DVR 键。在某些电视遥控器上，切换到录制的节目的 DVR 模式。
+    pub const KEYCODE_DVR: i32 = 173;
+
+    /// 键码常量：书签键。在某些电视遥控器上，用于标记内容或网页为书签。
+    pub const KEYCODE_BOOKMARK: i32 = 174;
+
+    /// 键码常量：切换字幕键。在电视节目期间，切换闭路字幕文本的模式。
+    pub const KEYCODE_CAPTIONS: i32 = 175;
+
+    /// 键码常量：设置键。启动系统设置活动。
+    pub const KEYCODE_SETTINGS: i32 = 176;
+
+    /// 键码常量：语言切换键。切换当前输入语言，例如在 QWERTY 键盘上切换英语和日语。在某些设备上，按 Shift+空格键可以执行相同的功能。
+    pub const KEYCODE_LANGUAGE_SWITCH: i32 = 204;
+
+    /// 键码常量：电视电源键。在HDMI电视面板设备和不支持HDMI的Android TV设备上，切换设备的电源状态。在HDMI源设备上，通过HDMI-CEC切换HDMI连接电视的电源状态，并使源设备跟随此电源状态。
+    pub const KEYCODE_TV_POWER: i32 = 177;
+
+    /// 键码常量：电视输入键。在电视遥控器上，在电视屏幕上切换输入。
+    pub const KEYCODE_TV_INPUT: i32 = 178;
+
+    /// 键码常量：机顶盒电源键。在电视遥控器上，切换外部机顶盒的电源。
+    pub const KEYCODE_STB_POWER: i32 = 179;
+
+    /// 键码常量：机顶盒输入键。在电视遥控器上，切换外部机顶盒的输入模式。
+    pub const KEYCODE_STB_INPUT: i32 = 180;
+
+    /// 键码常量：A/V接收器电源键。在电视遥控器上，切换外部A/V接收器的电源。
+    pub const KEYCODE_AVR_POWER: i32 = 181;
+
+    /// 键码常量：A/V接收器输入键。在电视遥控器上，切换外部A/V接收器的输入模式。
+    pub const KEYCODE_AVR_INPUT: i32 = 182;
+
+    /// 键码常量：红色“可编程”键。在电视遥控器上，作为上下文/可编程键使用。
+    pub const KEYCODE_PROG_RED: i32 = 183;
+
+    /// 键码常量：黄色“可编程”键。在电视遥控器上，作为上下文/可编程键使用。
+    pub const KEYCODE_PROG_YELLOW: i32 = 185;
+
+    /// 键码常量：蓝色“可编程”键。在电视遥控器上，作为上下文/可编程键使用。
+    pub const KEYCODE_PROG_BLUE: i32 = 186;
+
+    /// 键码常量：应用程序切换键。应该显示应用程序切换器对话框。
+    pub const KEYCODE_APP_SWITCH: i32 = 187;
+
+    /// 键码常量：通用游戏板按钮#1。
+    pub const KEYCODE_BUTTON_1: i32 = 188;
+
+    /// 键码常量：通用游戏板按钮#2。
+    pub const KEYCODE_BUTTON_2: i32 = 189;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：日语全角/半角键。
+    pub const KEYCODE_ZENKAKU_HANKAKU: i32 = 211;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：日语字母数字键。
+    pub const KEYCODE_EISU: i32 = 212;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：日语非转换键。
+    pub const KEYCODE_MUHENKAN: i32 = 213;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：日语转换键。
+    pub const KEYCODE_HENKAN: i32 = 214;
+
+    /// 键码常量：通用游戏板按钮#3。
+    pub const KEYCODE_BUTTON_3: i32 = 190;
+
+    /// 键码常量：通用游戏板按钮#4。
+    pub const KEYCODE_BUTTON_4: i32 = 191;
+
+    /// 键码常量：通用游戏板按钮#5。
+    pub const KEYCODE_BUTTON_5: i32 = 192;
+
+    /// 键码常量：通用游戏板按钮#6。
+    pub const KEYCODE_BUTTON_6: i32 = 193;
+
+    /// 键码常量：通用游戏板按钮#7。
+    pub const KEYCODE_BUTTON_7: i32 = 194;
+
+    /// 键码常量：通用游戏板按钮#8。
+    pub const KEYCODE_BUTTON_8: i32 = 195;
+
+    /// 键码常量：通用游戏板按钮#9。
+    pub const KEYCODE_BUTTON_9: i32 = 196;
+
+    /// 键码常量：通用游戏板按钮#10。
+    pub const KEYCODE_BUTTON_10: i32 = 197;
+
+    /// 键码常量：通用游戏板按钮#11。
+    pub const KEYCODE_BUTTON_11: i32 = 198;
+
+    /// 键码常量：通用游戏板按钮#12。
+    pub const KEYCODE_BUTTON_12: i32 = 199;
+
+    /// 键码常量：通用游戏板按钮#13。
+    pub const KEYCODE_BUTTON_13: i32 = 200;
+
+    /// 键码常量：通用游戏板按钮#14。
+    pub const KEYCODE_BUTTON_14: i32 = 201;
+
+    /// 键码常量：通用游戏板按钮#15。
+    pub const KEYCODE_BUTTON_15: i32 = 202;
+
+    /// 键码常量：通用游戏板按钮#16。
+    pub const KEYCODE_BUTTON_16: i32 = 203;
+
+    /// 键码常量：礼仪模式键。在某些设置（如在拥挤的火车上）中，打开和关闭静音或振动模式，使设备表现得更加礼貌。在某些设备上，此键可能仅在长按时才有效。
+    pub const KEYCODE_MANNER_MODE: i32 = 205;
+
+    /// 键码常量：3D模式键。在2D和3D模式之间切换显示。
+    pub const KEYCODE_3D_MODE: i32 = 206;
+
+    /// 键码常量：联系人特殊功能键。用于启动地址簿应用程序。
+    pub const KEYCODE_CONTACTS: i32 = 207;
+
+    /// 键码常量：日历特殊功能键。用于启动日历应用程序。
+    pub const KEYCODE_CALENDAR: i32 = 208;
+
+    /// 键码常量：音轨键。切换音轨。
+    pub const KEYCODE_MEDIA_AUDIO_TRACK: i32 = 222;
+
+    /// 键码常量：睡眠键。使设备进入睡眠状态。行为类似于 KEYCODE_POWER，但如果设备已处于睡眠状态，则不起作用。
+    pub const KEYCODE_SLEEP: i32 = 223;
+
+    /// 键码常量：唤醒键。唤醒设备。行为有点类似于 KEYCODE_POWER，但如果设备已唤醒，则不起作用。
+    pub const KEYCODE_WAKEUP: i32 = 224;
+
+    /// 键码常量：音乐特殊功能键。用于启动音乐播放器应用程序。
+    pub const KEYCODE_MUSIC: i32 = 209;
+
+    /// 键码常量：计算器特殊功能键。用于启动计算器应用程序。
+    pub const KEYCODE_CALCULATOR: i32 = 210;
+
+    /// 键码常量：日本假名/平假名键。
+    pub const KEYCODE_KATAKANA_HIRAGANA: i32 = 215;
+
+    /// 键码常量：日本日元键。
+    pub const KEYCODE_YEN: i32 = 216;
+
+    /// 键码常量：日本Ro键。
+    pub const KEYCODE_RO: i32 = 217;
+
+    /// 键码常量：日本假名键。
+    pub const KEYCODE_KANA: i32 = 218;
+
+    /// 键码常量：辅助键。启动全局辅助活动。不会传递给应用程序。
+    pub const KEYCODE_ASSIST: i32 = 219;
+
+    /// 键码常量：亮度减小键。降低屏幕亮度。
+    pub const KEYCODE_BRIGHTNESS_DOWN: i32 = 220;
+
+    /// 键码常量：亮度增大键。提高屏幕亮度。
+    pub const KEYCODE_BRIGHTNESS_UP: i32 = 221;
+
+    /// 键码常量：配对键。启动外设配对模式。对于配对遥控器或游戏控制器特别有用，尤其是如果没有其他输入模式可用时。
+    pub const KEYCODE_PAIRING: i32 = 225;
+
+    /// 键码常量：媒体顶层菜单键。跳转到媒体菜单的顶部。
+    pub const KEYCODE_MEDIA_TOP_MENU: i32 = 226;
+
+    /// 键码常量：‘11’键。
+    pub const KEYCODE_11: i32 = 227;
+
+    /// 键码常量：“12”键。
+    pub const KEYCODE_12: i32 = 228;
+
+    /// 键码常量：上一个频道键。跳转到最后一个观看的频道。
+    pub const KEYCODE_LAST_CHANNEL: i32 = 229;
+
+    /// 键码常量：电视数据服务键。显示数据服务，如天气、体育等。
+    pub const KEYCODE_TV_DATA_SERVICE: i32 = 230;
+
+    /// 键码常量：语音助手键。启动全局语音助手活动。不会传递给应用程序。
+    pub const KEYCODE_VOICE_ASSIST: i32 = 231;
+
+    /// 键码常量：收音机键。切换电视服务/收音机服务。
+    pub const KEYCODE_TV_RADIO_SERVICE: i32 = 232;
+
+    /// 键码常量：电视图文键。显示电视图文服务。
+    pub const KEYCODE_TV_TELETEXT: i32 = 233;
+
+    /// 键码常量：数字输入键。当每个数字键被分配用于选择单独的频道时，启动输入多位频道号。对应于 CEC 用户控制代码的数字输入模式 (0x1D)。
+    pub const KEYCODE_TV_NUMBER_ENTRY: i32 = 234;
+
+    /// 键码常量：模拟地面广播键。切换到模拟地面广播服务。
+    pub const KEYCODE_TV_TERRESTRIAL_ANALOG: i32 = 235;
+
+    /// 键码常量：数字地面广播键。切换到数字地面广播服务。
+    pub const KEYCODE_TV_TERRESTRIAL_DIGITAL: i32 = 236;
+
+    /// 键码常量：卫星键。切换到数字卫星广播服务。
+    pub const KEYCODE_TV_SATELLITE: i32 = 237;
+
+    /// 键码常量：BS键。切换到日本可用的BS数字卫星广播服务。
+    pub const KEYCODE_TV_SATELLITE_BS: i32 = 238;
+
+    /// 键码常量：CS键。切换到日本可用的CS数字卫星广播服务。
+    pub const KEYCODE_TV_SATELLITE_CS: i32 = 239;
+
+    /// 键码常量：BS/CS键。在BS和CS数字卫星服务之间切换。
+    pub const KEYCODE_TV_SATELLITE_SERVICE: i32 = 240;
+
+    /// 键码常量：切换网络键。切换选择广播服务。
+    pub const KEYCODE_TV_NETWORK: i32 = 241;
+
+    /// 键码常量：天线/电缆键。在天线和电缆之间切换广播输入源。
+    pub const KEYCODE_TV_ANTENNA_CABLE: i32 = 242;
+
+    /// 键码常量：HDMI #1 键。切换到 HDMI 输入 #1。
+    pub const KEYCODE_TV_INPUT_HDMI_1: i32 = 243;
+
+    /// 键码常量：HDMI #2 键。切换到 HDMI 输入 #2。
+    pub const KEYCODE_TV_INPUT_HDMI_2: i32 = 244;
+
+    /// 键码常量：HDMI #3 键。切换到 HDMI 输入 #3。
+    pub const KEYCODE_TV_INPUT_HDMI_3: i32 = 245;
+
+    /// 键码常量：HDMI #4 键。切换到 HDMI 输入 #4。
+    pub const KEYCODE_TV_INPUT_HDMI_4: i32 = 246;
+
+    /// 键码常量：复合 #1 键。切换到复合视频输入 #1。
+    pub const KEYCODE_TV_INPUT_COMPOSITE_1: i32 = 247;
+
+    /// 键码常量：复合 #2 键。切换到复合视频输入 #2。
+    pub const KEYCODE_TV_INPUT_COMPOSITE_2: i32 = 248;
+
+    /// 键码常量：分量 #1 键。切换到分量视频输入 #1。
+    pub const KEYCODE_TV_INPUT_COMPONENT_1: i32 = 249;
+
+    /// 键码常量：分量 #2 键。切换到分量视频输入 #2。
+    pub const KEYCODE_TV_INPUT_COMPONENT_2: i32 = 250;
+
+    /// 键码常量：VGA #1 键。切换到 VGA（模拟 RGB）输入 #1。
+    pub const KEYCODE_TV_INPUT_VGA_1: i32 = 251;
+
+    /// 键码常量：音频描述键。开启/关闭音频描述。
+    pub const KEYCODE_TV_AUDIO_DESCRIPTION: i32 = 252;
+
+    /// 键码常量：音频描述混合音量调高键。与正常音频音量相比，增大音频描述音量。
+    pub const KEYCODE_TV_AUDIO_DESCRIPTION_MIX_UP: i32 = 253;
+
+    /// 键码常量：音频描述混音音量减小键。与正常音频音量相比，降低音频描述音量。
+    pub const KEYCODE_TV_AUDIO_DESCRIPTION_MIX_DOWN: i32 = 254;
+
+    /// 键码常量：缩放模式键。更改缩放模式（正常、全屏、缩放、宽缩放等）
+    pub const KEYCODE_TV_ZOOM_MODE: i32 = 255;
+
+    /// 键码常量：内容菜单键。进入标题列表。对应于CEC用户控制代码的“内容菜单”（0x0B）
+    pub const KEYCODE_TV_CONTENTS_MENU: i32 = 256;
+
+    /// 键码常量：媒体上下文菜单键。进入媒体内容的上下文菜单。对应于CEC用户控制代码的“媒体上下文相关菜单”（0x11）。
+    pub const KEYCODE_TV_MEDIA_CONTEXT_MENU: i32 = 257;
+
+    /// 键码常量：定时器编程键。进入定时器录制菜单。对应于CEC用户控制代码的“定时器编程”（0x54）。
+    pub const KEYCODE_TV_TIMER_PROGRAMMING: i32 = 258;
+
+    /// 键码常量：帮助键。
+    pub const KEYCODE_HELP: i32 = 259;
+
+    /// 键码常量：导航到上一个键。在有序的项目集合中向后移动一个项目。
+    pub const KEYCODE_NAVIGATE_PREVIOUS: i32 = 260;
+
+    /// 键码常量：导航到下一个键。在有序的项目集合中前进到下一个项目。
+    pub const KEYCODE_NAVIGATE_NEXT: i32 = 261;
+
+    /// 键码常量：导航进入键。激活当前具有焦点的项目或展开到导航层级的下一个级别。
+    pub const KEYCODE_NAVIGATE_IN: i32 = 262;
+
+    /// 键码常量：导航退出键。退出导航层级的一个级别或折叠当前具有焦点的项目。
+    pub const KEYCODE_NAVIGATE_OUT: i32 = 263;
+
+    /// 键码常量：Wear手表上的主要电源/重置按钮的主要茎键。
+    pub const KEYCODE_STEM_PRIMARY: i32 = 264;
+
+    /// 键码常量：Wear的通用茎键1
+    pub const KEYCODE_STEM_1: i32 = 265;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键向上-向左
+    pub const KEYCODE_DPAD_UP_LEFT: i32 = 268;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键向下向左
+    pub const KEYCODE_DPAD_DOWN_LEFT: i32 = 269;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键右上
+    pub const KEYCODE_DPAD_UP_RIGHT: i32 = 270;
+
+    //noinspection SpellCheckingInspection
+    /// 键码常量：方向键右下
+    pub const KEYCODE_DPAD_DOWN_RIGHT: i32 = 271;
+
+    /// 键码常量：Wear 的通用茎键 2
+    pub const KEYCODE_STEM_2: i32 = 266;
+
+    /// 键码常量：Wear 的通用茎键 3
+    pub const KEYCODE_STEM_3: i32 = 267;
+
+    /// 键码常量：跳过向前的媒体键。
+    pub const KEYCODE_MEDIA_SKIP_FORWARD: i32 = 272;
+
+    /// 键码常量：跳过向后的媒体键。
+    pub const KEYCODE_MEDIA_SKIP_BACKWARD: i32 = 273;
+
+    /// 键码常量：逐帧向前媒体键。每次向前移动一帧媒体。
+    pub const KEYCODE_MEDIA_STEP_FORWARD: i32 = 274;
+
+    /// 键码常量：逐帧向后媒体键。每次向后移动一帧媒体。
+    pub const KEYCODE_MEDIA_STEP_BACKWARD: i32 = 275;
+
+    /// 键码常量：除非持有唤醒锁，否则使设备进入休眠状态。
+    pub const KEYCODE_SOFT_SLEEP: i32 = 276;
+
+    /// 键码常量：剪切键。
+    pub const KEYCODE_CUT: i32 = 277;
+
+    /// 键码常量：复制键。
+    pub const KEYCODE_COPY: i32 = 278;
+
+    /// 键码常量：粘贴键。
+    pub const KEYCODE_PASTE: i32 = 279;
+
+    /// 键码常量：由系统用于向上导航
+    pub const KEYCODE_SYSTEM_NAVIGATION_UP: i32 = 280;
+
+    /// 键码常量：由系统用于向下导航
+    pub const KEYCODE_SYSTEM_NAVIGATION_DOWN: i32 = 281;
+
+    /// 键码常量：由系统用于向左导航
+    pub const KEYCODE_SYSTEM_NAVIGATION_LEFT: i32 = 282;
+
+    /// 键码常量：由系统用于向右导航
+    pub const KEYCODE_SYSTEM_NAVIGATION_RIGHT: i32 = 283;
+
+    /// 键码常量：显示所有应用
+    pub const KEYCODE_ALL_APPS: i32 = 284;
+
+    /// 键码常量：刷新键。
+    pub const KEYCODE_REFRESH: i32 = 285;
+
+    /// 键码常量：点赞键。应用可以使用此键让用户对内容进行点赞。
+    pub const KEYCODE_THUMBS_UP: i32 = 286;
+
+    /// 键码常量：反对键。应用可利用此功能让用户反对内容。
+    pub const KEYCODE_THUMBS_DOWN: i32 = 287;
+
+    /// 键码常量：用于切换当前正在使用内容的 android.accounts.Account。系统可能会使用该代码来全局设置账户。
+    pub const KEYCODE_PROFILE_SWITCH: i32 = 288;
+
+    /// 键码常量：视频应用键 #1。
+    pub const KEYCODE_VIDEO_APP_1: i32 = 289;
+
+    /// 键码常量：视频应用键 #2。
+    pub const KEYCODE_VIDEO_APP_2: i32 = 290;
+
+    /// 键码常量：视频应用键 #3。
+    pub const KEYCODE_VIDEO_APP_3: i32 = 291;
+
+    /// 键码常量：视频应用键 #4。
+    pub const KEYCODE_VIDEO_APP_4: i32 = 292;
+
+    /// 键码常量：视频应用键 #5。
+    pub const KEYCODE_VIDEO_APP_5: i32 = 293;
+
+    /// 键码常量：视频应用键 #6。
+    pub const KEYCODE_VIDEO_APP_6: i32 = 294;
+
+    /// 键码常量：视频应用键 #7。
+    pub const KEYCODE_VIDEO_APP_7: i32 = 295;
+
+    /// 键码常量：视频应用键 #8。
+    pub const KEYCODE_VIDEO_APP_8: i32 = 296;
+
+    /// 键码常量：特色应用键 #1。
+    pub const KEYCODE_FEATURED_APP_1: i32 = 297;
+
+    /// 键码常量：特色应用键 #2。
+    pub const KEYCODE_FEATURED_APP_2: i32 = 298;
+
+    /// 键码常量：特色应用键 #3。
+    pub const KEYCODE_FEATURED_APP_3: i32 = 299;
+
+    /// 键码常量：特色应用键 #4。
+    pub const KEYCODE_FEATURED_APP_4: i32 = 300;
+
+    /// 键码常量：演示应用键 #1。
+    pub const KEYCODE_DEMO_APP_1: i32 = 301;
+
+    /// 键码常量：演示应用键 #2。
+    pub const KEYCODE_DEMO_APP_2: i32 = 302;
+
+    /// 键码常量：演示应用键 #3。
+    pub const KEYCODE_DEMO_APP_3: i32 = 303;
+
+    /// 键码常量：演示应用键 #4。
+    pub const KEYCODE_DEMO_APP_4: i32 = 304;
+
+    /// 键码常量：键盘背光调暗
+    pub const KEYCODE_KEYBOARD_BACKLIGHT_DOWN: i32 = 305;
+
+    /// 键码常量：键盘背光调亮
+    pub const KEYCODE_KEYBOARD_BACKLIGHT_UP: i32 = 306;
+
+    /// 键码常量：键盘背光切换
+    pub const KEYCODE_KEYBOARD_BACKLIGHT_TOGGLE: i32 = 307;
+
+    /// 键码常量：触控笔笔杆上的主要按钮。这通常是最靠近触控笔尖的按钮。
+    pub const KEYCODE_STYLUS_BUTTON_PRIMARY: i32 = 308;
+
+    /// 键码常量：触控笔笔杆上的第二个按钮。这通常是从触控笔尖算起的第二个按钮。
+    pub const KEYCODE_STYLUS_BUTTON_SECONDARY: i32 = 309;
+
+    /// 键码常量：触控笔笔杆上的第三个按钮。这通常是从触控笔尖开始的第三个按钮。
+    pub const KEYCODE_STYLUS_BUTTON_TERTIARY: i32 = 310;
+
+    /// 键码常量：触控笔尾部的按钮。此按钮的使用通常与橡皮擦的功能无关。
+    pub const KEYCODE_STYLUS_BUTTON_TAIL: i32 = 311;
+
+    /// 键码常量：打开最近使用的应用程序视图（又称概览）。此键由框架处理，永远不会传递给应用程序。
+    pub const KEYCODE_RECENT_APPS: i32 = 312;
+
+    /// 键码常量：用户可以通过系统自定义其用途的按钮。用户可自定义键 #1。
+    pub const KEYCODE_MACRO_1: i32 = 313;
+
+    /// 键码常量：用户可以通过系统自定义其用途的按钮。用户可自定义键 #2。
+    pub const KEYCODE_MACRO_2: i32 = 314;
+
+    /// 键码常量：用户可以通过系统自定义其用途的按钮。用户可自定义键 #3。
+    pub const KEYCODE_MACRO_3: i32 = 315;
+
+    /// 键码常量：用户可以通过系统自定义其用途的按钮。用户可自定义键 #4。
+    pub const KEYCODE_MACRO_4: i32 = 316;
+
+    /// 最后一个 KEYCODE 的整数值。随着新的键码添加到 KeyEvent，该值会增加。
+    pub const LAST_KEYCODE: i32 = Self::KEYCODE_MACRO_4;
+
+    #[deprecated(note = "现在键码数量已超过 MAX_KEYCODE。请使用 getMaxKeyCode()。")]
+    pub const MAX_KEYCODE: i32 = 84;
+
+    /// getAction值：该键已被按下。
+    pub const ACTION_DOWN: i32 = 0;
+
+    /// getAction 值：按键已被释放。
+    pub const ACTION_UP: i32 = 1;
+
+    #[deprecated(
+        note = "输入系统不再使用。getAction 值：连续发生多个重复按键事件，或者正在传递复杂字符串。如果按键代码不是 KEYCODE_UNKNOWN，则 getRepeatCount() 方法返回应执行给定按键代码的次数。否则，如果按键代码是 KEYCODE_UNKNOWN，则这是 getCharacters 返回的字符序列。"
+    )]
+    pub const ACTION_MULTIPLE: i32 = 2;
+
+    /// SHIFT 键在 CAPS 模式下锁定。保留供 MetaKeyKeyListener 用于其 API 中已发布的常量。
+    pub const META_CAP_LOCKED: i32 = 0x100;
+
+    /// ALT 键已锁定。保留供 MetaKeyKeyListener 用于其 API 中已发布的常量。
+    pub const META_ALT_LOCKED: i32 = 0x200;
+
+    /// SYM 键已锁定。保留供 MetaKeyKeyListener 用于其 API 中已发布的常量。
+    pub const META_SYM_LOCKED: i32 = 0x400;
+
+    /// 文本处于选择模式。保留供 MetaKeyKeyListener 使用，用于其 API 中未发布的私有常量，目前由于遗留原因而保留。
+    pub const META_SELECTING: i32 = 0x800;
+
+    /// 此掩码用于检查是否按下了 ALT 元键之一。
+    pub const META_ALT_ON: i32 = 0x02;
+
+    /// 此掩码用于检查左边 ALT 元键是否被按下。
+    pub const META_ALT_LEFT_ON: i32 = 0x10;
+
+    /// 此掩码用于检查是否按下了右边 ALT 元键。
+    pub const META_ALT_RIGHT_ON: i32 = 0x20;
+
+    /// 此掩码用于检查是否按下了 SHIFT 元键之一。
+    pub const META_SHIFT_ON: i32 = 0x1;
+
+    /// 此掩码用于检查左 SHIFT 元键是否被按下。
+    pub const META_SHIFT_LEFT_ON: i32 = 0x40;
+
+    /// 此掩码用于检查是否按下了右 SHIFT 元键。
+    pub const META_SHIFT_RIGHT_ON: i32 = 0x80;
+
+    /// 此掩码用于检查 SYM 元键是否被按下。
+    pub const META_SYM_ON: i32 = 0x4;
+
+    /// 此掩码用于检查 FUNCTION 元键是否被按下。
+    pub const META_FUNCTION_ON: i32 = 0x8;
+
+    /// 此掩码用于检查是否按下了 CTRL 元键之一。
+    pub const META_CTRL_ON: i32 = 0x1000;
+
+    /// 此掩码用于检查左边 CTRL 元键是否被按下。
+    pub const META_CTRL_LEFT_ON: i32 = 0x2000;
+
+    /// 此掩码用于检查是否按下了右边 CTRL 元键。
+    pub const META_CTRL_RIGHT_ON: i32 = 0x4000;
+
+    /// 此掩码用于检查是否按下了 META 元键之一。
+    pub const META_META_ON: i32 = 0x10000;
+
+    /// 该掩码用于检查左META键是否按下。
+    pub const META_META_LEFT_ON: i32 = 0x20000;
+
+    /// 此掩码用于检查是否按下了正确的 META 元键。
+    pub const META_META_RIGHT_ON: i32 = 0x40000;
+
+    /// 此掩码用于检查 CAPS LOCK 元键是否打开。
+    pub const META_CAPS_LOCK_ON: i32 = 0x100000;
+
+    /// 此掩码用于检查 NUM LOCK 元键是否打开。
+    pub const META_NUM_LOCK_ON: i32 = 0x200000;
+
+    /// 此掩码用于检查 SCROLL LOCK 元键是否打开。
+    pub const META_SCROLL_LOCK_ON: i32 = 0x400000;
+
+    /// 此掩码是 META_SHIFT_ON、META_SHIFT_LEFT_ON 和 META_SHIFT_RIGHT_ON 的组合。
+    pub const META_SHIFT_MASK: i32 =
+        Self::META_SHIFT_ON | Self::META_SHIFT_LEFT_ON | Self::META_SHIFT_RIGHT_ON;
+
+    /// 此掩码是 META_ALT_ON、META_ALT_LEFT_ON 和 META_ALT_RIGHT_ON 的组合。
+    pub const META_ALT_MASK: i32 =
+        Self::META_ALT_ON | Self::META_ALT_LEFT_ON | Self::META_ALT_RIGHT_ON;
+
+    /// 此掩码是 META_CTRL_ON、META_CTRL_LEFT_ON 和 META_CTRL_RIGHT_ON 的组合。
+    pub const META_CTRL_MASK: i32 =
+        Self::META_CTRL_ON | Self::META_CTRL_LEFT_ON | Self::META_CTRL_RIGHT_ON;
+
+    /// 此掩码是 META_META_ON、META_META_LEFT_ON 和 META_META_RIGHT_ON 的组合。
+    pub const META_META_MASK: i32 =
+        Self::META_META_ON | Self::META_META_LEFT_ON | Self::META_META_RIGHT_ON;
+
+    /// 如果设备由于该键事件而被唤醒，则设置此掩码。
+    #[deprecated(note = "由于系统本身会消耗所有唤醒键，因此系统永远不会设置此标志。")]
+    pub const FLAG_WOKE_HERE: u32 = 0x1;
+
+    /// 如果键事件是由软件键盘生成的，则设置此掩码。
+    pub const FLAG_SOFT_KEYBOARD: u32 = 0x2;
+
+    /// 如果我们不希望按键事件导致我们离开触摸模式，则设置此掩码。
+    pub const FLAG_KEEP_TOUCH_MODE: u32 = 0x4;
+
+    /// 如果已知事件来自系统的可信部分，则设置此掩码。也就是说，已知事件来自用户，并且不可能被第三方组件欺骗。
+    pub const FLAG_FROM_SYSTEM: u32 = 0x8;
+
+    /// 此掩码用于兼容性，以识别来自 IME 的输入键，该 IME 的输入键已自动标记为“下一个”或“完成”。这允许 TextView 将这些输入键作为旧应用程序的正常输入键进行分派，但在收到这些输入键时仍会执行适当的操作。
+    pub const FLAG_EDITOR_ACTION: u32 = 0x10;
+
+    /// 当与向上键事件相关联时，这表示按键已被取消。这通常用于虚拟触摸屏按键，用户可以从虚拟按键区域滑动到显示屏上：在这种情况下，应用程序将收到已取消的向上事件，并且不应执行通常与按键相关联的操作。
+    /// 请注意，要使此功能正常工作，应用程序在收到向上事件或长按超时已过期之前不能对按键执行操作。
+    pub const FLAG_CANCELED: u32 = 0x20;
+
+    /// 此按键事件由虚拟（屏幕上）硬键区域生成。通常，这是触摸屏上常规显示屏之外的区域，专用于“硬件”按钮。
+    pub const FLAG_VIRTUAL_HARD_KEY: u32 = 0x40;
+
+    /// 此标志是为长按超时后发生的第一次按键重复设置的。
+    pub const FLAG_LONG_PRESS: u32 = 0x80;
+
+    /// 当按键事件因按下时执行长按动作而设置了 FLAG_CANCELED 时设置。
+    pub const FLAG_CANCELED_LONG_PRESS: u32 = 0x100;
+
+    /// 当此事件的按键代码从其初始按下时仍在被跟踪时，设置为 ACTION_UP。也就是说，有人请求在按键按下时开始跟踪，并且长按不会导致跟踪被取消。
+    pub const FLAG_TRACKING: u32 = 0x200;
+
+    /// 当合成按键事件以实现应用未处理的事件的默认行为时设置。后备按键事件由未处理的轨迹球运动（用于模拟方向键盘）和按键映射中声明的某些未处理的按键（例如，当 NumLock 关闭时的特殊功能数字键盘键）生成。
+    pub const FLAG_FALLBACK: u32 = 0x400;
+
+    /// 此标志表示此事件由无障碍服务修改或生成。值 = 0x800
+    pub const FLAG_IS_ACCESSIBILITY_EVENT: u32 = 0x800;
+
+    //noinspection SpellCheckingInspection
+    /// 表示密钥正在被预先分派。
+    pub const FLAG_PREDISPATCH: u32 = 0x20000000;
+
+    /// 私人控制，用于确定应用程序何时跟踪按键序列。
+    pub const FLAG_START_TRACKING: u32 = 0x40000000;
+
+    /// 私有标志，指示系统何时检测到此按键事件可能与先前传送的按键事件的顺序不一致，例如，当发送了按键释放事件但按键并未按下时。
+    pub const FLAG_TAINTED: u32 = 0x80000000;
+
+    /// 返回最大键码。
+    #[java_method]
+    pub fn get_max_key_code() -> i32 {}
+
+    /// 获取在字符 c 上添加重音后生成的字符。例如，getDeadChar('`', 'e') 返回 è。
+    #[java_method]
+    pub fn get_dead_char(accent: i32, c: i32) -> i32 {}
+
+    /**
+     * 创建一个新的按键事件。
+     * `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+     * `code` 按键代码。
+     * */
+    #[java_constructor]
+    pub fn new(action: i32, code: i32) -> Self {}
+
+    /**
+     * 创建一个新的按键事件。
+     * `down_time` 此按键代码最初按下的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * `event_time` 此事件发生的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+     * `code` 按键代码。
+     * `repeat` 按下事件的重复计数（如果是在首次按下之后，则 > 0）或多个事件的事件计数。
+     * */
+    #[java_constructor]
+    pub fn new_with_time(
+        down_time: i64,
+        event_time: i64,
+        action: i32,
+        code: i32,
+        repeat: i32,
+    ) -> Self {
+    }
+
+    /// 获取（可能回收的）按键事件。
+    #[java_method]
+    pub fn obtain(
+        down_time: i64,
+        event_time: i64,
+        action: i32,
+        code: i32,
+        repeat: i32,
+        meta_state: i32,
+        device_id: i32,
+        scan_code: i32,
+        flags: u32,
+        source: i32,
+        display_id: i32,
+        characters: String,
+    ) -> Self {
+    }
+
+    /// 获取另一个关键事件的副本（可能被回收）。
+    #[java_method]
+    pub fn obtain_other(other: &Self) -> Self {}
+
+    /**
+     * 创建与给定事件相同的新按键事件，但其事件时间和重复次数将替换为给定值。
+     * `event` 要复制的现有事件。这不会被修改。
+     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * `new_repeat` 事件的新重复次数。
+     * */
+    #[java_method]
+    pub fn change_time_repeat(event: &Self, event_time: i64, new_repeat: i32) -> Self {}
+
+    /**
+     * 创建与给定事件相同的新键事件，但其事件时间和重复次数将替换为给定值。
+     * `event` 要复制的现有事件。这不会被修改。
+     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * `new_repeat` 事件的新重复次数。
+     * `new_flags` 事件的新标志，替换原始事件中的整个值。
+     * */
+    #[java_method]
+    pub fn change_time_repeat_with_flags(
+        event: &Self,
+        event_time: i64,
+        new_repeat: i32,
+        new_flags: u32,
+    ) -> Self {
+    }
+
+    /**
+     * 创建一个与给定事件相同的新键事件，但其操作将替换为给定值。
+     * `event` 要复制的现有事件。这不会被修改。
+     * `action` 事件的新操作代码。
+     * */
+    #[java_method]
+    pub fn change_action(event: &Self, action: i32) -> Self {}
+
+    /**
+     * 创建一个与给定事件相同的新键事件，但其标志将被替换为给定值。
+     * `event` 要复制的现有事件。这不会被修改。
+     * `flags` 新的标志常量。
+     * */
+    #[java_method]
+    pub fn change_flags(event: &Self, flags: u32) -> Self {}
+
+    /**
+     * 返回：如果操作是 ACTION_DOWN，则返回 true；否则返回 false。
+     * */
+    #[deprecated(note = "不要在新代码中使用，而是明确检查 getAction()。")]
+    #[java_method]
+    pub fn is_down(&self) -> bool {}
+
+    /**
+     * 这是系统键吗？系统键不能用作菜单快捷键。
+     * */
+    #[java_method]
+    pub fn is_system(&self) -> bool {}
+
+    #[java_method(overload = isWakeKey)]
+    pub fn is_wake(&self) -> bool {}
+
+    /**
+     * 如果指定的键码是游戏手柄按钮，则返回 true。
+     * 返回：如果键码是游戏手柄按钮（例如 KEYCODE_BUTTON_A），则返回 True。
+     * */
+    #[java_method]
+    pub fn is_gamepad_button(key_code: i32) -> bool {}
+
+    /**
+     * 默认情况下，按键是否会触发对焦点视图的点击。
+     * */
+    #[java_method]
+    pub fn is_confirm_key(key_code: i32) -> bool {}
+
+    /**
+     * 返回此键是否将被发送到android.media.session.MediaSession。若未处理则回调。
+     * */
+    #[java_method]
+    pub fn is_media_session_key(key_code: i32) -> bool {}
+
+    /// 这是系统键吗？系统键不能用作菜单快捷键。
+    #[java_method]
+    pub fn is_system_key(key_code: i32) -> bool {}
+
+    #[java_method]
+    pub fn is_wake_key(key_code: i32) -> bool {}
+
+    #[java_method]
+    pub fn is_meta_key(key_code: i32) -> bool {}
+
+    #[java_method]
+    pub fn is_alt_key(key_code: i32) -> bool {}
+
+    #[java_method]
+    pub fn get_device_id(&self) -> i32 {}
+
+    #[java_method]
+    pub fn get_source(&self) -> i32 {}
+
+    #[java_method]
+    pub fn set_source(&self, source: i32) {}
+
+    #[java_method]
+    pub fn get_display_id(&self) -> i32 {}
+
+    #[java_method]
+    pub fn set_display_id(&self, display_id: i32) {}
+
+    /// 返回元键的状态。
+    /// 返回：一个整数，其中每个设置为 1 的位代表按下的元键
+    #[java_method]
+    pub fn get_meta_state(&self) -> i32 {}
+
+    /**
+     * 返回修饰键的状态。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数专门屏蔽了 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。返回的值由使用 normalizeMetaState(int) 规范化的元状态（来自 getMetaState）组成，然后使用 getModifierMetaStateMask 进行屏蔽，以便仅保留有效的修饰位。
+     * 返回：一个整数，其中设置为 1 的每个位代表按下的修饰键。
+     * */
+    #[java_method]
+    pub fn get_modifiers(&self) -> i32 {}
+
+    /**
+     * 修改事件的标志。
+     * `new_flags` 事件的新标志，替换整个值。
+     * */
+    #[java_method]
+    pub fn set_flags(&self, new_flags: u32) {}
+
+    /**
+     * 返回此键事件的标志。
+     * */
+    #[java_method]
+    pub fn get_flags(&self) -> i32 {}
+
+    /// 获取包含所有有效修饰键元状态位的掩码。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，掩码明确排除 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+    /// 返回：修饰键元状态掩码，它是 META_SHIFT_ON、META_SHIFT_LEFT_ON、META_SHIFT_RIGHT_ON、META_ALT_ON、META_ALT_LEFT_ON、META_ALT_RIGHT_ON、META_CTRL_ON、META_CTRL_LEFT_ON、META_CTRL_RIGHT_ON、META_META_ON、META_META_LEFT_ON、META_META_RIGHT_ON、META_SYM_ON、META_FUNCTION_ON 的组合。
+    #[java_method]
+    pub fn get_modifier_meta_state_mask() -> i32 {}
+
+    /**
+     * 如果此键码是修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数对这些键返回 false。
+     * 返回：如果键码是 KEYCODE_SHIFT_LEFT、KEYCODE_SHIFT_RIGHT、KEYCODE_ALT_LEFT、KEYCODE_ALT_RIGHT、KEYCODE_CTRL_LEFT、KEYCODE_CTRL_RIGHT、KEYCODE_META_LEFT 或 KEYCODE_META_RIGHT、KEYCODE_SYM、KEYCODE_NUM、KEYCODE_FUNCTION 之一，则返回 True。
+     * */
+    #[java_method]
+    pub fn is_modifier_key(key_code: i32) -> bool {}
+
+    /**
+     * 规范化指定的元状态。元状态被规范化，这样如果设置了左或右修饰符元状态位，则结果还将包括该修饰符的通用位。如果指定的元状态包含 META_ALT_LEFT_ON，则结果除了 META_ALT_LEFT_ON 和输入中指定的其他位之外，还将包含 META_ALT_ON。
+     * 对 shift、control 和 meta 执行相同的过程。如果指定的元状态包含 MetaKeyKeyListener 定义的合成元状态，则这些状态将在此处转换，并从结果中删除原始合成元状态。MetaKeyKeyListener.META_CAP_LOCKED 转换为 META_CAPS_LOCK_ON。MetaKeyKeyListener.META_ALT_LOCKED 转换为 META_ALT_ON。MetaKeyKeyListener.META_SYM_LOCKED 转换为 META_SYM_ON。未定义的元状态位被删除。
+     * 返回：规范化的元状态。
+     * `meta_state` 元状态。
+     * */
+    #[java_method]
+    pub fn normalize_meta_state(meta_state: i32) -> i32 {}
+
+    /**
+     * 如果根据指定的元状态未按下任何修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。使用 normalizeMetaState(int) 比较之前，元状态已标准化。
+     * 返回：如果没有按下任何修饰键，则返回 True。
+     * `meta_state` 要考虑的元状态。
+     * */
+    #[java_method]
+    pub fn meta_state_has_no_modifiers(meta_state: i32) -> bool {}
+
+    /**
+     * 如果根据指定的元状态仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+     * 如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包含同一类型键的方向和非方向修饰符，例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON，则此方法将抛出非法参数异常。
+     * 返回：如果仅按下了指定的修饰键，则返回 True。
+     * 抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰符
+     * `meta_state` 要考虑的元状态。
+     * `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰符元状态的组合。可以为 0，以确保没有按下修饰键。
+     * */
+    #[java_method]
+    pub fn meta_state_has_modifiers(
+        meta_state: i32,
+        modifiers: i32,
+    ) -> Result<bool, <Self as JType>::Error> {
+    }
+
+    /**
+     * 如果没有按下修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+     * 使用 normalizeMetaState(int) 进行比较之前，元状态已标准化。
+     * 返回：如果没有按下修饰键，则返回 True。
+     * */
+    #[java_method]
+    pub fn has_no_modifiers(&self) -> bool {}
+
+    /**
+     * 如果仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+     * 如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包括同一类型键的方向修饰符和非方向修饰符（例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON），则此方法将引发非法参数异常。
+     * 返回：如果仅按下了指定的修饰键，则为 True。
+     * 抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰键
+     * `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰键元状态的组合。可能为 0，以确保未按下任何修饰键。
+     * */
+    #[java_method]
+    pub fn has_modifiers(&self, modifiers: i32) -> Result<bool, <Self as JType>::Error> {}
+
+    /**
+     * 返回 ALT 元键的按下状态。如果按下了 ALT 键，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_alt_pressed(&self) -> bool {}
+
+    /**
+     * 返回 SHIFT 元键的按下状态。如果按下了 SHIFT 键，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_shift_pressed(&self) -> bool {}
+
+    /**
+     * 返回 SYM 元键的按下状态。
+     * 返回：如果 SYM 键被按下，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_sym_pressed(&self) -> bool {}
+
+    /**
+     * 返回 CTRL 元键的按下状态。如果按下了 CTRL 键，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_ctrl_pressed(&self) -> bool {}
+
+    /**
+     * 返回 META 元键的按下状态。如果按下 META 键则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_meta_pressed(&self) -> bool {}
+
+    /**
+     * 返回 FUNCTION 元键的按下状态。如果 FUNCTION 键被按下，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_function_pressed(&self) -> bool {}
+
+    /**
+     * 返回 CAPS LOCK 元键的锁定状态。如果 CAPS LOCK 键处于打开状态，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_caps_lock_on(&self) -> bool {}
+
+    /**
+     * 返回 SCROLL LOCK 元键的锁定状态。如果 SCROLL LOCK 键处于打开状态，则返回 true，否则返回 false
+     * */
+    #[java_method]
+    pub fn is_num_lock_on(&self) -> bool {}
+
+    /**
+     * 查询此按键事件的操作。可能是 ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+     * 返回：事件操作：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+     * */
+    #[java_method]
+    pub fn get_action(&self) -> i32 {}
+
+    /// 对于 ACTION_UP 事件，表示事件已根据 FLAG_CANCELED 取消。
+    #[java_method]
+    pub fn is_canceled(&self) -> bool {}
+
+    /**
+     * 为按键事件设置 FLAG_CANCELED 标志。
+     * */
+    #[java_method]
+    pub fn cancel(&self) {}
+
+    /// 在 KeyEvent.Callback.onKeyDown 期间调用此方法，让系统跟踪按键直至其最后按下（可能包括长按）。请注意，一次只能跟踪一个按键 - 如果在跟踪前一个按键时收到另一个按键按下事件，则跟踪前一个事件时会停止。
+    #[java_method]
+    pub fn start_tracking(&self) {}
+
+    /**
+     * 对于 ACTION_UP 事件，表示该事件仍按照 FLAG_TRACKING 从其初始向下事件进行跟踪。
+     * */
+    #[java_method]
+    pub fn is_tracking(&self) -> bool {}
+
+    /// 对于 ACTION_DOWN 事件，表示该事件已根据 FLAG_LONG_PRESS 取消。
+    #[java_method]
+    pub fn is_long_press(&self) -> bool {}
+
+    /// 检索按键事件的按键代码。这是按下的物理按键，而不是 Unicode 字符。
+    /// 返回：事件的按键代码。
+    #[java_method]
+    pub fn get_key_code(&self) -> i32 {}
+
+    /// 对于 ACTION_MULTIPLE 事件（其键代码为 KEYCODE_UNKNOWN）的特殊情况，这是与该事件关联的原始字符串。在所有其他情况下，它为空。
+    /// 返回：返回与该事件关联的 1 个或多个字符的字符串。
+    #[deprecated(note = "不再由输入系统使用。")]
+    #[java_method]
+    pub fn get_characters(&self) -> Option<String> {}
+
+    /// 查询此按键事件的硬件按键 ID。这些值不可靠，且因设备而异。@more 主要用于调试目的。
+    #[java_method]
+    pub fn get_scan_code(&self) -> i32 {}
+
+    /// 查询事件的重复计数。对于按键按下事件，这是按键重复的次数，第一次按下从 0 开始，然后从那里开始计数。对于按键弹起事件，此值始终等于零。对于多个按键事件，这是发生的按下/弹起对的数量。
+    /// 返回：按键重复的次数。
+    #[java_method]
+    pub fn get_repeat_count(&self) -> i32 {}
+
+    /**
+     * 修改事件的按下时间和事件时间。
+     * `down_time` 事件的新按下时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+     * */
+    #[java_method]
+    pub fn set_time(down_time: i64, event_time: i64) {}
+
+    /**
+     * 查询最近一次按键按下事件的时间，以 android.os.SystemClock.uptimeMillis 时间为基准。如果这是按下事件，则此方法与 getEventTime() 相同。
+     * 请注意，当按下按键时，此值是最近按下的按键的按下时间，该按键可能不是此事件的同一物理按键。
+     * 返回：返回最近一次按键按下时间，以 android.os.SystemClock.uptimeMillis 时间为基准
+     * */
+    #[java_method]
+    pub fn get_down_time(&self) -> i64 {}
+
+    /**
+     * 以 android.os.SystemClock.uptimeMillis 时间基准检索此事件发生的时间。
+     * 返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
+     * */
+    #[java_method]
+    pub fn get_event_time(&self) -> i64 {}
+
+    /**
+     * 查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
+     * 返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
+     * */
+    #[java_method]
+    pub fn get_event_time_nanos(&self) -> i64 {}
+
+    /**
+     * 已重命名为 getDeviceId。
+     * */
+    #[deprecated(note = "请改用 getDeviceId()。")]
+    #[java_method]
+    pub fn get_keyboard_device(&self) -> i32 {}
+
+    /**
+     * 获取此键的主要字符。换句话说，就是实际打印在其上的标签。
+     * 返回：显示标签字符，如果没有则返回 0（例如，对于非打印键）。
+     * */
+    #[java_method]
+    pub fn get_display_label(&self) -> char {}
+
+    /**
+     * 获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。
+     * 如果该键不是用于键入 Unicode 字符的键，则返回 0。如果返回值已设置位 KeyCharacterMap.COMBINING_ACCENT，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 进行屏蔽后，应将其与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
+     * 返回：相关字符或组合重音符，如果没有，则返回 0。
+     * */
+    #[java_method]
+    pub fn get_unicode_char(&self) -> i32 {}
+
+    /**
+     * 获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。如果该键不是用于键入 Unicode 字符的键，则返回 0。
+     * 如果返回值已设置 KeyCharacterMap.COMBINING_ACCENT 位，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 屏蔽后，应与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
+     * 返回：相关字符或组合重音符，如果没有，则返回 0。
+     * `meta_state` 元键修饰符状态。
+     * */
+    #[java_method(overload=getUnicodeChar)]
+    pub fn get_unicode_char_from(meta_state: i32) -> i32 {}
+
+    /**
+     * 获取与该键关联的数字或符号。返回的是字符值，而不是数值。如果该键不是数字，而是符号，则返回该符号。
+     * 此方法旨在支持键盘上的拨号盘和其他数字或符号输入，其中某些键兼具字母和符号键的功能。此方法返回与该键关联的数字或符号，与用户是否按下了所需的修饰键无关。
+     * 例如，在一个特定的键盘上，按下 ALT 时，QWERTY 顶部行上的键会生成数字，因此 ALT-Q 会映射到“1”。因此，对于该键盘，当使用 KEYCODE_Q 调用 getNumber 时，它会返回“1”，以便用户可以在有意义时不按 ALT 来输入数字。
+     * 返回：关联的数字或符号字符，如果没有，则返回 0。
+     * */
+    #[java_method]
+    pub fn get_number(&self) -> char {}
+
+    /**
+     * 如果此键产生字形，则返回 true。
+     * 如果此键是打印键，则返回 true。
+     * */
+    #[java_method]
+    pub fn is_printing_key(&self) -> bool {}
+
+    /**
+     * 返回表示指定操作的符号名称的字符串，例如“ACTION_DOWN”，如果未知，则返回等效的数字常量，例如“35”。
+     * 返回：指定操作的符号名称。
+     * `action` 操作。
+     * */
+    #[java_method]
+    pub fn action_to_string(action: i32) -> String {}
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 返回表示指定键码的符号名称的字符串，例如“KEYCODE_A”、“KEYCODE_DPAD_UP”或等效数字常量（如“1001”（如果未知）。
+     * 此函数主要用于调试、日志记录和测试。它不特定于语言环境，也不旨在以面向用户的方式使用。
+     * 返回：指定键码的符号名称。
+     * `key_code` 键码。
+     * */
+    #[java_method]
+    pub fn key_code_to_string(key_code: i32) -> String {}
+
+    /**
+     * 通过其符号名称（例如“KEYCODE_A”）或等效数字常量（例如“29”）获取键码。对于符号名称，从 Build.VERSION_CODES.Q 开始，前缀“KEYCODE_”是可选的。
+     * 返回：键码，如果未找到，则返回 KEYCODE_UNKNOWN。
+     * `symbolic_name` 键码的符号名称。
+     * */
+    #[java_method]
+    pub fn key_code_from_string(symbolic_name: String) -> i32 {}
+
+    /**
+     * 返回一个字符串，该字符串表示指定的组合元键修饰符状态标志的符号名称，例如“0”、“META_SHIFT_ON”、“META_ALT_ON|META_SHIFT_ON”或等效数字常量，例如“0x10000000”（如果未知）。
+     * 返回：指定的组合元状态标志的符号名称。
+     * `meta_state` 元状态。
+     * */
+    #[java_method]
+    pub fn meta_state_to_string(meta_state: i32) -> String {}
+}
+
 #[cfg(feature = "test_android_view")]
 pub fn test() {
     use crate::{
@@ -2116,4 +3821,7 @@ pub fn test() {
         WindowManager_LayoutParams::FLAG_ALT_FOCUSABLE_IM,
         params.get_flags()
     );
+    let key_event = KeyEvent::new(KeyEvent::ACTION_DOWN, KeyEvent::KEYCODE_0);
+    assert_eq!(KeyEvent::ACTION_DOWN, key_event.get_action());
+    assert_eq!(KeyEvent::KEYCODE_0, key_event.get_key_code());
 }

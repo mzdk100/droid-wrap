@@ -12,10 +12,11 @@
  */
 
 use crate::{
-    android::{content::Context, os::Bundle},
-    JObjNew, JObjRef, JType,
+    android::{content::Context, os::Bundle, text::InputType},
+    java::lang::CharSequence,
+    JObjNew, JObjRef, JProxy, JType,
 };
-use droid_wrap_derive::{java_class, java_method};
+use droid_wrap_derive::{java_class, java_field, java_implement, java_method};
 
 //noinspection SpellCheckingInspection
 /**
@@ -416,6 +417,290 @@ impl InputMethodManager {
      * */
     #[java_method]
     pub fn get_display_id(&self) -> i32 {}
+}
+
+//noinspection SpellCheckingInspection
+/// EditorInfo 描述了输入法正在与之通信的文本编辑对象（通常是 EditText）的几个属性，最重要的是它包含的文本内容类型和当前光标位置。
+#[java_class(name = "android/view/inputmethod/EditorInfo")]
+pub struct EditorInfo;
+
+#[java_implement]
+impl InputType for EditorInfo {}
+
+impl EditorInfo {
+    /// imeOptions 中的一组位，提供与“enter”键相关的替代操作。这既有助于 IME 提供有关 Enter 键将执行的操作的 更好反馈，也允许它提供用于提供该命令的替代机制。
+    pub const IME_MASK_ACTION: u32 = 0x000000ff;
+
+    /// IME_MASK_ACTION 的位：没有与此编辑器相关联的特定操作，如果可以，让编辑器自己提出操作。
+    pub const IME_ACTION_UNSPECIFIED: u32 = 0x00000000;
+
+    /// IME_MASK_ACTION 的位：没有可用的操作。
+    pub const IME_ACTION_NONE: u32 = 0x00000001;
+
+    /// IME_MASK_ACTION 的位：操作键执行“前往”操作，将用户带到他们输入的文本的目标。通常用于输入 URL 等情况。
+    pub const IME_ACTION_GO: u32 = 0x00000002;
+
+    /// IME_MASK_ACTION 的位：操作键执行“搜索”操作，将用户带到他们所输入文本的搜索结果（在适当的上下文中）。
+    pub const IME_ACTION_SEARCH: u32 = 0x00000003;
+
+    /// IME_MASK_ACTION 的位：操作键执行“发送”操作，将文本传送到目标。这通常用于在即时通讯或短信中编写消息时，这些消息是即时发送的。
+    pub const IME_ACTION_SEND: u32 = 0x00000004;
+
+    /// IME_MASK_ACTION 的位：操作键执行“下一步”操作，将用户带到下一个接受文本的字段。
+    pub const IME_ACTION_NEXT: u32 = 0x00000005;
+
+    /// IME_MASK_ACTION 的位：操作键执行“完成”操作，通常意味着没有更多内容可输入并且 IME 将被关闭。
+    pub const IME_ACTION_DONE: u32 = 0x00000006;
+
+    /// IME_MASK_ACTION 的位：类似于 IME_ACTION_NEXT，但用于移动到上一个字段。这通常不会用于指定操作（因为它排除了 IME_ACTION_NEXT），但如果设置了 IME_FLAG_NAVIGATE_PREVIOUS，则可以返回给应用程序。
+    pub const IME_ACTION_PREVIOUS: u32 = 0x00000007;
+
+    /**
+     * imeOptions 标志：用于要求 IME 不应根据用户在此文本编辑对象上键入的内容更新任何个性化数据，如打字历史记录和个性化语言模型。典型的用例是：当应用程序处于特殊模式时，预计用户的活动不会记录在应用程序的历史记录中。一些 Web 浏览器和聊天应用程序可能有这种模式。当存储打字历史记录没有多大意义时。在打字游戏中指定此标志可能有助于避免打字历史记录被 用户 在日常生活中不太可能输入的单词填满。另一个示例是，当应用程序已经知道预期的输入不是有效单词时（例如，促销代码在任何自然语言中都不是有效单词）。
+     * 应用程序需要注意该标志并不是一种保证，并且某些 IME 可能不尊重它。
+     * */
+    pub const IME_FLAG_NO_PERSONALIZED_LEARNING: u32 = 0x1000000;
+
+    /// imeOptions 标志：用于请求 IME 永不进入全屏模式。默认情况下，IME 可能会在它们认为合适时进入全屏模式，例如在横向的小屏幕上，显示软件键盘可能会遮挡屏幕的很大一部分，以至于剩余部分太小而无法有意义地显示应用程序 UI。如果设置了此标志，兼容的 IME 将永远不会进入全屏模式，并且始终会留出一些空间来显示应用程序 UI。应用程序需要注意，该标志并不是保证，有些 IME 可能会忽略它。
+    pub const IME_FLAG_NO_FULLSCREEN: u32 = 0x2000000;
+
+    /// imeOptions 标志：类似于 IME_FLAG_NAVIGATE_NEXT，但指定向后导航可以关注一些有趣的内容。如果用户选择 IME 的向后导航功能，这将在应用程序中显示为 InputConnection#performEditorAction(int) InputConnection.performEditorAction(int) 处的 IME_ACTION_PREVIOUS。
+    pub const IME_FLAG_NAVIGATE_PREVIOUS: u32 = 0x4000000;
+
+    /// imeOptions 标志：用于指定向前导航可以关注的有趣内容。这类似于使用 IME_ACTION_NEXT，但允许 IME 为多行（带有回车键）并提供向前导航。请注意，某些 IME 可能无法执行此操作，尤其是在空间较小的小屏幕上运行时。在这种情况下，它不需要为此选项显示 UI。与 IME_ACTION_NEXT 一样，如果用户选择 IME 的向前导航功能，这将显示在应用程序中的 InputConnection#performEditorAction(int) InputConnection.performEditorAction(int)。
+    pub const IME_FLAG_NAVIGATE_NEXT: u32 = 0x8000000;
+
+    /// imeOptions 标志：用于指定 IME 不需要显示其提取的文本 UI。对于可能全屏的输入法（通常在横向模式下），这允许它们变小，并通过全屏 IME 中的透明 UI 部分让部分应用程序显示在后面。用户可见的 UI 部分可能对触摸没有响应，因为 IME 将接收触摸事件，这可能会让用户感到困惑；请使用 IME_FLAG_NO_FULLSCREEN 获得更好的体验。不鼓励使用此标志，将来可能会弃用。在某些情况下，它的含义不明确，并且可能无法在旧版本的平台上正常工作。
+    pub const IME_FLAG_NO_EXTRACT_UI: u32 = 0x10000000;
+
+    /// imeOptions 标志：与 IME_MASK_ACTION 屏蔽的操作之一结合使用，这表示当输入法为全屏时，该操作不应作为提取文本右侧的附属按钮提供。请注意，通过设置此标志，可能会出现用户永远无法使用该操作的情况。设置此标志通常意味着您认为在全屏模式下，由于几乎没有空间显示文本，因此不值得占用一些屏幕空间来显示该操作，而应该用它来显示更多文本。
+    pub const IME_FLAG_NO_ACCESSORY_ACTION: u32 = 0x20000000;
+
+    /// imeOptions 标志：与 IME_MASK_ACTION 屏蔽的操作之一结合使用。如果未设置此标志，IME 通常会用提供的操作替换“enter”键。此标志表示该操作不应以内联方式替代“enter”键。通常这是因为该操作具有如此重大的影响或不可恢复性，因此应避免意外按下它，例如发送消息。请注意，android.widget.TextView 会在多行文本视图上自动为您设置此标志。
+    pub const IME_FLAG_NO_ENTER_ACTION: u32 = 0x40000000;
+
+    /// imeOptions 标志：用于请求能够输入 ASCII 字符的 IME。此标志的目的是确保用户可以在 android.widget.TextView 中输入罗马字母字符。它通常用于输入账户 ID 或密码。很多时候，IME 已经能够输入 ASCII，即使没有被告知也是如此（此类 IME 在某种意义上已经尊重此标志），但有些情况下这不是默认的。例如，使用不同脚本（如阿拉伯语、希腊语、希伯来语或俄语）的语言的用户通常拥有默认无法输入 ASCII 字符的键盘。应用程序需要注意，该标志并不是保证，有些 IME 可能不尊重它。但是，强烈建议 IME 作者尊重此标志，尤其是当他们的 IME 最终可能处于仅启用使用非 ASCII 的语言的状态时。
+    pub const IME_FLAG_FORCE_ASCII: u32 = 0x80000000;
+
+    /// internalImeOptions 的标志：当包含此 EditorInfo 的应用程序窗口使用 Configuration#ORIENTATION_PORTRAIT 模式时设置标志。
+    pub const IME_INTERNAL_FLAG_APP_WINDOW_PORTRAIT: u32 = 0x00000001;
+
+    /// imeOptions 的通用未指定类型。
+    pub const IME_NULL: u32 = 0x00000000;
+
+    /// 文本框的内容类型，其位由InputType定义。
+    #[java_field]
+    pub fn get_input_type(&self) -> i32 {}
+
+    /// 文本框的内容类型，其位由InputType定义。
+    #[java_field]
+    pub fn set_input_type(&self, value: i32) {}
+
+    /// 扩展编辑器的类型信息，以帮助 IME 更好地与其集成。
+    #[java_field]
+    pub fn get_ime_options(&self) -> u32 {}
+
+    /// 扩展编辑器的类型信息，以帮助 IME 更好地与其集成。
+    #[java_field]
+    pub fn set_ime_options(&self, value: u32) {}
+
+    /// 提供特定 IME 实现私有的附加信息选项的字符串。该字符串必须限定在实现所拥有的包内，以确保实现之间不存在冲突，但除此之外，您可以在其中放入任何内容以与 IME 通信。例如，您可以有一个提供参数（如“com.example.myapp.SpecialMode=3”）的字符串。此字段可以从 TextView 的 android.R.attr.privateImeOptions 属性中填写。
+    #[java_field]
+    pub fn get_private_ime_options(&self) -> Option<String> {}
+
+    /// 提供特定 IME 实现私有的附加信息选项的字符串。该字符串必须限定在实现所拥有的包内，以确保实现之间不存在冲突，但除此之外，您可以在其中放入任何内容以与 IME 通信。例如，您可以有一个提供参数（如“com.example.myapp.SpecialMode=3”）的字符串。此字段可以从 TextView 的 android.R.attr.privateImeOptions 属性中填写。
+    #[java_field]
+    pub fn set_private_ime_options(&self, value: Option<String>) {}
+
+    /// 与 android.R.attr.imeOptions 相同，但仅供框架内部使用。
+    #[java_field]
+    pub fn get_internal_ime_options(&self) -> u32 {}
+
+    /// 与 android.R.attr.imeOptions 相同，但仅供框架内部使用。
+    #[java_field]
+    pub fn set_internal_ime_options(&self, value: u32) {}
+
+    /// 如果已经给出了 actionLabel，那么当用户按下按钮时，这就是通过 InputConnection.performEditorAction() 传回的命令的 id。
+    #[java_field]
+    pub fn get_action_id(&self) -> i32 {}
+
+    /// 如果已经给出了 actionLabel，那么当用户按下按钮时，这就是通过 InputConnection.performEditorAction() 传回的命令的 id。
+    #[java_field]
+    pub fn set_action_id(&self, value: i32) {}
+
+    /// 编辑开始时所选内容的文本偏移量；如果不知道，则为 -1。请记住，如果不知道光标位置，许多 IME 将无法提供其全部功能集，甚至可能以不可预测的方式运行：如果可能的话，请在此处传递实际光标位置。此外，这必须是当前的光标位置，而不是过去的某个时间点，即使输入开始于与之前相同的文本字段。当应用填充此对象时，输入即将根据定义开始，并且此值将覆盖应用之前可能传递给 InputMethodManager.updateSelection(View, int, int, int, int) 的任何值。
+    #[java_field]
+    pub fn get_initial_sel_start(&self) -> i32 {}
+
+    /// 编辑开始时所选内容的文本偏移量；如果不知道，则为 -1。请记住，如果不知道光标位置，许多 IME 将无法提供其全部功能集，甚至可能以不可预测的方式运行：如果可能的话，请在此处传递实际光标位置。此外，这必须是当前的光标位置，而不是过去的某个时间点，即使输入开始于与之前相同的文本字段。当应用填充此对象时，输入即将根据定义开始，并且此值将覆盖应用之前可能传递给 InputMethodManager.updateSelection(View, int, int, int, int) 的任何值。
+    #[java_field]
+    pub fn set_initial_sel_start(&self, value: i32) {}
+
+    /// 编辑开始时所选内容结尾的文本偏移量；如果不知道，则为 -1。请记住，如果不知道光标位置，许多 IME 将无法提供其全部功能集，并且可能会以不可预测的方式运行：如果可能的话，请在此处传递实际光标位置。此外，这必须是当前的光标位置，而不是过去某个时间点的光标位置，即使输入开始于与之前相同的文本字段。当应用填充此对象时，输入即将根据定义开始，并且此值将覆盖应用之前可能传递给 InputMethodManager.updateSelection(View, int, int, int, int) 的任何值。
+    #[java_field]
+    pub fn get_initial_sel_end(&self) -> i32 {}
+
+    /// 编辑开始时所选内容结尾的文本偏移量；如果不知道，则为 -1。请记住，如果不知道光标位置，许多 IME 将无法提供其全部功能集，并且可能会以不可预测的方式运行：如果可能的话，请在此处传递实际光标位置。此外，这必须是当前的光标位置，而不是过去某个时间点的光标位置，即使输入开始于与之前相同的文本字段。当应用填充此对象时，输入即将根据定义开始，并且此值将覆盖应用之前可能传递给 InputMethodManager.updateSelection(View, int, int, int, int) 的任何值。
+    #[java_field]
+    pub fn set_initial_sel_end(&self, value: i32) {}
+
+    /// 文本中正在编辑的第一个字符的大写模式。值可以是 TextUtils.CAP_MODE_CHARACTERS、TextUtils.CAP_MODE_WORDS 和 TextUtils.CAP_MODE_SENTENCES 的任意组合，但通常只需采用非零值来表示“以大写模式开始”。
+    #[java_field]
+    pub fn get_initial_caps_mode(&self) -> i32 {}
+
+    /// 文本中正在编辑的第一个字符的大写模式。值可以是 TextUtils.CAP_MODE_CHARACTERS、TextUtils.CAP_MODE_WORDS 和 TextUtils.CAP_MODE_SENTENCES 的任意组合，但通常只需采用非零值来表示“以大写模式开始”。
+    #[java_field]
+    pub fn set_initial_caps_mode(&self, value: i32) {}
+
+    /// 文本视图的“提示”文本，通常在文本为空时以内联显示，以告诉用户要输入什么。
+    #[java_field]
+    pub fn get_hint_text<CS: CharSequence>(&self) -> Option<CS> {}
+
+    /// 文本视图的“提示”文本，通常在文本为空时以内联显示，以告诉用户要输入什么。
+    #[java_field]
+    pub fn set_hint_text<CS: CharSequence>(&self, value: Option<CS>) {}
+
+    /// 向用户显示描述他们正在编写的文本的标签。
+    #[java_field]
+    pub fn get_label<CS: CharSequence>(&self) -> Option<CS> {}
+
+    /// 向用户显示描述他们正在编写的文本的标签。
+    #[java_field]
+    pub fn set_label<CS: CharSequence>(&self, value: Option<CS>) {}
+
+    /// 拥有此编辑器的软件包的名称。
+    /// IME 作者：在 API 级别 22 android.os.Build.VERSION_CODES.LOLLIPOP_MR1 及之前，请勿信任此软件包名称。系统尚未验证此处的软件包名称与应用程序的 uid 之间的一致性。考虑使用可信赖的 InputBinding.getUid()。从 android.os.Build.VERSION_CODES.M 开始，系统会在将 EditorInfo 传递给输入法之前验证此软件包名称与应用程序 uid 之间的一致性。
+    /// 编辑器作者：从 android.os.Build.VERSION_CODES.M 开始，如果此处提供的软件包名称与应用程序的 uid 不一致，则应用程序将无法再建立输入连接。
+    #[java_field]
+    pub fn get_package_name(&self) -> Option<String> {}
+
+    /// 拥有此编辑器的软件包的名称。
+    /// IME 作者：在 API 级别 22 android.os.Build.VERSION_CODES.LOLLIPOP_MR1 及之前，请勿信任此软件包名称。系统尚未验证此处的软件包名称与应用程序的 uid 之间的一致性。考虑使用可信赖的 InputBinding.getUid()。从 android.os.Build.VERSION_CODES.M 开始，系统会在将 EditorInfo 传递给输入法之前验证此软件包名称与应用程序 uid 之间的一致性。
+    /// 编辑器作者：从 android.os.Build.VERSION_CODES.M 开始，如果此处提供的软件包名称与应用程序的 uid 不一致，则应用程序将无法再建立输入连接。
+    #[java_field]
+    pub fn set_package_name(&self, value: Option<String>) {}
+
+    /// 编辑器字段的标识符。这是可选的，可以为 0。默认情况下，它使用正在编辑的视图上的 View.getId() 的结果填充。
+    #[java_field]
+    pub fn get_field_id(&self) -> i32 {}
+
+    /// 编辑器字段的标识符。这是可选的，可以为 0。默认情况下，它使用正在编辑的视图上的 View.getId() 的结果填充。
+    #[java_field]
+    pub fn set_field_id(&self, value: i32) {}
+
+    /// 编辑字段的其他名称。这可以为该字段提供其他名称信息。默认情况下它为空。实际内容没有意义。
+    #[java_field]
+    pub fn get_field_name(&self) -> Option<String> {}
+
+    /// 编辑字段的其他名称。这可以为该字段提供其他名称信息。默认情况下它为空。实际内容没有意义。
+    #[java_field]
+    pub fn set_field_name(&self, value: Option<String>) {}
+
+    //noinspection SpellCheckingInspection
+    /// 提供给输入法的任何额外数据。这用于与特定输入法进行扩展通信；包中的名称字段应具有范围（例如“com.mydomain.im.SOME_FIELD”），以便它们不会与其他字段冲突。可以从 TextView 的 android.R.attr.editorExtras 属性中填写此字段。
+    #[java_field]
+    pub fn get_extras(&self) -> Bundle {}
+
+    //noinspection SpellCheckingInspection
+    /// 提供给输入法的任何额外数据。这用于与特定输入法进行扩展通信；包中的名称字段应具有范围（例如“com.mydomain.im.SOME_FIELD”），以便它们不会与其他字段冲突。可以从 TextView 的 android.R.attr.editorExtras 属性中填写此字段。
+    #[java_field]
+    pub fn set_extras(&self, value: Bundle) {}
+
+    /**
+     * 编辑器可以使用此方法向 IME 提供初始输入文本。由于周围的文本可用于提供各种输入辅助，我们建议编辑器在其 View.onCreateInputConnection(EditorInfo) 回调中提供完整的初始输入文本。然后，将处理提供的文本以提供 getInitialTextBeforeCursor、getInitialSelectedText 和 getInitialTextBeforeCursor。系统可以出于各种原因修剪 source_text，同时保留对 IME 最有价值的数据。从 android.os.Build.VERSION_CODES.S 开始，未实现 Parcelable 的 span 将自动删除。
+     * 编辑器作者：提供初始输入文本有助于减少 IME 的 IPC 调用，以便在连接设置后立即提供许多现代功能。我们建议在您的实现中调用此方法。
+     * `source_text` 完整的输入文本。
+     * */
+    #[java_method]
+    pub fn set_initial_surrounding_text<CS: CharSequence>(&self, s_source_text: &CS) {}
+
+    /**
+     * 编辑器可以使用此方法向 IME 提供初始输入文本。由于周围文本可用于提供各种输入辅助，我们建议编辑器在其 View.onCreateInputConnection(EditorInfo) 回调中提供完整的初始输入文本。当需要修剪输入文本时，请调用此方法而不是 setInitialSurroundingText(CharSequence)，并提供修剪后的位置信息。始终尝试将选定的文本包含在 sub_text 中，以便系统在必要时能够灵活地选择在哪里以及如何修剪 sub_text。
+     * 从 android.os.Build.VERSION_CODES.S 开始，未实现 Parcelable 的 span 将自动删除。
+     * `sub_text` 输入文本。修剪后，必须正确提供 sub_text_start。
+     * `sub_text_start` 输入文本被修剪的位置。例如，当编辑器想要修剪掉前 10 个字符时，sub_text_start 应该是 10。
+     * */
+    #[java_method]
+    pub fn set_initial_surrounding_sub_text<CS: CharSequence>(
+        &self,
+        sub_text: &CS,
+        sub_text_start: i32,
+    ) {
+    }
+
+    /**
+     * 获取当前光标位置之前的文本的长度字符。当不支持该协议时，可能为空。
+     * 返回：光标位置之前的文本；返回文本的长度可能小于 length。当光标前没有文本时，将返回一个空字符串。当编辑器或系统不支持此协议时，它也可能是空的。
+     * `length` 文本的预期长度。
+     * `flags` 提供控制如何返回文本的其他选项。可以是 0 或 InputConnection。GET_TEXT_WITH_STYLES。
+     * */
+    #[java_method]
+    pub fn get_initial_text_before_cursor<CS: CharSequence>(
+        &self,
+        length: i32,
+        flags: u32,
+    ) -> Option<CS> {
+    }
+
+    /**
+     * 获取选定的文本（如果有）。如果协议不受支持或选定的文本太长，则可能为 null。
+     * 返回：当前选定的文本（如果有）。如果未选定文本，则可能为空字符串。如果返回 null，则选定的文本可能太长或不支持此协议。
+     * `flags` 提供控制文本返回方式的其他选项。可以是 0 或 InputConnection。GET_TEXT_WITH_STYLES。
+     * */
+    #[java_method]
+    pub fn get_initial_selected_text<CS: CharSequence>(&self, flags: u32) -> Option<CS> {}
+
+    /**
+     * 获取当前光标位置后的文本长度字符。当不支持该协议时，可能为空。
+     * 返回：光标位置后的文本；返回文本的长度可能小于 length。当光标后没有文本时，将返回空字符串。当编辑器或系统不支持此协议时，它也可能是空的。
+     * `length` 文本的预期长度。
+     * `flags` 提供控制如何返回文本的其他选项。可以是 0 或 InputConnection.GET_TEXT_WITH_STYLES。
+     * */
+    #[java_method]
+    pub fn get_initial_text_after_cursor<CS: CharSequence>(
+        &self,
+        length: i32,
+        flags: u32,
+    ) -> Option<CS> {
+    }
+
+    /**
+     * 确保此 EditorInfo 中的数据与针对给定目标 API 版本开发的应用程序兼容。这可能会影响以下输入类型：
+     * InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS、InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD、InputType.TYPE_NUMBER_VARIATION_NORMAL、InputType.TYPE_NUMBER_VARIATION_PASSWORD。
+     * 此方法由框架调用以用于输入法实现；您通常不需要自己调用它。
+     * `target_sdk_version` 兼容应用程序针对其开发的 API 版本号。
+     * */
+    #[java_method]
+    pub fn make_compatible(&self, target_sdk_version: i32) {}
+
+    /**
+     * 返回初始 MotionEvent.ACTION_UP 工具类型 MotionEvent.getToolType(int) 负责关注当前编辑器。
+     * 返回：toolType MotionEvent.getToolType(int)。
+     * */
+    #[java_method]
+    pub fn get_initial_tool_type(&self) -> i32 {}
+
+    /**
+     * 设置初始 MotionEvent.ACTION_UP 工具类型 MotionEvent.getToolType(int)。将焦点放在视图上。
+     * `tool_type` 工具类型。
+     * */
+    #[java_method]
+    pub fn set_initial_tool_type(&self, tool_type: i32) {}
+
+    /// EditorInfo 的深度复制。
+    #[java_method(type_bound=(Self, JType))]
+    pub fn create_copy_internal() -> Self {}
+
+    #[java_method]
+    pub fn describe_contents(&self) -> i32 {}
+
+    //noinspection SpellCheckingInspection
+    /**
+     * 执行松散的相等性检查，这意味着可能存在假阴性，但如果该方法返回 true，则保证两个对象相等。 extras 与 Bundle 进行比较。
+     * kindofEquals actionLabel、hintText 和 label 与 TextUtils 进行比较。equals 不考虑 Spans。
+     * */
+    #[java_method(type_bound=(Self, JType))]
+    pub fn kindof_equals(&self, that: Option<Self>) -> bool {}
 }
 
 //noinspection SpellCheckingInspection

@@ -92,6 +92,9 @@ android.view.View的API等（包括点击监听器的实现）。
 7. android.view.WindowManager;
 8. android.view.Display;
 9. android.view.inputmethod.InputMethodManager;
+10. android.view.KeyEvent;
+11. android.view.InputEvent;
+12. android.view.inputmethod.EditorInfo;
 
 ### 安卓小部件(android_widget)
 
@@ -102,6 +105,7 @@ android.view.View的API等（包括点击监听器的实现）。
 3. android.widget.Button;
 4. android.widget.LinearLayout;
 5. android.widget.LinearLayout_LayoutParams;
+6. android.widget.TextView_OnEditorActionListener;
 
 ## java功能(java)
 

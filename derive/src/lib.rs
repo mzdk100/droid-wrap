@@ -310,6 +310,13 @@ pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 
+    let class_token = if let Some(it) = type_bounds.iter().find(|i| i.0.to_string() == "Self") {
+        let tt = it.1.clone();
+        quote! {<Self as #tt>::CLASS}
+    } else {
+        quote! {Self::CLASS}
+    };
+
     if self_.is_none() {
         quote! {
             #(#attrs)*
@@ -317,7 +324,7 @@ pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 #(#stmts)*
                 droid_wrap_utils::vm_attach(|env| {
                     let ret = env.call_static_method(
-                        Self::CLASS,
+                        #class_token,
                         #name,
                         format!(#fmt, #arg_types_sig #ret_type_sig).as_str(),
                         &[#arg_values],
@@ -515,24 +522,37 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
                 }
                 let ret_token = match ret_type.to_string().as_str() {
                     "()" => quote! {Self::null().java_ref()},
+                    "bool" => quote! {
+                        let v: droid_wrap_utils::JValueGen<droid_wrap_utils::JObject<'_>> = (ret as droid_wrap_utils::jboolean).into();
+                        env.new_global_ref(v.l().unwrap()).unwrap()
+                    },
                     _ => quote! {(&ret).into()},
                 };
                 let mut arg_tokens = TokenStream2::new();
                 for i in 0..arg_types.len() {
-                    let ty = &arg_types[i];
-                    let ty_str = ty.to_string();
+                    let (unwrapped_ty, origin_ty) = &arg_types[i];
+                    let ty_str = unwrapped_ty.to_string();
                     let ar = if [
                         "bool", "char", "i16", "u16", "i32", "u32", "i64", "u64", "f32", "f64",
                     ]
                     .contains(&ty_str.as_str())
                     {
                         quote! {
-                            droid_wrap_utils::ParseJObjectType::<#ty>::parse(&args2[#i], env),
+                            droid_wrap_utils::ParseJObjectType::<#unwrapped_ty>::parse(&args2[#i], env),
                         }
+                    } else if origin_ty.to_string().starts_with("Option") {
+                        quote! {{
+                            if args2[#i].is_null() {
+                                None
+                            } else {
+                                let r = env.new_global_ref(&args2[#i]).unwrap();
+                                Some(#unwrapped_ty::_new(&r, Default::default()))
+                            }
+                        },}
                     } else {
                         quote! {{
                             let r = env.new_global_ref(&args2[#i]).unwrap();
-                            #ty::_new(&r, Default::default())
+                            #unwrapped_ty::_new(&r, Default::default())
                         },}
                     };
                     arg_tokens.extend(ar);

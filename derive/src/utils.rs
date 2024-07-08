@@ -162,7 +162,7 @@ pub(crate) fn parse_function_signature(
     type_bounds: &Vec<(TokenStream, TokenStream)>,
 ) -> (
     Option<SelfValue>,
-    Vec<TokenStream>,
+    Vec<(TokenStream, TokenStream)>,
     TokenStream,
     String,
     TokenStream,
@@ -178,7 +178,7 @@ pub(crate) fn parse_function_signature(
                 self_ = Some(r.self_token.clone());
             }
             FnArg::Typed(t) => {
-                let (unwrapped_ty, _) = unwrap_type(&t.ty.to_token_stream());
+                let (unwrapped_ty, origin_ty) = unwrap_type(&t.ty.to_token_stream());
                 let ty_str = unwrapped_ty.to_string();
                 let v = t.pat.clone();
                 let v = if ty_str == "i8" || ty_str == "u8" {
@@ -202,7 +202,7 @@ pub(crate) fn parse_function_signature(
                 };
 
                 let arg_sig = get_type_descriptor_token(&unwrapped_ty, &sig.generics, &type_bounds);
-                arg_types.push(unwrapped_ty);
+                arg_types.push((unwrapped_ty, origin_ty));
                 arg_types_sig.extend(quote!(#arg_sig,));
                 arg_values.push(Expr::Verbatim(v));
             }

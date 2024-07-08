@@ -88,6 +88,38 @@ impl JType for String {
     const CLASS: &'static str = "java/lang/String";
 }
 
+/**
+ * Boolean 类将原始类型布尔值包装在对象中。布尔类型的对象包含一个类型为布尔的字段。此外，此类还提供了许多将布尔值转换为字符串和将字符串转换为布尔值的方法，以及处理布尔值时有用的其他常量和方法。
+ * */
+#[java_class(name = "java/lang/Boolean")]
+pub struct Boolean;
+
+impl Boolean {
+    /**
+     * 分配一个表示值参数的布尔对象。
+     * `value` 布尔值。
+     * */
+    #[deprecated(
+        note = "使用此构造函数很少适合。静态工厂valueOf(boolean)通常是一个更好的选择，因为它可能会产生更好的空间和时间性能。还要考虑如果可能的话，请考虑使用最终字段。"
+    )]
+    #[java_constructor]
+    pub fn new(value: bool) -> Self {}
+
+    /**
+     * 返回表示指定布尔值的布尔实例。如果指定的布尔值为真，则此方法返回 Boolean.TRUE；如果为假，则此方法返回 Boolean.FALSE。如果不需要新的布尔实例，则通常应优先使用此方法而不是构造函数 Boolean(boolean)，因为此方法可能会产生更好的空间和时间性能。
+     * 返回：表示 b 的布尔实例。
+     * `b` 布尔值。
+     * */
+    #[java_method]
+    pub fn value_of(b: bool) -> Result<Self, <Self as JType>::Error> {}
+}
+
+impl From<&bool> for Boolean {
+    fn from(value: &bool) -> Self {
+        Self::value_of(*value).unwrap()
+    }
+}
+
 pub trait CharSequenceExt {
     fn to_char_sequence<CS: CharSequence>(&self) -> CS
     where
