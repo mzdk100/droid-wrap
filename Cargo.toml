@@ -14,7 +14,7 @@ authors = ["mzdk100 <mzdk100@foxmail.com>"]
 description = "用于Rust的Android API的高级封装"
 keywords = ["android", "api", "sdk", "jni", "java"]
 license = "Apache-2.0"
-version = "0.1.9"
+version = "0.2.0"
 edition = "2021"
 readme = "README.md"
 repository = "https://gitcode.net/mzdk100/droid-wrap.git"
@@ -60,11 +60,11 @@ test_java_nio = ["java_nio"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
-version = "0.1.9"
+version = "0.2.0"
 path = "utils"
 
 [dependencies.droid-wrap-derive]
-version = "0.1.9"
+version = "0.2.0"
 path="derive"
 
 [workspace]
