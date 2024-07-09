@@ -43,7 +43,9 @@ impl Object {
     pub fn hash_code(&self) -> i32 {}
 }
 
+/// Object的扩展操作
 pub trait ObjectExt {
+    /// 把Object类型转换到任意java类型。
     fn cast<T: JType>(&self) -> T
     where
         <T as JObjNew>::Fields: Default;
@@ -84,12 +86,14 @@ impl JObjNew for String {
 impl JType for String {
     type Error = Error;
     const CLASS: &'static str = "java/lang/String";
+    //noinspection SpellCheckingInspection
+    const OBJECT_SIG: &'static str = "Ljava/lang/String;";
 }
 
 /**
  * Boolean 类将原始类型布尔值包装在对象中。布尔类型的对象包含一个类型为布尔的字段。此外，此类还提供了许多将布尔值转换为字符串和将字符串转换为布尔值的方法，以及处理布尔值时有用的其他常量和方法。
  * */
-#[java_class(name = "java/lang/Boolean")]
+#[java_class(name = "java/lang/Boolean", extends=Object)]
 pub struct Boolean;
 
 impl Boolean {
@@ -118,7 +122,11 @@ impl From<&bool> for Boolean {
     }
 }
 
+/// CharSequence的扩展操作
 pub trait CharSequenceExt {
+    /**
+     * 实现一个CharSequence类型。
+     * */
     fn to_char_sequence<CS: CharSequence>(&self) -> CS
     where
         <CS as JObjNew>::Fields: Default;
@@ -140,7 +148,7 @@ impl<'a> CharSequenceExt for &'a str {
  * Integer 类将原始类型 int 的值包装在对象中。Integer 类型的对象包含一个类型为 int 的字段。此外，此类还提供了几种将 int 转换为 String 和将 String 转换为 int 的方法，以及处理 int 时有用的其他常量和方法。
  * 实现说明：“位操作”方法（如 highestOneBit 和 numberOfTrailingZeros）的实现基于 Henry S. Warren, Jr. 的《Hacker's Delight》（Addison Wesley，2002 年）中的材料。
  * */
-#[java_class(name = "java/lang/Integer")]
+#[java_class(name = "java/lang/Integer", extends=Object)]
 pub struct Integer;
 
 impl Integer {
@@ -173,7 +181,7 @@ impl Integer {
 /**
  * Float 类将原始类型浮点的值包装在对象中。Float 类型的对象包含一个类型为浮点的字段。此外，此类还提供了几种将浮点转换为字符串和将字符串转换为浮点的方法，以及处理浮点时有用的其他常量和方法。浮点相等、等价和比较 java.lang.Double 类讨论了浮点值的相等、等价和比较，其中相等适用于浮点值。
  * */
-#[java_class(name = "java/lang/Float")]
+#[java_class(name = "java/lang/Float", extends=Object)]
 pub struct Float;
 
 impl Float {
@@ -216,7 +224,8 @@ pub trait CharSequence {
     fn char_at(&self, index: i32) -> Result<char, Error>;
 }
 
-#[java_class(name = "java/lang/CharSequenceImpl")]
+#[doc(hidden)]
+#[java_class(name = "java/lang/CharSequenceImpl", extends=Object)]
 pub struct CharSequenceImpl;
 
 impl CharSequence for CharSequenceImpl {
@@ -241,7 +250,8 @@ pub trait Runnable {
     fn run(&self);
 }
 
-#[java_class(name = "java/lang/RunnableImpl")]
+#[doc(hidden)]
+#[java_class(name = "java/lang/RunnableImpl", extends=Object)]
 pub struct RunnableImpl(Box<dyn Fn() + Sync + Send>);
 
 impl RunnableImpl {
@@ -324,7 +334,7 @@ impl System {
  * 二进制名称作为 String 参数提供给 ClassLoader 中方法的任何类名都必须是 Java™ 语言规范定义的二进制名称。有效类名的示例包括：
  * "java.lang.String" "javax.swing.JSpinner$DefaultEditor" "java.security.KeyStore$Builder$FileBuilder$1" "java.net.URLClassLoader$3$1"
  * */
-#[java_class(name = "java/lang/ClassLoader")]
+#[java_class(name = "java/lang/ClassLoader", extends=Object)]
 pub struct ClassLoader;
 
 #[cfg(feature = "test_java_lang")]

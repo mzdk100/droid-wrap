@@ -10,10 +10,10 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-
 use droid_wrap_derive::{
     java_class, java_constructor, java_implement, java_interface, java_method,
 };
+use std::sync::Arc;
 
 use crate::{
     android::{content::Context, os::Bundle},
@@ -210,6 +210,29 @@ pub trait TextToSpeech_OnInitListener {
     fn on_init(&self, status: i32);
 }
 
+#[allow(non_camel_case_types)]
+#[java_class(name = "android/speech/tts/TextToSpeech$OnInitListenerImpl")]
+struct TextToSpeech_OnInitListenerImpl(Box<dyn Fn(i32) + Send + Sync>);
+
+#[java_implement]
+impl TextToSpeech_OnInitListener for TextToSpeech_OnInitListenerImpl {
+    fn on_init(&self, status: i32) {
+        self.0(status)
+    }
+}
+
+impl Default for TextToSpeech_OnInitListenerImplDefault {
+    fn default() -> Self {
+        Self(Box::new(|_| ()))
+    }
+}
+
+impl TextToSpeech_OnInitListenerImpl {
+    pub fn from_fn(func: impl Fn(/* status */ i32) + Send + Sync + 'static) -> Arc<Self> {
+        Self::new(TextToSpeech_OnInitListenerImplDefault(Box::new(func)))
+    }
+}
+
 //noinspection SpellCheckingInspection
 #[cfg(feature = "test_android_speech_tts")]
 pub fn test() {
@@ -218,17 +241,10 @@ pub fn test() {
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
     let context: Context = (&Activity::fetch()).into();
-    #[allow(non_camel_case_types)]
-    #[java_class(name = "rs/TtsListener")]
-    struct TextToSpeech_OnInitListenerImpl;
-    #[java_implement]
-    impl TextToSpeech_OnInitListener for TextToSpeech_OnInitListenerImpl {
-        fn on_init(&self, status: i32) {
-            println!("Tts is initialized status: {}.", status)
-        }
-    }
-    let a = TextToSpeech_OnInitListenerImpl::new(());
-    let tts = TextToSpeech::new(&context, a.as_ref());
+    let init_listener = TextToSpeech_OnInitListenerImpl::from_fn(|status| {
+        println!("Tts is initialized status: {}.", status)
+    });
+    let tts = TextToSpeech::new(&context, init_listener.as_ref());
     assert!(tts
         .to_string()
         .starts_with("android.speech.tts.TextToSpeech"));

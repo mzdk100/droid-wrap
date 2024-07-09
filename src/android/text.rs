@@ -285,35 +285,36 @@ pub trait TextWatcher {
 
 #[java_class(name = "android/text/TextWatcherImpl")]
 pub struct TextWatcherImpl {
-    before_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32)>,
-    on_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32)>,
-    after_text_changed: Option<fn(<TextWatcherImpl as TextWatcher>::E)>,
+    before_text_changed:
+        Box<dyn Fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32) + Send + Sync>,
+    on_text_changed: Box<dyn Fn(<TextWatcherImpl as TextWatcher>::Cs, i32, i32, i32) + Send + Sync>,
+    after_text_changed: Box<dyn Fn(<TextWatcherImpl as TextWatcher>::E) + Send + Sync>,
 }
 
 impl TextWatcherImpl {
     pub fn from_fn(
-        before_text_changed: Option<
-            fn(
+        before_text_changed: impl Fn(
                 /* s */ <Self as TextWatcher>::Cs,
                 /* start */ i32,
                 /* count */ i32,
                 /* after */ i32,
-            ),
-        >,
-        on_text_changed: Option<
-            fn(
+            ) + Send
+            + Sync
+            + 'static,
+        on_text_changed: impl Fn(
                 /* s */ <Self as TextWatcher>::Cs,
                 /* start */ i32,
                 /* before */ i32,
                 /* count */ i32,
-            ),
-        >,
-        after_text_changed: Option<fn(/* s */ <Self as TextWatcher>::E)>,
+            ) + Send
+            + Sync
+            + 'static,
+        after_text_changed: impl Fn(/* s */ <Self as TextWatcher>::E) + Send + Sync + 'static,
     ) -> Arc<Self> {
         Self::new(TextWatcherImplDefault {
-            before_text_changed,
-            on_text_changed,
-            after_text_changed,
+            before_text_changed: Box::new(before_text_changed),
+            on_text_changed: Box::new(on_text_changed),
+            after_text_changed: Box::new(after_text_changed),
         })
     }
 }
@@ -321,9 +322,9 @@ impl TextWatcherImpl {
 impl Default for TextWatcherImplDefault {
     fn default() -> Self {
         Self {
-            before_text_changed: None,
-            on_text_changed: None,
-            after_text_changed: None,
+            before_text_changed: Box::new(|_, _, _, _| ()),
+            on_text_changed: Box::new(|_, _, _, _| ()),
+            after_text_changed: Box::new(|_| ()),
         }
     }
 }
@@ -340,26 +341,24 @@ impl TextWatcher for TextWatcherImpl {
         count: i32,
         after: i32,
     ) {
-        if let Some(ref f) = self.before_text_changed {
-            f(s, start, count, after)
-        }
+        (self.before_text_changed)(s, start, count, after)
     }
 
     fn on_text_changed(&self, s: <Self as TextWatcher>::Cs, start: i32, before: i32, count: i32) {
-        if let Some(ref f) = self.on_text_changed {
-            f(s, start, before, count)
-        }
+        (self.on_text_changed)(s, start, before, count)
     }
 
     fn after_text_changed(&self, s: <Self as TextWatcher>::E) {
-        if let Some(ref f) = self.after_text_changed {
-            f(s)
-        }
+        (self.after_text_changed)(s)
     }
 }
 
 #[cfg(feature = "test_android_text")]
 pub fn test() {
-    let watcher = TextWatcherImpl::from_fn(Some(|_s, _start, _count, _after| ()), None, None);
+    let watcher = TextWatcherImpl::from_fn(
+        |_s, _start, _count, _after| (),
+        |_s, _start, _before, _count| (),
+        |_s| (),
+    );
     dbg!(watcher);
 }

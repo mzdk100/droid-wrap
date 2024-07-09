@@ -175,12 +175,6 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
         #item
         #item2_token
 
-        impl #generics #name #generics {
-            pub fn get_this_ref(&self) -> &droid_wrap_utils::GlobalRef {
-                &self.#added_this
-            }
-        }
-
         impl #generics JObjNew for #name #generics {
             type Fields = #name2;
 
@@ -192,6 +186,7 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
         impl #generics JType for #name #generics {
             type Error = droid_wrap_utils::Error;
             const CLASS: &'static str = #cls;
+            const OBJECT_SIG: &'static str = concat!("L", #cls, ";");
         }
 
         impl #generics JObjRef for #name #generics {
@@ -442,12 +437,14 @@ pub fn java_interface(attrs: TokenStream, input: TokenStream) -> TokenStream {
         .push(TypeParamBound::Verbatim(quote! {std::fmt::Debug}));
 
     item.items.push(TraitItem::Verbatim(
-        quote! {const CLASS: &'static str = #cls;},
+        quote! {
+            #[doc = #cls]
+            const CLASS: &'static str = #cls;
+        },
     ));
     item.items.push(TraitItem::Verbatim(quote! {
-        fn get_object_sig() -> String {
-            concat!("L", #cls, ";").to_string()
-        }
+        #[doc = concat!("L", #cls, ";")]
+        const OBJECT_SIG: &'static str = concat!("L", #cls, ";");
     }));
     let stream = quote! {
         #item
@@ -603,7 +600,7 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
         impl Drop for #name {
             fn drop(&mut self) {
-                droid_wrap_utils::unbind_proxy_handler(self.get_this_ref());
+                droid_wrap_utils::unbind_proxy_handler(&self.java_ref());
             }
         }
     };

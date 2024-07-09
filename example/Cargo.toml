@@ -9,6 +9,11 @@ edition.workspace = true
 readme.workspace = true
 repository.workspace = true
 
+[package.metadata.android.sdk]
+min_sdk_version = 26
+target_sdk_version = 35
+max_sdk_version = 35
+
 [[example]]
 name = "activity-example"
 crate-type = ["dylib"]

@@ -199,6 +199,13 @@ impl View {
     pub fn set_on_click_listener<L: View_OnClickListener + JProxy>(&self, l: &L) {}
 
     /**
+     * 注册一个回调，当此视图被点击并按住时调用。如果此视图不是长按可点击的，则变为长按可点击的。
+     * `l` 将运行的回调
+     * */
+    #[java_method]
+    pub fn set_on_long_click_listener<L: View_OnLongClickListener + JProxy>(&self, l: &L) {}
+
+    /**
      * 获取与此视图关联的 LayoutParams。所有视图都应具有布局参数。这些参数为此视图的父级提供参数，指定应如何排列。
      * ViewGroup.LayoutParams 有许多子类，这些子类对应于负责排列其子级的 ViewGroup 的不同子类。如果此视图未附加到父 ViewGroup 或 setLayoutParams(ViewGroup.LayoutParams) 未成功调用，则此方法可能返回 null。当视图附加到父 ViewGroup 时，此方法不得返回 null。
      * 返回：与此视图关联的 LayoutParams，如果尚未设置参数，则返回 null
@@ -281,6 +288,18 @@ impl View {
      * */
     #[java_method]
     pub fn set_context_clickable(&self, context_clickable: bool) {}
+
+    /**
+     * 返回此视图是否具有附加的 OnClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
+     * */
+    #[java_method]
+    pub fn has_on_click_listeners(&self) -> bool {}
+
+    /**
+     * 返回此视图是否具有附加的 OnLongClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
+     * */
+    #[java_method]
+    pub fn has_on_long_click_listeners(&self) -> bool {}
 }
 
 /// 当视图被点击时调用的回调的接口定义。
@@ -294,28 +313,27 @@ pub trait View_OnClickListener {
     fn on_click(&self, v: View);
 }
 
+#[doc(hidden)]
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/view/View$OnClickListenerImpl")]
-pub struct View_OnClickListenerImpl(Option<fn(View)>);
+pub struct View_OnClickListenerImpl(Box<dyn Fn(View) + Send + Sync>);
 
 impl View_OnClickListenerImpl {
-    pub fn from_fn(func: fn(View)) -> Arc<Self> {
-        Self::new(View_OnClickListenerImplDefault(Some(func)))
+    pub fn from_fn(func: impl Fn(/* v */ View) + Send + Sync + 'static) -> Arc<Self> {
+        Self::new(View_OnClickListenerImplDefault(Box::new(func)))
     }
 }
 
 impl Default for View_OnClickListenerImplDefault {
     fn default() -> Self {
-        Self(None)
+        Self(Box::new(|v| unimplemented!("{:?}", v)))
     }
 }
 
 #[java_implement]
 impl View_OnClickListener for View_OnClickListenerImpl {
     fn on_click(&self, v: View) {
-        if let Some(ref f) = self.0 {
-            f(v)
-        }
+        self.0(v)
     }
 }
 
@@ -331,12 +349,21 @@ pub trait ViewManager {
      * `params` 要分配给视图的 LayoutParams。
      * */
     fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams);
+
+    #[doc(hidden)]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams);
+
+    #[doc(hidden)]
     fn remove_view(&self, view: &View);
 }
 
+/**
+ * 应用用于与窗口管理器通信的接口。每个窗口管理器实例都绑定到一个 Display。要获取与显示器关联的 WindowManager，请调用 Context.createWindowContext(Display, int, Bundle) 以获取显示器的 UI 上下文，然后在 UI 上下文上调用 Context.getSystemService(String) 或 Context.getSystemService(Class)。
+ * 在特定显示器上显示窗口的最简单方法是创建一个 Presentation，它会自动获取显示器的 WindowManager 和上下文。
+ * */
 #[java_interface(name = "android/view/WindowManager")]
 pub trait WindowManager: ViewManager {
+    #[doc(hidden)]
     const PARCEL_KEY_SHORTCUTS_ARRAY: &'static str = "shortcuts_array";
 
     /**
@@ -355,6 +382,7 @@ pub trait WindowManager: ViewManager {
     fn get_default_display(&self) -> Display {}
 }
 
+#[doc(hidden)]
 #[java_class(name = "android/view/WindowManagerImpl")]
 pub struct WindowManagerImpl;
 
@@ -518,13 +546,16 @@ impl ViewGroup_MarginLayoutParams {
     #[java_field]
     pub fn set_bottom_margin(&self, value: i32) {}
 
+    #[doc(hidden)]
     #[java_constructor]
     pub fn new(width: i32, height: i32) -> Self {}
 
+    #[doc(hidden)]
     #[java_constructor]
     pub fn from_layout_params(source: &ViewGroup_LayoutParams) -> Self {}
 }
 
+#[doc(hidden)]
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/view/WindowManager$LayoutParams", extends=ViewGroup_LayoutParams)]
 pub struct WindowManager_LayoutParams;
@@ -1814,22 +1845,31 @@ impl Display {
     /// 显示色彩模式：显示器的默认或原生色域。
     pub const COLOR_MODE_DEFAULT: i32 = 0;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_BT601_625: i32 = 1;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_BT601_625_UNADJUSTED: i32 = 2;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_BT601_525: i32 = 3;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_BT601_525_UNADJUSTED: i32 = 4;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_BT709: i32 = 5;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_DCI_P3: i32 = 6;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_SRGB: i32 = 7;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_ADOBE_RGB: i32 = 8;
 
+    #[doc(hidden)]
     pub const COLOR_MODE_DISPLAY_P3: i32 = 9;
 
     /// 表示当显示屏被移除时，其所有活动将移至主显示屏，并且最顶层的活动将成为焦点。
@@ -1840,6 +1880,7 @@ impl Display {
     /// TODO (b/114338689): 删除该标志并使用 WindowManager#REMOVE_CONTENT_MODE_DESTROY
     pub const REMOVE_MODE_DESTROY_CONTENT: i32 = 1;
 
+    #[doc(hidden)]
     pub const DISPLAY_MODE_ID_FOR_FRAME_RATE_OVERRIDE: i32 = 0xFF;
 
     /**
@@ -1916,10 +1957,12 @@ impl Display {
     #[java_method]
     pub fn get_maximum_size_dimension(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[deprecated(note = "改用 WindowMetrics.getBounds.width()。")]
     #[java_method]
     pub fn get_width(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[deprecated(note = "改用#height()。")]
     #[java_method]
     pub fn get_height(&self) -> i32 {}
@@ -2051,9 +2094,11 @@ impl Display {
     #[java_method]
     pub fn can_steal_top_focus(&self) -> bool {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn type_to_string(r#type: i32) -> String {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn state_to_string(state: i32) -> String {}
 
@@ -2224,6 +2269,7 @@ impl InputEvent {
     #[java_method]
     pub fn get_id(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn describe_contents(&self) -> i32 {}
 }
@@ -3217,6 +3263,7 @@ impl KeyEvent {
     /// 最后一个 KEYCODE 的整数值。随着新的键码添加到 KeyEvent，该值会增加。
     pub const LAST_KEYCODE: i32 = Self::KEYCODE_MACRO_4;
 
+    #[doc(hidden)]
     #[deprecated(note = "现在键码数量已超过 MAX_KEYCODE。请使用 getMaxKeyCode()。")]
     pub const MAX_KEYCODE: i32 = 84;
 
@@ -3226,6 +3273,7 @@ impl KeyEvent {
     /// getAction 值：按键已被释放。
     pub const ACTION_UP: i32 = 1;
 
+    #[doc(hidden)]
     #[deprecated(
         note = "输入系统不再使用。getAction 值：连续发生多个重复按键事件，或者正在传递复杂字符串。如果按键代码不是 KEYCODE_UNKNOWN，则 getRepeatCount() 方法返回应执行给定按键代码的次数。否则，如果按键代码是 KEYCODE_UNKNOWN，则这是 getCharacters 返回的字符序列。"
     )]
@@ -3468,6 +3516,7 @@ impl KeyEvent {
     #[java_method]
     pub fn is_system(&self) -> bool {}
 
+    #[doc(hidden)]
     #[java_method(overload = isWakeKey)]
     pub fn is_wake(&self) -> bool {}
 
@@ -3494,27 +3543,35 @@ impl KeyEvent {
     #[java_method]
     pub fn is_system_key(key_code: i32) -> bool {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn is_wake_key(key_code: i32) -> bool {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn is_meta_key(key_code: i32) -> bool {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn is_alt_key(key_code: i32) -> bool {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn get_device_id(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn get_source(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn set_source(&self, source: i32) {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn get_display_id(&self) -> i32 {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn set_display_id(&self, display_id: i32) {}
 
@@ -3815,6 +3872,36 @@ impl KeyEvent {
      * */
     #[java_method]
     pub fn meta_state_to_string(meta_state: i32) -> String {}
+}
+
+/// 当视图被点击并保持时调用的回调的接口定义。
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/view/View$OnLongClickListener")]
+pub trait View_OnLongClickListener {
+    /**
+     * 当单击并按住某个视图时调用。
+     * 返回：如果回调消耗了长按，则返回 true，否则返回 false。
+     * `v` 被单击并按住的视图。
+     * */
+    fn on_long_click(&self, v: View) -> bool;
+}
+
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+#[java_class(name = "android/view/View$OnLongClickListenerImpl")]
+pub struct View_OnLongClickListenerImpl(Box<dyn Fn(View) -> bool + Send + Sync>);
+
+impl Default for View_OnLongClickListenerImplDefault {
+    fn default() -> Self {
+        Self(Box::new(|v| unimplemented!("{:?}", v)))
+    }
+}
+
+#[java_implement]
+impl View_OnLongClickListener for View_OnLongClickListenerImpl {
+    fn on_long_click(&self, v: View) -> bool {
+        self.0(v)
+    }
 }
 
 #[cfg(feature = "test_android_view")]

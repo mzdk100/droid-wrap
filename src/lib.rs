@@ -14,6 +14,8 @@
 //! 封装Android系统的API。
 //! [官方参考文档](https://developer.android.google.cn/reference/packages)
 
+#![warn(missing_docs)]
+
 #![doc = include_str!("../README.md")]
 
 /**
@@ -35,6 +37,13 @@ pub mod android {
     #[cfg(feature = "android_content")]
     #[cfg_attr(docsrs, doc(cfg(feature = "android_content")))]
     pub mod content;
+
+    /**
+     * 提供对硬件功能（例如摄像头和其他传感器）的支持。
+     * */
+    #[cfg(feature = "android_hardware")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "android_hardware")))]
+    pub mod hardware;
 
     /**
      * 提供管理音频和视频中各种媒体接口的类。

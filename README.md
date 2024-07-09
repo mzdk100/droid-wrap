@@ -65,7 +65,10 @@
 
 ### 安卓系统(android_os)
 
-android.os.Bundle。
+1. android.os.Bundle;
+2. android.os.VibrationEffect;
+3. android.os.Vibrator;
+4. android.os.VibratorManager;
 
 ### 安卓语音(android_speech)
 
@@ -95,6 +98,7 @@ android.view.View的API等（包括点击监听器的实现）。
 10. android.view.KeyEvent;
 11. android.view.InputEvent;
 12. android.view.inputmethod.EditorInfo;
+13. android.view.View_OnLongClickListener;
 
 ### 安卓小部件(android_widget)
 
@@ -112,6 +116,15 @@ android.view.View的API等（包括点击监听器的实现）。
 ### java语言内置(java_lang)
 
 实现了java.lang.String,java.lang.Integer等类型。
+
+1. java.lang.Boolean;
+2. java.lang.Float;
+3. java.lang.Object;
+4. java.lang.String;
+5. java.lang.Integer;
+6. java.lang.CharSequence;
+7. java.lang.Runnable;
+8. java.lang.System;
 
 ### java缓冲区(java_nio)
 

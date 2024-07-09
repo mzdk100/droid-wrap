@@ -111,21 +111,22 @@ macro_rules! import {
         pub trait JType: JObjRef + JObjNew {
             /// 错误类型。
             type Error;
+
             /// java类的名称。
             const CLASS: &'static str;
 
-            /**
-             * 获取对象的签名描述。
-             * */
-            fn get_object_sig() -> String {
-                format!("L{};", Self::CLASS)
-            }
+            /// 对象的签名描述。
+            const OBJECT_SIG: &'static str;
         }
 
         /**
          * 用于Java动态代理的创建。
          * */
         pub trait JProxy: JObjNew {
+            /**
+             * 创建一个代理对象。
+             * `fields` 传递给struct的自定义字段。
+             * */
             fn new(fields: Self::Fields) -> std::sync::Arc<Self>;
         }
 
@@ -155,9 +156,7 @@ macro_rules! import {
         impl<T: JType> JType for Arc<T> {
             const CLASS: &'static str = T::CLASS;
             type Error = T::Error;
-            fn get_object_sig() -> String {
-                T::get_object_sig()
-            }
+            const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjRef> JObjRef for Arc<T> {
@@ -177,9 +176,7 @@ macro_rules! import {
         impl<T: JType> JType for Rc<T> {
             const CLASS: &'static str = T::CLASS;
             type Error = T::Error;
-            fn get_object_sig() -> String {
-                T::get_object_sig()
-            }
+            const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjRef> JObjRef for Rc<T> {
@@ -199,9 +196,7 @@ macro_rules! import {
         impl<T: JType> JType for Mutex<T> {
             const CLASS: &'static str = T::CLASS;
             type Error = T::Error;
-            fn get_object_sig() -> String {
-                T::get_object_sig()
-            }
+            const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjNew> JObjNew for Mutex<T> {
@@ -522,19 +517,6 @@ unsafe extern "C" fn rust_callback<'a>(
     method: JObject<'a>,
     args: JObjectArray<'a>,
 ) -> JObject<'a> {
-    let return_type = env
-        .call_method(&method, "getReturnType", "()Ljava/lang/Class;", &[])
-        .unwrap()
-        .l()
-        .unwrap();
-    let name = env
-        .call_method(&return_type, "toString", "()Ljava/lang/String;", &[])
-        .unwrap()
-        .l()
-        .unwrap();
-    let name = env.get_string((&name).into()).unwrap();
-    println!("ret:{}", name.to_str().unwrap());
-
     let hash_code = env
         .call_method(&this, "hashCode", "()I", &[])
         .unwrap()

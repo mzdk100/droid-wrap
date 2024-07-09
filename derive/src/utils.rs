@@ -153,7 +153,7 @@ fn get_type_descriptor_token(
         } else {
             ty.clone()
         };
-        quote! {#ty::get_object_sig()}
+        quote! {#ty::OBJECT_SIG}
     }
 }
 
@@ -263,7 +263,7 @@ pub(crate) fn get_return_value_token(
     let (unwrapped_ty, ty) = unwrap_type(ret_type);
     let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics, &type_bounds);
 
-    if ret_type_sig.to_string().contains("get_object_sig") {
+    if ret_type_sig.to_string().contains("OBJECT_SIG") {
         let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);
         return (
             quote! {

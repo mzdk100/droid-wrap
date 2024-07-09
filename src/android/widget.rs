@@ -187,33 +187,35 @@ pub trait TextView_OnEditorActionListener {
 
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/widget/TextView$OnEditorActionListenerImpl")]
-pub struct TextView_OnEditorActionListenerImpl(Option<fn(TextView, i32, Option<KeyEvent>) -> bool>);
+pub struct TextView_OnEditorActionListenerImpl(
+    Box<dyn Fn(TextView, i32, Option<KeyEvent>) -> bool + Send + Sync>,
+);
 
 impl Default for TextView_OnEditorActionListenerImplDefault {
     fn default() -> Self {
-        Self(None)
+        Self(Box::new(|_, _, _| false))
     }
 }
 
 impl TextView_OnEditorActionListenerImpl {
     pub fn from_fn(
-        func: fn(
-            /* v */ TextView,
-            /* action_id */ i32,
-            /* event */ Option<KeyEvent>,
-        ) -> bool,
+        func: impl Fn(
+                /* v */ TextView,
+                /* action_id */ i32,
+                /* event */ Option<KeyEvent>,
+            ) -> bool
+            + Send
+            + Sync
+            + 'static,
     ) -> Arc<Self> {
-        Self::new(TextView_OnEditorActionListenerImplDefault(Some(func)))
+        Self::new(TextView_OnEditorActionListenerImplDefault(Box::new(func)))
     }
 }
 
 #[java_implement]
 impl TextView_OnEditorActionListener for TextView_OnEditorActionListenerImpl {
     fn on_editor_action(&self, v: TextView, action_id: i32, event: Option<KeyEvent>) -> bool {
-        if let Some(ref f) = self.0 {
-            return f(v, action_id, event);
-        }
-        false
+        self.0(v, action_id, event)
     }
 }
 
@@ -387,7 +389,17 @@ pub fn test() {
         1.0,
     );
     assert_eq!(1.0, params.get_weight());
-    let watcher = TextWatcherImpl::from_fn(None, None, None);
+    let watcher = TextWatcherImpl::from_fn(
+        |s, start, count, after| {
+            dbg!((s, start, count, after));
+        },
+        |s, start, before, count| {
+            dbg!((s, start, before, count));
+        },
+        |s| {
+            dbg!(s);
+        },
+    );
     button.add_text_changed_listener(watcher.as_ref());
     button.remove_text_changed_listener(watcher.as_ref());
 }

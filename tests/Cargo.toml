@@ -9,8 +9,16 @@ edition.workspace = true
 readme.workspace = true
 repository.workspace = true
 
+[package.metadata.android.sdk]
+min_sdk_version = 26
+target_sdk_version = 35
+max_sdk_version = 35
+
 [[package.metadata.android.queries.intent]]
 actions = ["android.intent.action.TTS_SERVICE"]
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.VIBRATE"
 
 [features]
 android = ["droid-wrap/android_app"]

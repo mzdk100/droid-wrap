@@ -157,8 +157,10 @@ impl Context {
     pub const NETWORK_STATS_SERVICE: &'static str = "netstats";
 
     //noinspection SpellCheckingInspection
+    #[doc(hidden)]
     pub const NETWORK_POLICY_SERVICE: &'static str = "netpolicy";
 
+    #[doc(hidden)]
     pub const NETWORK_WATCHLIST_SERVICE: &'static str = "network_watchlist";
 
     /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.WifiManager 来处理 Wi-Fi 访问的管理。
@@ -907,6 +909,10 @@ impl ContextWrapper {
         self._based.get_class_loader()
     }
 
+    /**
+     * 将给定的意图广播给所有感兴趣的 BroadcastReceiver。此调用是异步的；它会立即返回，您将在接收器运行时继续执行。接收器不会传播任何结果，接收器也无法中止广播。如果您想允许接收器传播结果或中止广播，则必须使用 sendOrderedBroadcast(Intent, String) 发送有序广播。有关 Intent 广播的更多信息，请参阅 BroadcastReceiver。
+     * `intent` 要广播的 Intent；与此 Intent 匹配的所有接收器都将收到广播。
+     * */
     pub fn send_broadcast(&self, intent: &Intent) {
         self._based.send_broadcast(intent)
     }
@@ -2637,6 +2643,7 @@ impl Intent {
     pub const ACTION_DYNAMIC_SENSOR_CHANGED: &'static str =
         "android.intent.action.DYNAMIC_SENSOR_CHANGED";
 
+    #[doc(hidden)]
     #[deprecated(note = "已弃用 - 改用 ACTION_FACTORY_RESET。")]
     pub const ACTION_MASTER_CLEAR: &'static str = "android.intent.action.MASTER_CLEAR";
 
@@ -3006,6 +3013,7 @@ impl Intent {
     /// 广播动作：报告何时发生新的热事件。当设备达到其最高温度时，报告的热级别
     pub const ACTION_THERMAL_EVENT: &'static str = "android.intent.action.THERMAL_EVENT";
 
+    #[doc(hidden)]
     pub const EXTRA_THERMAL_STATE: &'static str = "android.intent.extra.THERMAL_STATE";
 
     /// 设备正常时的热状态。此状态在 ACTION_THERMAL_EVENT 广播中作为 EXTRA_THERMAL_STATE 发送。
@@ -3507,6 +3515,7 @@ impl Intent {
     /// 用于远程意图中的额外字段。它是随远程意图传递的字符串标记。
     pub const EXTRA_REMOTE_INTENT_TOKEN: &'static str = "android.intent.extra.remote_intent_token";
 
+    #[doc(hidden)]
     #[deprecated(note = "请参阅EXTRA_CHANGED_COMPONENT_NAME_LIST;该字段将仅包含列表中的名字。")]
     pub const EXTRA_CHANGED_COMPONENT_NAME: &'static str =
         "android.intent.extra.changed_component_name";
@@ -3574,8 +3583,13 @@ impl Intent {
     pub const EXTRA_TIME_PREF_24_HOUR_FORMAT: &'static str =
         "android.intent.extra.TIME_PREF_24_HOUR_FORMAT";
 
+    #[doc(hidden)]
     pub const EXTRA_TIME_PREF_VALUE_USE_12_HOUR: i32 = 0;
+
+    #[doc(hidden)]
     pub const EXTRA_TIME_PREF_VALUE_USE_24_HOUR: i32 = 1;
+
+    #[doc(hidden)]
     pub const EXTRA_TIME_PREF_VALUE_USE_LOCALE_DEFAULT: i32 = 2;
 
     /**
@@ -3672,6 +3686,7 @@ impl Intent {
     /// 用于根据直接启动感知和当前用户状态自动匹配意图的标志。由于默认行为是自动应用当前用户状态，因此这实际上是一个哨兵值，不会根据其存在与否更改任何查询的输出。相反，此值可以与 android.os.StrictMode.VmPolicy.Builder#detectImplicitDirectBoot() 结合使用，以检测调用者何时依赖隐式自动匹配，而不是确认他们想要的显式行为。
     pub const FLAG_DIRECT_BOOT_AUTO: u32 = 0x00000100;
 
+    #[doc(hidden)]
     #[deprecated]
     pub const FLAG_DEBUG_TRIAGED_MISSING: u32 = Self::FLAG_DIRECT_BOOT_AUTO;
 
@@ -3733,6 +3748,7 @@ impl Intent {
     /// 此标志通常不由应用程序代码设置，但如果此活动是从历史记录中启动的，则由系统为您设置。
     pub const FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY: u32 = 0x00100000;
 
+    #[doc(hidden)]
     #[deprecated(
         note = "从 API 21 开始，它的执行方式与 FLAG_ACTIVITY_NEW_DOCUMENT 相同，应使用 FLAG_ACTIVITY_NEW_DOCUMENT 来代替它。"
     )]
@@ -3991,6 +4007,7 @@ impl From<&crate::android::app::Activity> for Context {
     }
 }
 
+/// 测试android.content
 #[cfg(feature = "test_android_content")]
 pub fn test() {
     let act = crate::android::app::Activity::fetch();
