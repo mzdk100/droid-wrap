@@ -63,6 +63,7 @@ impl InMemoryDexClassLoader {
     pub fn new(dex_buffer: &ByteBuffer, parent: &ClassLoader) -> Self {}
 }
 
+/// 测试dalvik.system
 #[cfg(feature = "test_dalvik_system")]
 pub fn test() {
     use crate::android::{app::Activity, content::Context};

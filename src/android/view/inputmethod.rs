@@ -48,16 +48,22 @@ use droid_wrap_derive::{java_class, java_field, java_implement, java_method};
 pub struct InputMethodManager;
 
 impl InputMethodManager {
+    #[doc(hidden)]
     pub const DISPATCH_IN_PROGRESS: i32 = -1;
 
+    #[doc(hidden)]
     pub const DISPATCH_NOT_HANDLED: i32 = 0;
 
+    #[doc(hidden)]
     pub const DISPATCH_HANDLED: i32 = 1;
 
+    #[doc(hidden)]
     pub const SHOW_IM_PICKER_MODE_AUTO: i32 = 0;
 
+    #[doc(hidden)]
     pub const SHOW_IM_PICKER_MODE_INCLUDE_AUXILIARY_SUBTYPES: i32 = 1;
 
+    #[doc(hidden)]
     pub const SHOW_IM_PICKER_MODE_EXCLUDE_AUXILIARY_SUBTYPES: i32 = 2;
 
     /**
@@ -265,6 +271,7 @@ impl InputMethodManager {
     #[java_method]
     pub fn invalidate_input(&self, view: &super::View) {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn add_virtual_stylus_id_for_test_session(&self) {}
 
@@ -691,6 +698,7 @@ impl EditorInfo {
     #[java_method(type_bound=(Self, JType))]
     pub fn create_copy_internal() -> Self {}
 
+    #[doc(hidden)]
     #[java_method]
     pub fn describe_contents(&self) -> i32 {}
 
@@ -704,6 +712,7 @@ impl EditorInfo {
 }
 
 //noinspection SpellCheckingInspection
+/// 测试android.view.inputmethod
 #[cfg(feature = "test_android_view_inputmethod")]
 pub fn test() {
     use crate::{

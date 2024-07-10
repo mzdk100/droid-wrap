@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+/// 文本转语音
 #[cfg(feature = "android_speech_tts")]
 #[cfg_attr(docsrs, doc(cfg(feature = "android_speech_tts")))]
-#[cfg(feature = "android_speech_tts")]
 pub mod tts;

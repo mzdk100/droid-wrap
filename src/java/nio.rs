@@ -11,9 +11,8 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-
+use crate::{JObjNew, JObjRef, JType};
 use droid_wrap_derive::java_class;
-use crate::{JObjRef,JType,JObjNew};
 
 /**
  * 字节缓冲区。此类定义了六类针对字节缓冲区的操作：
@@ -55,6 +54,7 @@ use crate::{JObjRef,JType,JObjNew};
 #[java_class(name = "java/nio/ByteBuffer")]
 pub struct ByteBuffer;
 
+/// 测试java.nio
 #[cfg(feature = "test_java_nio")]
 pub fn test() {
     let buffer = ByteBuffer::null();

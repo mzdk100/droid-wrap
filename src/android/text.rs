@@ -18,6 +18,14 @@ use crate::{
 use droid_wrap_derive::{java_class, java_implement, java_interface, java_method};
 use std::sync::Arc;
 
+/**
+ * 整数的位定义，定义可编辑对象中保存的文本的基本内容类型。支持的类可以与变体和标志组合以指示所需的行为。
+ *
+ * 示例
+ * - 密码字段，密码对用户可见： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+ * - 多行邮箱地址，自动大写： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_POSTAL_ADDRESS | TYPE_TEXT_FLAG_MULTI_LINE
+ * - 时间字段： inputType = TYPE_CLASS_DATETIME | TYPE_DATETIME_VARIATION_TIME
+ * */
 #[java_interface(name = "android/text/InputType")]
 pub trait InputType {
     /// 确定给定文本总体类别的位掩码。当前支持的类别有：TYPE_CLASS_TEXT、TYPE_CLASS_NUMBER、TYPE_CLASS_PHONE、TYPE_CLASS_DATETIME。IME 作者：如果您不了解该类别，则假定 TYPE_CLASS_TEXT 不带任何变体或标志。
@@ -147,6 +155,7 @@ pub trait InputType {
     const TYPE_DATETIME_VARIATION_TIME: i32 = 0x00000020;
 }
 
+#[doc(hidden)]
 #[java_class(name = "android/text/InputTypeImpl")]
 pub struct InputTypeImpl;
 
@@ -157,7 +166,9 @@ impl InputType for InputTypeImpl {}
  * */
 #[java_interface(name = "android/text/Editable")]
 pub trait Editable: CharSequence {
+    #[doc(hidden)]
     type Cs: CharSequence;
+    #[doc(hidden)]
     type E: Editable;
 
     /**
@@ -205,6 +216,7 @@ pub trait Editable: CharSequence {
     fn clear_spans(&self);
 }
 
+#[doc(hidden)]
 #[java_class(name = "android/text/EditableImpl", extends=CharSequenceImpl)]
 pub struct EditableImpl;
 
@@ -267,7 +279,9 @@ impl Editable for EditableImpl {
  * */
 #[java_interface(name = "android/text/TextWatcher")]
 pub trait TextWatcher {
+    #[doc(hidden)]
     type Cs: CharSequence;
+    #[doc(hidden)]
     type E: Editable;
 
     /// 调用此方法是为了通知您，在 s 中，从 start 开始的 count 个字符即将被长度为 after 的新文本替换。
@@ -283,6 +297,7 @@ pub trait TextWatcher {
     fn after_text_changed(&self, s: Self::E);
 }
 
+#[doc(hidden)]
 #[java_class(name = "android/text/TextWatcherImpl")]
 pub struct TextWatcherImpl {
     before_text_changed:
@@ -353,6 +368,7 @@ impl TextWatcher for TextWatcherImpl {
     }
 }
 
+/// 测试android.text
 #[cfg(feature = "test_android_text")]
 pub fn test() {
     let watcher = TextWatcherImpl::from_fn(

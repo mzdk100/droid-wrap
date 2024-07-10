@@ -30,6 +30,7 @@ pub trait InvocationHandler {
     fn invoke(proxy: &Object, method: &Method, args: &[Object]);
 }
 
+/// 方法和构造函数的共同功能的共享超类。
 #[java_class(name = "java/lang/reflect/Executable")]
 pub struct Executable;
 
@@ -71,5 +72,6 @@ impl Method {
     }
 }
 
+/// 测试java.lang.reflect
 #[cfg(feature = "test_java_lang_reflect")]
 pub fn test() {}

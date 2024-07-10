@@ -42,6 +42,7 @@ use crate::{
 pub struct EditText;
 
 impl EditText {
+    #[doc(hidden)]
     #[java_constructor]
     pub fn new(context: &Context) -> Self {}
 
@@ -58,6 +59,9 @@ impl EditText {
     #[java_method]
     pub fn set_selection(&self, start: i32, stop: i32) -> Result<(), droid_wrap_utils::Error> {}
 
+    /**
+     * 子类会重写此功能以指定它们默认具有 KeyListener，即使在 XML 选项中没有特别调用。
+     * */
     pub fn get_default_editable(&self) -> bool {
         self._based.get_default_editable()
     }
@@ -95,6 +99,7 @@ impl EditText {
 pub struct TextView;
 
 impl TextView {
+    #[doc(hidden)]
     #[java_constructor]
     pub fn new(context: &Context) -> Self {}
 
@@ -185,6 +190,7 @@ pub trait TextView_OnEditorActionListener {
     fn on_editor_action(&self, v: TextView, action_id: i32, event: Option<KeyEvent>) -> bool;
 }
 
+#[doc(hidden)]
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/widget/TextView$OnEditorActionListenerImpl")]
 pub struct TextView_OnEditorActionListenerImpl(
@@ -282,9 +288,13 @@ impl Button {
 pub struct LinearLayout;
 
 impl LinearLayout {
+    #[doc(hidden)]
     pub const HORIZONTAL: i32 = 0;
+
+    #[doc(hidden)]
     pub const VERTICAL: i32 = 1;
 
+    #[doc(hidden)]
     #[java_constructor]
     pub fn new(context: &Context) -> Self {}
 
@@ -327,6 +337,7 @@ impl LinearLayout_LayoutParams {
     #[java_field]
     pub fn set_gravity(&self, value: i32) {}
 
+    #[doc(hidden)]
     #[java_constructor]
     pub fn new(width: i32, height: i32) -> Self {}
 
@@ -339,14 +350,17 @@ impl LinearLayout_LayoutParams {
     #[java_constructor]
     pub fn new_with_weight(width: i32, height: i32, weight: f32) -> Self {}
 
+    #[doc(hidden)]
     #[allow(unused_qualifications)]
     #[java_constructor]
     pub fn from_layout_params(p: &ViewGroup_LayoutParams) -> Self {}
 
+    #[doc(hidden)]
     #[java_constructor]
     pub fn from_margin_layout_params(source: &ViewGroup_MarginLayoutParams) -> Self {}
 }
 
+/// 测试android.widget
 #[cfg(feature = "test_android_widget")]
 pub fn test() {
     use crate::{

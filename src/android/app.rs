@@ -210,6 +210,7 @@ impl Activity {
     }
 }
 
+/// 测试android.app
 #[cfg(feature = "test_android_app")]
 pub fn test() {
     use crate::{

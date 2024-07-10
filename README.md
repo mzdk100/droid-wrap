@@ -69,6 +69,11 @@
 2. android.os.VibrationEffect;
 3. android.os.Vibrator;
 4. android.os.VibratorManager;
+5. android.os.Build;
+6. android.os.SystemProperties;
+7. android.os.Build_VERSION_CODES;
+8. android.os.Build_VERSION;
+9. android.os.SystemProperties_Handle;
 
 ### 安卓语音(android_speech)
 
@@ -125,6 +130,7 @@ android.view.View的API等（包括点击监听器的实现）。
 6. java.lang.CharSequence;
 7. java.lang.Runnable;
 8. java.lang.System;
+9. java.lang.reflect.Executable;
 
 ### java缓冲区(java_nio)
 

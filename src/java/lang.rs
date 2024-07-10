@@ -337,6 +337,7 @@ impl System {
 #[java_class(name = "java/lang/ClassLoader", extends=Object)]
 pub struct ClassLoader;
 
+/// 测试java.lang
 #[cfg(feature = "test_java_lang")]
 pub fn test() {
     let integer = Integer::value_of(100).unwrap();

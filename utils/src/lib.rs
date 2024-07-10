@@ -357,7 +357,14 @@ pub fn bind_proxy_handler(
         + 'static,
 ) {
     let hash_code = get_proxy_hash_code(proxy);
-    let mut lock = HOOK_OBJECTS.try_write().unwrap();
+    let mut lock = match HOOK_OBJECTS.try_write() {
+        Ok(lock) => lock,
+        Err(e) => {
+            error!("Can't bind proxy handler. ({})", e);
+            return;
+        }
+    };
+
     if lock.is_none() {
         lock.replace(HashMap::new());
     }

@@ -210,9 +210,10 @@ pub trait TextToSpeech_OnInitListener {
     fn on_init(&self, status: i32);
 }
 
+#[doc(hidden)]
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/speech/tts/TextToSpeech$OnInitListenerImpl")]
-struct TextToSpeech_OnInitListenerImpl(Box<dyn Fn(i32) + Send + Sync>);
+pub struct TextToSpeech_OnInitListenerImpl(Box<dyn Fn(i32) + Send + Sync>);
 
 #[java_implement]
 impl TextToSpeech_OnInitListener for TextToSpeech_OnInitListenerImpl {
@@ -234,6 +235,7 @@ impl TextToSpeech_OnInitListenerImpl {
 }
 
 //noinspection SpellCheckingInspection
+/// 测试android.speech.tts
 #[cfg(feature = "test_android_speech_tts")]
 pub fn test() {
     use crate::{
