@@ -30,12 +30,10 @@ use droid_wrap_derive::java_class;
  * 访问二进制数据
  * 此类定义了用于读取和写入除布尔值之外的所有其他原始类型的值的方法。原始值根据缓冲区的当前字节顺序转换为（或从）字节序列，可以通过 order 方法检索和修改字节序列。特定字节顺序由 ByteOrder 类的实例表示。字节缓冲区的初始顺序始终是 BIG_ENDIAN。
  * 对于访问异构二进制数据（即不同类型的值序列），此类为每种类型定义了一系列绝对和相对地获取和放置方法。例如，对于 32 位浮点值，此类定义：
- * ```java
  * float getFloat()
  * float getFloat(int index)
  * void putFloat(float f)
  * void putFloat(int index, float f)
- * ```
  * char、short、int、long 和 double 类型定义了相应的方法。绝对获取和放置方法的索引参数以字节为单位，而不是以读取或写入的类型为单位。对于访问同质二进制数据（即相同类型的值序列），此类定义了可以创建给定字节缓冲区视图的方法。
  * 视图缓冲区只是另一个缓冲区，其内容由字节缓冲区支持。对字节缓冲区内容的更改将在视图缓冲区中可见，反之亦然；两个缓冲区的位置、限制和标记值是独立的。例如，asFloatBuffer 方法创建 FloatBuffer 类的一个实例，该实例由调用该方法的字节缓冲区支持。为 char、short、int、long 和 double 类型定义了相应的视图创建方法。
  * 与上述类型特定的 get 和 put 方法系列相比，视图缓冲区具有三个重要优势：
@@ -44,12 +42,11 @@ use droid_wrap_derive::java_class;
  * - 视图缓冲区可能更高效，因为当且仅当其支持字节缓冲区是直接的时，它才是直接的。视图缓冲区的字节顺序固定为其创建视图时的字节缓冲区的字节顺序。
  * 调用链
  * 此类中没有返回值的方法被指定为返回调用它们的缓冲区。这允许方法调用链。语句序列
- * ```java
  * bb.putInt(0xCAFEBABE);
  * bb.putShort(3);
  * bb.putShort(45);
- * ```
- * 例如，可以用单个语句 `bb.putInt(0xCAFEBABE).putShort(3).putShort(45);` 代替
+ * 例如，可以用单个语句代替：
+ * bb.putInt(0xCAFEBABE).putShort(3).putShort(45);
  * */
 #[java_class(name = "java/nio/ByteBuffer")]
 pub struct ByteBuffer;

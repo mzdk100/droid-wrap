@@ -476,7 +476,10 @@ impl<T: FromStr> ParseJObjectType<T> for JObject<'_> {
 }
 //noinspection SpellCheckingInspection
 fn load_rust_call_method_hook_class<'a>() -> &'a GlobalRef {
+    #[cfg(target_os = "android")]
     const BYTECODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/classes.dex"));
+    #[cfg(not(target_os = "android"))]
+    const BYTECODE: &[u8] = &[];
     const LOADER_CLASS: &str = "dalvik/system/InMemoryDexClassLoader";
     static INSTANCE: OnceLock<GlobalRef> = OnceLock::new();
 
@@ -584,7 +587,7 @@ unsafe extern "C" fn rust_callback<'a>(
         if let Some(f) = map.get(&hash_code) {
             let ret = f(&mut env, &method, &args);
             drop(lock);
-            dbg!(ret.is_null());
+
             return env.new_local_ref(ret.as_obj()).unwrap();
         } else {
             warn!("The method call has reached, but it appears that the proxy object has been dropped.");

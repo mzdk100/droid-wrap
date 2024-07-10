@@ -311,13 +311,10 @@ impl System {
  * 在委托模型不是严格分层的环境中，类加载器需要具有并行能力，否则类加载可能会导致死锁，因为加载器锁会在整个类加载过程中一直保持（请参阅 loadClass 方法）。
  * 通常，Java 虚拟机以与平台相关的方式从本地文件系统加载类。例如，在 UNIX 系统上，虚拟机从 CLASSPATH 环境变量定义的目录中加载类。但是，某些类可能不是源自文件；它们可能源自其他来源，例如网络，或者可以由应用程序构造。方法 defineClass 将字节数组转换为 Class 类的实例。
  * 可以使用 Class.newInstance 创建此新定义类的实例。类加载器创建的对象的方法和构造函数可能会引用其他类。为了确定引用的类，Java 虚拟机会调用最初创建该类的类加载器的 loadClass 方法。例如，应用程序可以创建网络类加载器以从服务器下载类文件。示例代码可能如下所示：
- * ```java
  * ClassLoader loader = new NetworkClassLoader(host, port);
  * Object main = loader.loadClass("Main", true).newInstance();
  * ...
- * ```
  * 网络类加载器子类必须定义 findClass 和 loadClassData 方法，以便从网络加载类。下载组成类的字节后，应使用 defineClass 方法创建类实例。示例实现如下：
- * ```java
  * class NetworkClassLoader extends ClassLoader {
  * String host;
  * int port;
@@ -330,7 +327,6 @@ impl System {
  * ...
  * }
  * }
- * ```
  * 二进制名称作为 String 参数提供给 ClassLoader 中方法的任何类名都必须是 Java™ 语言规范定义的二进制名称。有效类名的示例包括：
  * "java.lang.String" "javax.swing.JSpinner$DefaultEditor" "java.security.KeyStore$Builder$FileBuilder$1" "java.net.URLClassLoader$3$1"
  * */

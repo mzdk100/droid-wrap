@@ -21,7 +21,7 @@
 pub mod inputmethod;
 
 use crate::{
-    android::content::Context,
+    android::{content::Context, os::Bundle},
     java::lang::{CharSequence, Integer},
     JObjNew, JObjRef, JProxy, JType,
 };
@@ -300,6 +300,272 @@ impl View {
      * */
     #[java_method]
     pub fn has_on_long_click_listeners(&self) -> bool {}
+
+    /**
+     * 返回屏幕是否应保持开启，对应于 KEEP_SCREEN_ON 的当前值。
+     * 返回：如果设置了 KEEP_SCREEN_ON，则返回 true。
+     * */
+    #[java_method]
+    pub fn get_keep_screen_on(&self) -> bool {}
+
+    /**
+     * 控制屏幕是否应保持开启，修改 KEEP_SCREEN_ON 的值。
+     * `keep_screen_on` 提供 true 以设置 KEEP_SCREEN_ON。
+     * */
+    #[java_method]
+    pub fn set_keep_screen_on(keep_screen_on: bool) {}
+
+    /**
+     * 获取此视图的父级。请注意，父级是 ViewParent，不一定是 View。
+     * 返回：此视图的父级。
+     * */
+    #[java_method]
+    pub fn get_parent<VP: ViewParent>(&self) -> Option<VP> {}
+}
+
+/// 定义视图父类的职责。这是视图想要与其父类交互时看到的 API。
+#[java_interface(name = "android/view/ViewParent")]
+pub trait ViewParent {
+    #[doc(hidden)]
+    type VP: ViewParent;
+
+    /// 当发生某些更改导致此视图父级的子级布局无效时调用。这将安排视图树的布局过程。
+    fn request_layout(&self);
+
+    /// 指示是否在此视图父级上请求布局。
+    /// 返回：如果请求布局，则返回 true，否则返回 false
+    fn is_layout_requested(&self) -> bool;
+
+    /**
+     * 当子视图希望视图层次结构收集透明区域并将其报告给窗口合成器时调用。在视图层次结构中“打”洞的视图（例如 SurfaceView）可以使用此 API 来提高系统的性能。当层次结构中不存在此类视图时，此优化是不必要的，并且可能会略微降低视图层次结构的性能。
+     * `child` 请求透明区域计算的视图
+     * */
+    fn request_transparent_region(&self, child: &View);
+
+    /**
+     * 如果父级存在则返回该父级，否则返回 null。
+     * 返回：ViewParent，如果此 ViewParent 没有父级则返回 null。
+     * */
+    fn get_parent(&self) -> Option<Self::VP>;
+
+    /**
+     * 当此父级的子级需要焦点时调用
+     * `child` 此 ViewParent 需要焦点的子级。此视图将包含焦点视图。它不一定是实际具有焦点的视图。
+     * `focused` 实际具有焦点的子级后代视图
+     * */
+    fn request_child_focus(&self, child: &View, focused: &View);
+
+    /**
+     * 告诉视图层次结构需要重新评估全局视图属性。
+     * `child` 属性已更改的视图。
+     * */
+    fn recompute_view_attributes(&self, child: &View);
+
+    /**
+     * 当此父级的子级放弃焦点时调用
+     * `child` 放弃焦点的视图
+     * */
+    fn clear_child_focus(&self, child: &View);
+
+    /**
+     * 查找指定方向上想要获得焦点的最近视图
+     * `v` 当前获得焦点的视图
+     * `direction` FOCUS_UP、FOCUS_DOWN、FOCUS_LEFT 和 FOCUS_RIGHT 之一
+     * */
+    fn focus_search(&self, v: &View, direction: i32) -> View;
+
+    /**
+     * 更改子项的 z 顺序，使其位于所有其他子项之上。如果此容器使用顺序相关的布局方案（例如 LinearLayout），则此顺序更改可能会影响布局。在 android.os.Build.VERSION_CODES.KITKAT 之前，此方法应随后调用此父项的 requestLayout() 和 View.invalidate()，以强制父项使用新的子项顺序重新绘制。
+     * `child` 要置于 z 顺序顶部的子项
+     * */
+    fn bring_child_to_front(&self, child: &View);
+
+    /**
+     * 显示指定视图或其祖先的上下文菜单。在大多数情况下，子类不需要覆盖此。但是，如果将子类直接添加到窗口管理器（例如，ViewManager.addView(View, ViewGroup.LayoutParams)），则它应该覆盖此并显示上下文菜单。
+     * 返回：如果显示上下文菜单，则返回 true，否则返回 false
+     * `original_view` 首次调用上下文菜单的源视图
+     * */
+    fn show_context_menu_for_child(&self, original_view: &View) -> bool;
+
+    /**
+     * 当子项的可绘制状态发生改变时，将在父项上调用此方法。
+     * `child` 可绘制状态发生改变的子项。
+     * */
+    fn child_drawable_state_changed(&self, child: &View);
+
+    /**
+     * 当子级不希望此父级及其祖先使用 ViewGroup.onInterceptTouchEvent(MotionEvent) 拦截触摸事件时调用。此父级应将此调用传递给其父级。此父级必须在触摸期间遵守此请求（即，仅在此父级收到向上或取消后清除标志。
+     * `disallow_intercept` 如果子级不希望父级拦截触摸事件，则为 True。
+     * */
+    fn request_disallow_intercept_touch_event(&self, disallow_intercept: bool);
+
+    /**
+     * 当子视图现在具有或不再跟踪瞬态时调用。 “瞬态”是视图可能持有的任何状态，但不应反映在视图当前呈现的数据模型中。此状态仅影响视图本身向用户呈现的内容，例如正在进行的动画的当前状态或文本选择操作的状态。瞬态可用于向视图系统的其他组件提示特定视图正在跟踪复杂但封装的内容。例如，ListView 可能承认具有瞬态的列表项视图应保留在其位置或稳定项 ID 中，而不是将该视图视为可由后备适配器轻松替换。
+     * 这使得适配器实现更简单，而不需要跟踪正在进行的项目视图动画的状态，以便在意外回收和重新绑定附加项目视图时可以恢复它们。当子视图或其子树中的视图开始或结束内部瞬态跟踪时，将在父视图上调用此方法。
+     * `child` 状态已改变的子视图
+     * `has_transient_state` 如果此子视图具有瞬时状态，则为 true
+     * */
+    fn child_has_transient_state_changed(&self, child: &View, has_transient_state: bool);
+
+    /**
+     * 要求执行新的 View.fitSystemWindows(Rect) 调度。
+     * */
+    fn request_fit_system_windows(&self);
+
+    /**
+     * 获取给定 View 的父级，以实现可访问性。由于某些 View 未暴露给可访问性层，因此可访问性的父级不一定是 View 的直接父级，而是前任。
+     * 返回：父级，如果未找到，则返回 null。
+     * */
+    fn get_parent_for_accessibility(&self) -> Option<Self::VP>;
+
+    /**
+     * 通知视图父级，其某个后代的可访问性状态已更改，并且子树的结构不同。
+     * `child` 子树已更改的直接子级。
+     * `source` 发生更改的后代视图。不能为 null。
+     * `change_type` 发生的更改类型的位掩码。以下一个或多个：
+     * AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE
+     * AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_STARTED
+     * AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_CANCELLED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_DROPPED
+     * */
+    fn notify_subtree_accessibility_state_changed(
+        &self,
+        child: &View,
+        source: &View,
+        change_type: i32,
+    );
+
+    /**
+     * 告知此视图父级是否可以解析布局方向。请参阅 View.setLayoutDirection(int)
+     * 返回：如果此视图父级可以解析布局方向，则返回 True。
+     * */
+    fn can_resolve_layout_direction(&self) -> bool;
+
+    /**
+     * 告知此视图父级布局方向是否已解析。请参阅 View.setLayoutDirection(int)
+     * 返回：如果此视图父级布局方向已解析，则返回 True。
+     * */
+    fn is_layout_direction_resolved(&self) -> bool;
+
+    /**
+     * 返回此视图的父布局方向。请参阅 View.getLayoutDirection()
+     * 返回：如果布局方向为 RTL，则返回 View.LAYOUT_DIRECTION_RTL；如果布局方向不是 RTL，则返回 View.LAYOUT_DIRECTION_LTR。
+     * */
+    fn get_layout_direction(&self) -> i32;
+
+    /**
+     * 告知此视图父级是否可以解析文本方向。请参阅 View.setTextDirection(int)
+     * 返回：如果此视图父级可以解析文本方向，则返回 True。
+     * */
+    fn can_resolve_text_direction(&self) -> bool;
+
+    /**
+     * 告知此视图父文本方向是否已解析。请参阅 View.setTextDirection(int)
+     * 返回：如果此视图父文本方向已解析，则返回 true。
+     * */
+    fn is_text_direction_resolved(&self) -> bool;
+
+    /**
+     * 返回此视图父文本方向。参见 View.getTextDirection()
+     * 返回：已解析的文本方向。返回以下之一：
+     * View.TEXT_DIRECTION_FIRST_STRONG View.TEXT_DIRECTION_ANY_RTL、View.TEXT_DIRECTION_LTR、View.TEXT_DIRECTION_RTL、View.TEXT_DIRECTION_LOCALE
+     * */
+    fn get_text_direction(&self) -> i32;
+
+    /**
+     * 告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
+     * 返回：如果此视图父级可以解决文本对齐问题，则返回 True。
+     * */
+    fn can_resolve_text_alignment(&self) -> bool;
+
+    /**
+     * 告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
+     * 返回：如果此视图父级可以解决文本对齐问题，则返回 True。
+     * */
+    fn is_text_alignment_resolved(&self) -> bool;
+
+    /**
+     * 对启动嵌套滚动操作的子视图做出反应，在适当的情况下声明嵌套滚动操作。此方法将在子视图调用 View.startNestedScroll(int) 时调用。视图层次结构中的每个父视图都将有机会通过返回 true 来响应和声明嵌套滚动操作。
+     * 此方法可能被 ViewParent 实现覆盖，以指示视图何时愿意支持即将开始的嵌套滚动操作。如果它返回 true，则此 ViewParent 将成为目标视图的嵌套滚动父视图，直至滚动操作完成。当嵌套滚动完成时，此 ViewParent 将收到对 onStopNestedScroll(View) 的调用。
+     * 如果此 ViewParent 接受嵌套滚动操作，则返回 true
+     * `child` 包含目标的此 ViewParent 的直接子视图
+     * `target` 发起嵌套滚动的视图
+     * `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
+     * */
+    fn on_start_nested_scroll(&self, child: &View, target: &View, nested_scroll_axes: i32) -> bool;
+
+    /**
+     * 对成功声明嵌套滚动操作做出反应。此方法将在 onStartNestedScroll 返回 true 后调用。它为视图及其超类提供了对嵌套滚动执行初始配置的机会。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
+     * `child` 此 ViewParent 的直接子级，包含 target
+     * `target` 启动嵌套滚动的视图
+     * `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
+     * */
+    fn on_nested_scroll_accepted(&self, child: &View, target: &View, nested_scroll_axes: i32);
+
+    /**
+     * 对嵌套滚动操作结束做出反应。在嵌套滚动操作后执行清理。当嵌套滚动停止时，将调用此方法，例如当嵌套触摸滚动以 MotionEvent.ACTION_UP 或 MotionEvent.ACTION_CANCEL 事件结束时。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
+     * `target` 启动嵌套滚动的视图
+     * */
+    fn on_stop_nested_scroll(&self, target: &View);
+
+    /**
+     * 对正在进行的嵌套滚动做出反应。当 ViewParent 的当前嵌套滚动子视图分派嵌套滚动事件时，将调用此方法。要接收对此方法的调用，ViewParent 必须先前已为 onStartNestedScroll(View, View, int) 调用返回 true。
+     * 滚动距离的已消耗部分和未消耗部分均报告给 ViewParent。例如，实现可以选择使用已消耗部分来匹配或追踪多个子元素的滚动位置。未消耗部分可用于允许连续拖动多个滚动或可拖动元素，例如滚动垂直抽屉内的列表，一旦到达内部滚动内容的边缘，抽屉便开始拖动。
+     * `target` 控制嵌套滚动的后代视图
+     * `dx_consumed` 目标已消耗的水平滚动距离（以像素为单位）
+     * `dy_consumed` 目标已消耗的垂直滚动距离（以像素为单位）
+     * `dx_unconsumed` 目标未消耗的水平滚动距离（以像素为单位）
+     * `dy_unconsumed` 目标未消耗的垂直滚动距离（以像素为单位）
+     * */
+    fn on_nested_scroll(
+        &self,
+        target: &View,
+        dx_consumed: i32,
+        dy_consumed: i32,
+        dx_unconsumed: i32,
+        dy_unconsumed: i32,
+    );
+
+    /**
+     * 从嵌套滚动请求一次抛出。此方法表示嵌套滚动子视图已检测到适合抛出的条件。通常，这意味着触摸滚动已在滚动方向上以达到或超过可滚动轴上的最小抛出速度的速度结束。
+     * 如果嵌套滚动子视图通常会抛出但位于其自身内容的边缘，则可以使用此方法将抛出委托给其嵌套滚动父视图。父视图可以选择使用抛出或观察子视图的抛出。
+     * 返回：如果此父视图消耗了抛出或以其他方式对抛出做出反应，则为 true
+     * `target` 发起嵌套滚动的视图。
+     * `velocity_x` 水平速度（以像素/秒为单位）。
+     * `velocity_y` 垂直速度（以像素/秒为单位）。
+     * `consumed` 如果子视图消耗了抛出，则为 true，否则为 false。
+     * */
+    fn on_nested_fling(
+        &self,
+        target: &View,
+        velocity_x: f32,
+        velocity_y: f32,
+        consumed: bool,
+    ) -> bool;
+
+    /**
+     * 在目标视图使用嵌套的快速滑动之前对其做出反应。此方法表示嵌套滚动子视图已检测到沿每个轴具有给定速度的快速滑动。通常，这意味着触摸滚动已在滚动方向上以达到或超过沿可滚动轴的最小快速滑动速度的速度结束。
+     * 如果嵌套滚动父视图正在将运动作为预滚动的一部分使用，则它可能也适合使用预快速滑动以完成相同的运动。通过从此方法返回 true，父视图表示子视图也不应该快速滑动其自己的内部内容。
+     * 返回：如果此父视图在目标视图之前使用了快速滑动，则返回 true
+     * `target` 发起嵌套滚动的视图。
+     * `velocity_x` 水平速度（以像素/秒为单位）。
+     * `velocity_y` 垂直速度（以像素/秒为单位）。
+     * */
+    fn on_nested_pre_fling(&self, target: &View, velocity_x: f32, velocity_y: f32) -> bool;
+
+    /**
+     * 在目标处理目标后代视图委托的可访问性操作之前，对它做出反应。如果目标希望让其父链中的视图有机会在正常处理发生之前对事件做出反应，则目标后代视图可以调用此方法。
+     * 最常见的是滚动事件，例如 android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD。支持充当嵌套滚动父级的 ViewParent 应覆盖此方法并采取相应行动，以通过可访问性系统实​​现滚动。
+     * 返回：true，如果此 ViewParent 使用了此操作
+     * `target` 调度此操作的目标视图。
+     * `action` 正在执行的操作；请参阅 android.view.accessibility.AccessibilityNodeInfo。
+     * `arguments` 可选的操作参数。
+     * */
+    fn on_nested_pre_perform_accessibility_action(
+        &self,
+        target: &View,
+        action: i32,
+        arguments: Option<Bundle>,
+    ) -> bool;
 }
 
 /// 当视图被点击时调用的回调的接口定义。
@@ -449,6 +715,131 @@ impl ViewManager for ViewGroup {
 
     #[java_method]
     fn remove_view(&self, view: &View) {}
+}
+
+impl ViewParent for ViewGroup {
+    type VP = Self;
+
+    #[java_method]
+    fn request_layout(&self) {}
+
+    #[java_method]
+    fn is_layout_requested(&self) -> bool {}
+
+    #[java_method]
+    fn request_transparent_region(&self, child: &View) {}
+
+    #[java_method(type_bound=(Self::VP, ViewParent))]
+    fn get_parent(&self) -> Option<Self::VP> {}
+
+    #[java_method]
+    fn request_child_focus(&self, child: &View, focused: &View) {}
+
+    #[java_method]
+    fn recompute_view_attributes(&self, child: &View) {}
+
+    #[java_method]
+    fn clear_child_focus(&self, child: &View) {}
+
+    #[java_method]
+    fn focus_search(&self, v: &View, direction: i32) -> View {}
+
+    #[java_method]
+    fn bring_child_to_front(&self, child: &View) {}
+
+    #[java_method]
+    fn show_context_menu_for_child(&self, original_view: &View) -> bool {}
+
+    #[java_method]
+    fn child_drawable_state_changed(&self, child: &View) {}
+
+    #[java_method]
+    fn request_disallow_intercept_touch_event(&self, disallow_intercept: bool) {}
+
+    #[java_method]
+    fn child_has_transient_state_changed(&self, child: &View, has_transient_state: bool) {}
+
+    #[java_method]
+    fn request_fit_system_windows(&self) {}
+
+    #[java_method(type_bound=(Self::VP, ViewParent))]
+    fn get_parent_for_accessibility(&self) -> Option<Self::VP> {}
+
+    #[java_method]
+    fn notify_subtree_accessibility_state_changed(
+        &self,
+        child: &View,
+        source: &View,
+        change_type: i32,
+    ) {
+    }
+
+    #[java_method]
+    fn can_resolve_layout_direction(&self) -> bool {}
+
+    #[java_method]
+    fn is_layout_direction_resolved(&self) -> bool {}
+
+    #[java_method]
+    fn get_layout_direction(&self) -> i32 {}
+
+    #[java_method]
+    fn can_resolve_text_direction(&self) -> bool {}
+
+    #[java_method]
+    fn is_text_direction_resolved(&self) -> bool {}
+
+    #[java_method]
+    fn get_text_direction(&self) -> i32 {}
+
+    #[java_method]
+    fn can_resolve_text_alignment(&self) -> bool {}
+
+    #[java_method]
+    fn is_text_alignment_resolved(&self) -> bool {}
+
+    #[java_method]
+    fn on_start_nested_scroll(&self, child: &View, target: &View, nested_scroll_axes: i32) -> bool {
+    }
+
+    #[java_method]
+    fn on_nested_scroll_accepted(&self, child: &View, target: &View, nested_scroll_axes: i32) {}
+
+    #[java_method]
+    fn on_stop_nested_scroll(&self, target: &View) {}
+
+    #[java_method]
+    fn on_nested_scroll(
+        &self,
+        target: &View,
+        dx_consumed: i32,
+        dy_consumed: i32,
+        dx_unconsumed: i32,
+        dy_unconsumed: i32,
+    ) {
+    }
+
+    #[java_method]
+    fn on_nested_fling(
+        &self,
+        target: &View,
+        velocity_x: f32,
+        velocity_y: f32,
+        consumed: bool,
+    ) -> bool {
+    }
+
+    #[java_method]
+    fn on_nested_pre_fling(&self, target: &View, velocity_x: f32, velocity_y: f32) -> bool {}
+
+    #[java_method]
+    fn on_nested_pre_perform_accessibility_action(
+        &self,
+        target: &View,
+        action: i32,
+        arguments: Option<Bundle>,
+    ) -> bool {
+    }
 }
 
 /**
@@ -3946,6 +4337,7 @@ pub fn test() {
     assert_eq!(true, view.is_long_clickable());
     view.set_allow_click_when_disabled(true);
     view.perform_click();
+    assert_eq!(None, view.get_parent::<ViewGroup>());
 
     let params = ViewGroup_LayoutParams::new(
         ViewGroup_LayoutParams::MATCH_PARENT,

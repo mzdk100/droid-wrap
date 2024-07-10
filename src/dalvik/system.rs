@@ -21,9 +21,7 @@ use crate::{
 /**
  * 类加载器，用于从包含 classes.dex 条目的 .jar 和 .apk 文件中加载类。这可用于执行未作为应用程序的一部分安装的代码。
  * 在 API 级别 26 之前，此类加载器需要一个应用程序私有的可写目录来缓存优化的类。使用 Context.getCodeCacheDir() 创建这样的目录：
- * ```java
  * File dexOutputDir = context.getCodeCacheDir();
- * ```
  * 不要在外部存储上缓存优化的类。外部存储不提供保护应用程序免受代码注入攻击所需的访问控制。
  * */
 #[java_class(name = "dalvik/system/DexClassLoader")]

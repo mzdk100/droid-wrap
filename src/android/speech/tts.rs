@@ -23,14 +23,12 @@ use crate::{
 
 /**
  * 从文本合成语音以立即播放或创建声音文件。 TextToSpeech 实例只有在完成初始化后才可用于合成文本。实现 TextToSpeech.OnInitListener 以接收初始化完成的通知。使用完 TextToSpeech 实例后，调用 shutdown() 方法释放 TextToSpeech 引擎使用的原生资源。针对 Android 11 且使用文本转语音的应用应在其清单的查询元素中声明 TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE：
- * ```xml
- * <queries>
+ * &lt;queries&gt;
  *  ...
- *  <intent>
- *      <action android:name="android. intent. action. TTS_SERVICE" />
- *  </ intent>
- * </ queries>
- * ```
+ *  &lt;intent&gt;
+ *      &lt;action android:name="android. intent. action. TTS_SERVICE" /&gt;
+ *  &lt;/intent&gt;
+ * &lt;/queries&gt;
  * */
 #[java_class(name = "android/speech/tts/TextToSpeech")]
 pub struct TextToSpeech;

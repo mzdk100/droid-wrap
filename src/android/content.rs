@@ -217,13 +217,12 @@ impl Context {
     /// 与 getSystemService(String) 一起使用来查询 android.media.MediaTranscodingManager 以进行媒体转码。
     pub const MEDIA_TRANSCODING_SERVICE: &'static str = "media_transcoding";
 
-    /**
-     * AuthService 协调生物识别和 PIN/图案/密码认证。
-     * BiometricService 被分为两个服务，AuthService 和 BiometricService，其中 AuthService 是协调所有类型身份验证的高级服务，而 BiometricService 是仅负责生物识别身份验证的下层服务。
-     * 理想情况下，我们应该将 BiometricManager 重命名为 AuthManager，因为它在逻辑上与 AuthService 相对应。但是，由于 BiometricManager 是一个公共 API，因此我们保留了旧名称，但将内部实现更改为使用 AuthService。
-     * 截至目前，AUTH_SERVICE 常量仅用于在 SystemServiceRegistry 和 SELinux 中识别服务。要获取 AUTH_SERVICE 的管理器，应使用 BIOMETRIC_SERVICE 和 getSystemService(String) 来查询 android.hardware.biometrics.BiometricManager
-     * 两个服务及其管理器的映射：[服务] [管理器] AuthService BiometricManager BiometricService N/A
-     * */
+    /// AuthService 负责协调生物特征识别和 PIN/图案/密码身份验证。BiometricService 被拆分为两个服务，AuthService 和 BiometricService，其中 AuthService 是协调所有类型身份验证的高级服务，而 BiometricService 是仅负责生物特征身份验证的下层服务。
+    /// 理想情况下，我们应该将 BiometricManager 重命名为 AuthManager，因为它在逻辑上与 AuthService 相对应。但是，由于 BiometricManager 是一个公共 API，我们保留了旧名称，但更改了内部实现以使用 AuthService。
+    /// 截至目前，AUTH_SERVICE 常量仅用于在 SystemServiceRegistry 和 SELinux 中标识服务。要获取 AUTH_SERVICE 的管理器，应使用 BIOMETRIC_SERVICE 和 getSystemService(String) 来检索 android.hardware.biometrics.BiometricManager 两个服务及其管理器的映射：
+    /// Service | Manager
+    /// AuthService BiometricManager
+    /// BiometricService N/A
     pub const AUTH_SERVICE: &'static str = "auth";
 
     /// 与 getSystemService(String) 一起使用来查询 android.hardware.fingerprint.FingerprintManager 来处理指纹管理。
@@ -950,89 +949,81 @@ impl ContextWrapper {
  * 意图解析机制基本上围绕将意图与已安装的应用程序包中的所有 描述进行匹配。 （此外，对于广播，任何 BroadcastReceiver 对象都明确注册到 Context.registerReceiver。）有关此内容的更多详细信息，请参阅 IntentFilter 类的文档。
  * Intent 中有三部分信息用于解析：操作、类型和类别。使用这些信息，在 PackageManager 上查询可以处理该意图的组件。根据 AndroidManifest.xml 文件中提供的意图信息确定适当的组件，如下所示：如果给出了操作，则组件必须将其列为其处理的操作。如果 Intent 中尚未提供类型，则从 Intent 的数据中查询类型。与操作一样，如果意图中包含某种类型（在其数据中明确或隐式地包含），则组件必须将其列为其处理的类型。对于不是 content: URI 的数据，并且 Intent 中未包含明确类型，则将考虑意图数据的方案（例如 http: 或 mailto:）。同样，与操作一样，如果我们要匹配一个方案，则组件必须将其列为可以处理的方案。如果提供了类别，则活动必须将其全部列为其处理的类别。也就是说，如果您包括类别 CATEGORY_LAUNCHER 和 CATEGORY_ALTERNATIVE，那么您将只解析具有列出这两个类别的意图的组件。
  * 活动通常需要支持 CATEGORY_DEFAULT，以便 Context.startActivity() 可以找到它们。例如，考虑 Note Pad 示例应用程序，它允许用户浏览笔记数据列表并查看有关各个项目的详细信息。斜体文本表示您将用特定于您自己的包的名称替换名称的位置。
- * ```xml
- * <manifest xmlns:android="http:// schemas. android. com/ apk/ res/ android"
- * package="com. android. notepad">
- * <application android:icon="@drawable/ app_notes"
- * android:label="@string/ app_name">
+ * &lt;manifest xmlns:android="<http://schemas.android.com/apk/res/android>"
+ * package="com.android.notepad"&gt;
+ * &lt;application android:icon="@drawable/app_notes"
+ * android:label="@string/app_name"&gt;
  *
- * <provider class=".NotePadProvider"
- * android:authorities="com. google. provider. NotePad" />
+ * &lt;provider class=".NotePadProvider"
+ * android:authorities="com.google.provider.NotePad" /&gt;
  *
- * <activity class=".NotesList" android:label="@string/ title_notes_list">
- * <intent-filter>
- * <action android:name="android. intent. action. MAIN" />
- * <category android:name="android. intent. category. LAUNCHER" />
- * </ intent-filter>
- * <intent-filter>
- * <action android:name="android. intent. action. VIEW" />
- * <action android:name="android. intent. action. EDIT" />
- * <action android:name="android. intent. action. PICK" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. dir/vnd. google. note" />
- * </ intent-filter>
- * <intent-filter>
- * <action android:name="android. intent. action. GET_CONTENT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
- * </ activity>
+ * &lt;activity class=".NotesList" android:label="@string/title_notes_list"&gt;
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.MAIN" /&gt;
+ * &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+ * &lt;/intent-filter&gt;
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.VIEW" /&gt;
+ * &lt;action android:name="android.intent.action.EDIT" /&gt;
+ * &lt;action android:name="android.intent.action.PICK" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.dir/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.GET_CONTENT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
+ * &lt;/activity&gt;
  *
- * <activity class=".NoteEditor" android:label="@string/ title_note">
- * <intent-filter android:label="@string/ resolve_edit">
- * <action android:name="android. intent. action. VIEW" />
- * <action android:name="android. intent. action. EDIT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
+ * &lt;activity class=".NoteEditor" android:label="@string/title_note"&gt;
+ * &lt;intent-filter android:label="@string/resolve_edit"&gt;
+ * &lt;action android:name="android.intent.action.VIEW" /&gt;
+ * &lt;action android:name="android.intent.action.EDIT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  *
- * <intent-filter>
- * <action android:name="android. intent. action. INSERT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. dir/vnd. google. note" />
- * </ intent-filter>
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.INSERT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.dir/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  *
- * </ activity>
+ * &lt;/activity&gt;
  *
- * <activity class=".TitleEditor" android:label="@string/ title_edit_title"
- * android:theme="@android:style/ Theme. Dialog">
- * <intent-filter android:label="@string/ resolve_title">
- * <action android:name="com. android. notepad. action. EDIT_TITLE" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <category android:name="android. intent. category. ALTERNATIVE" />
- * <category android:name="android. intent. category. SELECTED_ALTERNATIVE" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
- * </ activity>
+ * &lt;activity class=".TitleEditor" android:label="@string/title_edit_title"
+ * android:theme="@android:style/Theme.Dialog"&gt;
+ * &lt;intent-filter android:label="@string/resolve_title"&gt;
+ * &lt;action android:name="com.android.notepad.action.EDIT_TITLE" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;category android:name="android.intent.category.ALTERNATIVE" /&gt;
+ * &lt;category android:name="android.intent.category.SELECTED_ALTERNATIVE" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
+ * &lt;/activity&gt;
  *
- * </ application>
- * </ manifest>
- * ```
+ * &lt;/application&gt;
+ * &lt;/manifest&gt;
  * 第一个活动 com.android.notepad.NotesList 是我们进入应用程序的主要入口。它可以做三件事，正如它的三个意图模板所描述的那样：
- * ```xml
- * <intent-filter>
- * <action android:name="android. intent. action. MAIN" />
- * <category android:name="android. intent. category. LAUNCHER" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.MAIN" /&gt;
+ * &lt;category android:name="android.intent.category.LAUNCHER" /&gt;
+ * &lt;/intent-filter&gt;
  * 这为 NotePad 应用程序提供了顶级入口：标准 MAIN 操作是一个主入口点（不需要 Intent 中的任何其他信息），LAUNCHER 类别表示此入口点应在应用程序启动器中列出。
- * ```xml
- * <intent-filter>
- * <action android:name="android. intent. action. VIEW" />
- * <action android:name="android. intent. action. EDIT" />
- * <action android:name="android. intent. action. PICK" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. dir/vnd. google. note" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.VIEW" /&gt;
+ * &lt;action android:name="android.intent.action.EDIT" /&gt;
+ * &lt;action android:name="android.intent.action.PICK" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.dir/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  * 这声明了活动可以对便笺目录执行的操作。所支持的类型由 标记指定，其中 vnd.android.cursor.dir/vnd.google.note 是一个 URI，可从中查询包含我们的记事本数据 (vnd.google.note) 的零个或多个项目的 Cursor (vnd.android.cursor.dir)。该活动允许用户查看或编辑数据目录 (通过 VIEW 和 EDIT 操作)，或选择特定便笺并将其返回给调用者 (通过 PICK 操作)。还请注意此处提供的 DEFAULT 类别：当未明确指定组件名称时，Context.startActivity 方法需要此类别来解析您的活动。
- * ```xml
- * <intent-filter>
- * <action android:name="android. intent. action. GET_CONTENT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.GET_CONTENT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  * 此过滤器描述了向调用者返回用户选择的注释而无需知道注释来自何处的能力。数据类型 vnd.android.cursor.item/vnd.google.note 是一个 URI，可以从中查询一个包含我们的记事本数据 (vnd.google.note) 的项 (vnd.android.cursor.item)。GET_CONTENT 操作类似于 PICK 操作，其中活动将向其调用者返回用户选择的一段数据。但是，在这里，调用者指定他们想要的数据类型，而不是用户将从中选择的数据类型。鉴于这些功能，以下意图将解析为 NotesList 活动：
  * { action=android.app.action.MAIN } 匹配所有可用作应用程序顶级入口点的活动。
  * { action=android.app.action.MAIN, category=android.app.category.LAUNCHER } 是启动器用来填充其顶级列表的实际意图。
@@ -1040,36 +1031,30 @@ impl ContextWrapper {
  * { action=android.app.action.PICK data=content://com.google.provider.NotePad/notes } 提供“content://com.google.provider.NotePad/notes”下的注释列表，用户可以从中挑选一个注释，并将其数据URL返回给调用者。
  * { action=android.app.action.GET_CONTENT type=vnd.android.cursor.item/vnd.google.note } 与 pick 动作类似，但允许调用者指定他们想要返回的数据类型，以便系统可以找到适当的活动来选择该数据类型的内容。
  * 第二个活动 com.android.notepad.NoteEditor 向用户显示单个笔记条目并允许他们编辑它。它可以做两件事，如其两个意图模板所述：
- * ```xml
- * <intent-filter android:label="@string/ resolve_edit">
- * <action android:name="android. intent. action. VIEW" />
- * <action android:name="android. intent. action. EDIT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter android:label="@string/resolve_edit"&gt;
+ * &lt;action android:name="android.intent.action.VIEW" /&gt;
+ * &lt;action android:name="android.intent.action.EDIT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  * 此活动的第一个主要目的是让用户与单个注释进行交互，如 MIME 类型 vnd.android.cursor.item/vnd.google.note 所述。此活动可以查看注释或允许用户编辑注释。我们再次支持 DEFAULT 类别，以允许在不明确指定其组件的情况下启动活动。
- * ```xml
- * <intent-filter>
- * <action android:name="android. intent. action. INSERT" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <data android:mimeType="vnd. android. cursor. dir/vnd. google. note" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter&gt;
+ * &lt;action android:name="android.intent.action.INSERT" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.dir/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  * 此活动的第二个用途是将新笔记条目插入现有笔记目录中。这在用户创建新笔记时使用：在笔记目录上执行 INSERT 操作，导致此活动运行并让用户创建新笔记数据，然后将其添加到内容提供程序。鉴于这些功能，以下意图将解析为 NoteEditor 活动：
  * { action=android.intent.action.VIEW data=content://com.google.provider.NotePad/notes/{ID} } 向用户显示注释{ID}的内容。
  * { action=android.app.action.EDIT data=content://com.google.provider.NotePad/notes/{ID} } 允许用户编辑注释{ID}的内容。
  * { action=android.app.action.INSERT data=content://com.google.provider.NotePad/notes } 在“content://com.google.provider.NotePad/notes”的注释列表中创建一个新的空注释，并允许用户编辑它。如果他们保留更改，则将新创建的注释的 URI 返回给调用者。
  * 最后一个活动 com.android.notepad.TitleEditor 允许用户编辑笔记的标题。这可以作为应用程序直接调用的类来实现（通过在 Intent 中明确设置其组件），但这里我们展示了一种可以在现有数据上发布替代操作的方法：
- * ```xml
- * <intent-filter android:label="@string/ resolve_title">
- * <action android:name="com. android. notepad. action. EDIT_TITLE" />
- * <category android:name="android. intent. category. DEFAULT" />
- * <category android:name="android. intent. category. ALTERNATIVE" />
- * <category android:name="android. intent. category. SELECTED_ALTERNATIVE" />
- * <data android:mimeType="vnd. android. cursor. item/vnd. google. note" />
- * </ intent-filter>
- * ```
+ * &lt;intent-filter android:label="@string/resolve_title"&gt;
+ * &lt;action android:name="com.android.notepad.action.EDIT_TITLE" /&gt;
+ * &lt;category android:name="android.intent.category.DEFAULT" /&gt;
+ * &lt;category android:name="android.intent.category.ALTERNATIVE" /&gt;
+ * &lt;category android:name="android.intent.category.SELECTED_ALTERNATIVE" /&gt;
+ * &lt;data android:mimeType="vnd.android.cursor.item/vnd.google.note" /&gt;
+ * &lt;/intent-filter&gt;
  * 在这里的单个意图模板中，我们创建了自己的私有操作，称为 com.android.notepad.action.EDIT_TITLE，表示编辑笔记的标题。它必须在特定笔记（数据类型 vnd.android.cursor.item/vnd.google.note）上调用，就像以前的查看和编辑操作一样，但这里显示和编辑笔记数据中包含的标题。除了像往常一样支持默认类别外，我们的标题编辑器还支持另外两个标准类别：ALTERNATIVE 和 SELECTED_ALTERNATIVE。实现这些类别允许其他人通过 PackageManager.queryIntentActivityOptions 方法找到它提供的特殊操作而无需直接了解它，或者更常见的是使用 android.view.Menu.addIntentOptions 构建动态菜单项。
  * 请注意，在这里的意图模板中，还为模板提供了一个明确的名称（通过 android:label="@string/resolve_title"），以便更好地控制用户在将此活动作为他们正在查看的数据的替代操作呈现时看到的内容。鉴于这些功能，以下意图将解析为 TitleEditor 活动：
  * { action=com.android.notepad.action.EDIT_TITLE data=content://com.google.provider.NotePad/notes/{ID} } 显示并允许用户编辑与注释 {ID} 相关的标题。
@@ -2439,7 +2424,7 @@ impl Intent {
     pub const ACTION_PRE_BOOT_COMPLETED: &'static str = "android.intent.action.PRE_BOOT_COMPLETED";
 
     /**
-     * 向特定应用广播，以查询任何受支持的限制，以对受限用户实施。广播意图包含一个额外的 EXTRA_RESTRICTIONS_BUNDLE，其中当前持久化的限制作为键/值对的 Bundle。值类型可以是布尔值、字符串或 String[]，具体取决于限制类型。响应应包含一个额外的 EXTRA_RESTRICTIONS_LIST，其类型为 ArrayList<RestrictionEntry>。它还可以包含一个额外的 EXTRA_RESTRICTIONS_INTENT，其类型为 Intent。将启动该意图指定的活动，以获得必须包含额外 EXTRA_RESTRICTIONS_LIST 或 EXTRA_RESTRICTIONS_BUNDLE 之一的结果。返回的限制的键和值将被持久化。
+     * 向特定应用广播，以查询任何受支持的限制，以对受限用户实施。广播意图包含一个额外的 EXTRA_RESTRICTIONS_BUNDLE，其中当前持久化的限制作为键/值对的 Bundle。值类型可以是布尔值、字符串或 String[]，具体取决于限制类型。响应应包含一个额外的 EXTRA_RESTRICTIONS_LIST，其类型为 `ArrayList<RestrictionEntry>`。它还可以包含一个额外的 EXTRA_RESTRICTIONS_INTENT，其类型为 Intent。将启动该意图指定的活动，以获得必须包含额外 EXTRA_RESTRICTIONS_LIST 或 EXTRA_RESTRICTIONS_BUNDLE 之一的结果。返回的限制的键和值将被持久化。
      * */
     pub const ACTION_GET_RESTRICTION_ENTRIES: &'static str =
         "android.intent.action.GET_RESTRICTION_ENTRIES";
@@ -2801,7 +2786,7 @@ impl Intent {
     pub const SIM_LOCKED_ON_PUK: &'static str = "PUK";
 
     /**
-     * Intent 值 NETWORK 表示 SIM 卡已锁定在 NETWORK PERSONALIZATION #[已弃用]
+     * Intent 值 NETWORK 表示 SIM 卡已锁定在 NETWORK PERSONALIZATION
      * */
     #[deprecated(
         note = "使用 android.telephony.TelephonyManager#ACTION_SIM_APPLICATION_STATE_CHANGED"
@@ -2989,7 +2974,7 @@ impl Intent {
         "isDataRoamingFromRegistration";
 
     /**
-     * 与 ACTION_SERVICE_STATE 一起使用的布尔值，指示是否正在使用载波聚合。否则为 ` `。#[已弃用]
+     * 与 ACTION_SERVICE_STATE 一起使用的布尔值，指示是否正在使用载波聚合。否则为 ` `。
      * */
     #[deprecated(
         note = "使用 android.provider.Telephony.ServiceStateTable#IS_USING_CARRIER_AGGREGATION。"
@@ -3121,7 +3106,7 @@ impl Intent {
 
     /**
      * 如果活动应被视为用户当前正在查看的数据的替代操作，则设置此设置。另请参阅 CATEGORY_SELECTED_ALTERNATIVE，了解适用于项目列表中的选择的替代操作。
-     * 支持此类别意味着您希望您的活动显示在用户可以执行的备选操作集合中，通常作为当前活动的选项菜单的一部分。您通常希望在此操作的 <intent-filter> 中包含一个特定标签，向用户描述它的作用。
+     * 支持此类别意味着您希望您的活动显示在用户可以执行的备选操作集合中，通常作为当前活动的选项菜单的一部分。您通常希望在此操作的 &lt;intent-filter&gt; 中包含一个特定标签，向用户描述它的作用。
      * 此类别的 IntentFilter 操作非常重要，因为它描述了目标将执行的特定操作。这通常不应是通用操作（例如 ACTION_VIEW），而应是特定名称，例如“com.android.camera.action.CROP”。任何特定操作都只会向用户显示一种替代方案，因此使用这样的特定操作可确保您的替代方案能够显示，同时还允许其他应用程序提供对该特定操作的自己的覆盖。
      * */
     pub const CATEGORY_ALTERNATIVE: &'static str = "android.intent.category.ALTERNATIVE";
@@ -3553,7 +3538,7 @@ impl Intent {
     /// UserHandle 携带了意图。
     pub const EXTRA_USER: &'static str = "android.intent.extra.USER";
 
-    /// 处理 ACTION_GET_RESTRICTION_ENTRIES 的 BroadcastReceiver 的响应中使用的额外内容。额外内容的类型为 ArrayList<RestrictionEntry>。
+    /// 处理 ACTION_GET_RESTRICTION_ENTRIES 的 BroadcastReceiver 的响应中使用的额外内容。额外内容的类型为 ArrayList&lt;RestrictionEntry&gt;。
     pub const EXTRA_RESTRICTIONS_LIST: &'static str = "android.intent.extra.restrictions_list";
 
     /// Extra 以 Intent 的形式发送给处理 ACTION_GET_RESTRICTION_ENTRIES 的 BroadcastReceiver。Extra 的类型是 Bundle，其中包含以键/值对形式呈现的限制。
@@ -3882,14 +3867,14 @@ impl Intent {
      * Action:
      * ACTION_VIEW
      * Data:
-     * http://example.com/
+     * <http://example.com/>
      * Package:
      * com.example.app
      * android-app://com.example.app/http/example.com/foo?1234 |
      * Action:
      * ACTION_VIEW
      * Data:
-     * http://example.com/foo?1234
+     * <http://example.com/foo?1234>
      * Package:
      * com.example.app
      * android-app://com.example.app/#Intent;action=com.example.MY_ACTION;end |

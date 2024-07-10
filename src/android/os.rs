@@ -17,10 +17,7 @@ use crate::{
     JObjNew, JObjRef, JType,
 };
 use droid_wrap_derive::{java_class, java_constructor, java_method};
-use std::collections::HashSet;
-use std::convert::Into;
-use std::iter::Iterator;
-use std::{str::FromStr, string::ToString};
+use std::{collections::HashSet, convert::Into, iter::Iterator, str::FromStr, string::ToString};
 
 type ConstFn<R = String> = fn() -> R;
 
@@ -607,7 +604,7 @@ impl Build {
 
     //noinspection SpellCheckingInspection
     /**
-     * 此版本是否在 ARC（适用于 Chrome 的 Android 运行时）上运行（https://chromium.googlesource.com/chromiumos/docs/+/master/containers_and_vms.md）。在 R 之前，它被实现为容器，但从 R 开始，它将是 VM。属性的名称仍为 ro.boot.conntainer，因为它在其他项目中被引用。
+     * 此版本是否在 ARC（适用于 Chrome 的 Android 运行时）上运行<https://chromium.googlesource.com/chromiumos/docs/+/master/containers_and_vms.md>。在 R 之前，它被实现为容器，但从 R 开始，它将是 VM。属性的名称仍为 ro.boot.conntainer，因为它在其他项目中被引用。
      * 如果可能的话，我们应尽量避免检查此标记，以尽量减少 与 非容器 Android 行为的不必要差异。当低级资源不同时，检查此标记是可以接受的，例如某些功能的可用性、对系统资源的访问受到限制以及主机操作系统可能会为我们处理某些功能。对于更高级别的行为差异，应优先进行其他检查。
      * */
     pub const IS_ARC: ConstFn<bool> =
@@ -808,7 +805,7 @@ impl Build_VERSION_CODES {
      * H MR2.
      * 2011 年 7 月作为 Android 3.2 公开发布。更新至 Honeycomb MR1 以支持 7 英寸平板电脑、改进屏幕兼容模式等。
      * 从此版本开始，未说明是否支持 XLARGE 屏幕的应用程序只有在针对 HONEYCOMB 或更高版本时才会被假定支持；之前是 GINGERBREAD 或更高版本。不支持至少与当前屏幕一样大屏幕尺寸的应用程序将为用户提供一个 UI，以将其切换到屏幕尺寸兼容模式。
-     * 此版本引入了基于屏幕尺寸（单位为 dp）的新屏幕尺寸资源限定符：请参阅 android.content.res.Configuration#screenWidthDp、android.content.res.Configuration#screenHeightDp 和 android.content.res.Configuration#smallestScreenWidthDp。根据 android.content.pm.ApplicationInfo#requiresSmallestWidthDp、android.content.pm.ApplicationInfo#compatibleWidthLimitDp 和 android.content.pm.ApplicationInfo#largestWidthLimitDp 在 <supports-screens> 中提供这些资源限定符，优于旧屏幕尺寸存储桶，对于旧设备，将从中推断出适当的存储桶。
+     * 此版本引入了基于屏幕尺寸（单位为 dp）的新屏幕尺寸资源限定符：请参阅 android.content.res.Configuration#screenWidthDp、android.content.res.Configuration#screenHeightDp 和 android.content.res.Configuration#smallestScreenWidthDp。根据 android.content.pm.ApplicationInfo#requiresSmallestWidthDp、android.content.pm.ApplicationInfo#compatibleWidthLimitDp 和 android.content.pm.ApplicationInfo#largestWidthLimitDp 在 &lt;supports-screens&gt; 中提供这些资源限定符，优于旧屏幕尺寸存储桶，对于旧设备，将从中推断出适当的存储桶。
      * 以此版本或更高版本为目标的应用将获得以下新的行为变化：此版本引入了新的 android.content.pm.PackageManager#FEATURE_SCREEN_PORTRAIT 和 android.content.pm.PackageManager#FEATURE_SCREEN_LANDSCAPE 功能。以以前的平台版本为目标的应用被认为需要设备同时支持纵向和横向；当以 Honeycomb MR1 或更高版本为目标时，应用负责指定其所需的任何特定方向。android.os.AsyncTask 在调用 android.os.AsyncTask#execute 时将默认使用串行执行器。android.content.pm.ActivityInfo#configChanges ActivityInfo.configChanges 将设置 android.content.pm.ActivityInfo#CONFIG_SCREEN_SIZE 和 android.content.pm.ActivityInfo#CONFIG_SMALLEST_SCREEN_SIZE 位；对于较旧的应用程序，需要清除这些，因为一些开发人员对该值进行了绝对比较，而不是正确屏蔽他们感兴趣的位。
      * */
     pub const HONEYCOMB_MR2: i32 = 13;

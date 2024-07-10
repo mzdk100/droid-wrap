@@ -27,15 +27,13 @@ use crate::{
 };
 
 /**
- * 用于输入和修改文本的用户界面元素。定义编辑文本小部件时，必须指定 android.R.styleable.TextView_inputType 属性。例如，对于纯文本输入，将 inputType 设置为“text”：
- * ```xml
- *   <EditText
- *    android:id="@+id/ plain_text_input"
+ * 用于输入和修改文本的用户界面元素。定义编辑文本小部件时，必须指定 android.R.styleable.TextView_inputType 属性。例如，对于纯文本输入，将 inputType 设置为 "text"：
+ *   &lt;EditText
+ *    android:id="@+id/plain_text_input"
  *    android:layout_height="wrap_content"
  *    android:layout_width="match_parent"
- *    android:inputType="text"/>
- * ```
- * 选择输入类型可配置显示的键盘类型、可接受的字符以及编辑文本的外观。例如，如果您想接受秘密数字（如唯一 PIN 码或序列号），可以将 inputType 设置为“numericPassword”。inputType 为“numericPassword”会导致编辑文本仅接受数字，聚焦时显示数字键盘，并屏蔽输入的文本以保护隐私。有关其他 android.R.styleable.TextView_inputType 设置的示例，请参阅文本字段指南。
+ *    android:inputType="text"/&gt;
+ * 选择输入类型可配置显示的键盘类型、可接受的字符以及编辑文本的外观。例如，如果您想接受秘密数字（如唯一 PIN 码或序列号），可以将 inputType 设置为 "numericPassword"。inputType 为 "numericPassword" 会导致编辑文本仅接受数字，聚焦时显示数字键盘，并屏蔽输入的文本以保护隐私。有关其他 android.R.styleable.TextView_inputType 设置的示例，请参阅文本字段指南。
  * 您还可以通过在编辑文本中添加 android.text.TextWatcher 来接收用户更改文本时的回调。例如，当您想在进行更改时添加自动保存功能或验证用户输入的格式时，这很有用。您可以使用 TextView.addTextChangedListener 方法添加文本观察器。此小部件不支持自动调整文本大小。 XML 属性请参阅 EditText 属性、TextView 属性、View 属性
  * */
 #[java_class(name = "android/widget/EditText", extends=TextView)]
@@ -70,20 +68,17 @@ impl EditText {
 /**
  * 向用户显示文本的用户界面元素。要提供用户可编辑的文本，请参阅 EditText。
  * 以下代码示例展示了一种典型用法，其中包含 XML 布局和用于修改文本视图内容的代码：
- * ```xml
- *   <LinearLayout
- *     xmlns:android="http:// schemas. android. com/ apk/ res/ android"
+ *   &lt;LinearLayout
+ *     xmlns:android="http://schemas.android.com/apk/res/android"
  *     android:layout_width="match_parent"
- *     android:layout_height="match_parent">
- *   <TextView
- *       android:id="@+id/ text_view_id"
+ *     android:layout_height="match_parent"&gt;
+ *   &lt;TextView
+ *       android:id="@+id/text_view_id"
  *       android:layout_height="wrap_content"
  *       android:layout_width="wrap_content"
- *       android:text="@string/ hello" />
- * </ LinearLayout>
- * ```
+ *       android:text="@string/hello" /&gt;
+ * &lt;/LinearLayout&gt;
  * 此代码示例演示了如何修改上一个 XML 布局中定义的文本视图的内容：
- * ```java
  * public class MainActivity extends Activity {
  * protected void onCreate(Bundle savedInstanceState) {
  * super.onCreate(savedInstanceState);
@@ -92,7 +87,6 @@ impl EditText {
  * helloTextView.setText(R.string.user_greeting);
  * }
  * }
- * ```
  * 要自定义 TextView 的外观，请参阅样式和主题。 XML 属性请参阅 TextView 属性、视图属性
  * */
 #[java_class(name = "android/widget/TextView", extends=super::view::View)]
@@ -225,36 +219,28 @@ impl TextView_OnEditorActionListener for TextView_OnEditorActionListenerImpl {
     }
 }
 
-/**
- * 要在活动中显示按钮，请将按钮添加到活动的布局 XML 文件：
- * ```xml
- *   <Button
- *       android:id="@+id/ button_id"
- *       android:layout_height="wrap_content"
- *       android:layout_width="wrap_content"
- *       android:text="@string/ self_destruct" />
- * ```
- * 要指定按下按钮时的操作，请在相应的活动代码中对按钮对象设置单击监听器：
- * ```java
- *   public class MyActivity extends Activity {
- *       protected void onCreate(Bundle savedInstanceState) {
- *           super. onCreate(savedInstanceState);
- *
- *           setContentView(R. layout. content_layout_id);
- *
- *           final Button button = findViewById(R. id. button_id);
- *           button. setOnClickListener(new View. OnClickListener() {
- *               public void onClick(View v) {
- *                   // Code here executes on main thread after user presses button
- *               }
- *           });
- *       }
- *   }
- * ```
- * 上面的代码片段创建了一个 android.view.View.OnClickListener 实例，并使用 setOnClickListener(View.OnClickListener) 将侦听器连接到按钮。因此，系统会在用户按下按钮后执行您在 onClick(View) 中编写的代码。
- * 系统在主线程上执行 onClick 中的代码。这意味着您的 onClick 代码必须快速执行，以避免延迟您的应用对进一步用户操作的响应。有关更多详细信息，请参阅保持您的应用响应迅速。
- * 每个按钮都使用系统的默认按钮背景进行样式设置，该背景通常因平台的不同版本而异。如果您对默认按钮样式不满意，可以对其进行自定义。有关更多详细信息和代码示例，请参阅按钮样式指南。有关按钮上可用的所有 XML 样式属性，请参阅按钮属性、TextView 属性、视图属性。请参阅样式和主题指南，了解如何实现和组织与样式相关的属性的覆盖。
- * */
+/// 要在活动中显示按钮，请将按钮添加到活动的布局 XML 文件：
+///   &lt;Button
+///       android:id="@+id/button_id"
+///       android:layout_height="wrap_content"
+///       android:layout_width="wrap_content"
+///       android:text="@string/self_destruct" /&gt;
+/// 要指定按下按钮时的操作，请在相应的活动代码中对按钮对象设置单击监听器：
+///   public class MyActivity extends Activity {
+///       protected void onCreate(Bundle savedInstanceState) {
+///           super. onCreate(savedInstanceState);
+///           setContentView(R. layout. content_layout_id);
+///           final Button button = findViewById(R. id. button_id);
+///           button.setOnClickListener(new View.OnClickListener() {
+///               public void onClick(View v) {
+///                   // 用户按下按钮后，此处的代码在主线程上执行
+///               }
+///           });
+///       }
+///   }
+/// 上面的代码片段创建了一个 android.view.View.OnClickListener 实例，并使用 setOnClickListener(View.OnClickListener) 将侦听器连接到按钮。因此，系统会在用户按下按钮后执行您在 onClick(View) 中编写的代码。
+/// 系统在主线程上执行 onClick 中的代码。这意味着您的 onClick 代码必须快速执行，以避免延迟您的应用对进一步用户操作的响应。有关更多详细信息，请参阅保持您的应用响应迅速。
+/// 每个按钮都使用系统的默认按钮背景进行样式设置，该背景通常因平台的不同版本而异。如果您对默认按钮样式不满意，可以对其进行自定义。有关更多详细信息和代码示例，请参阅按钮样式指南。有关按钮上可用的所有 XML 样式属性，请参阅按钮属性、TextView 属性、视图属性。请参阅样式和主题指南，了解如何实现和组织与样式相关的属性的覆盖。
 #[java_class(name = "android/widget/Button", extends=TextView)]
 pub struct Button;
 
@@ -270,18 +256,16 @@ impl Button {
 /**
  * 将其他视图水平排列在一列中或垂直排列在一行中的布局。
  * 以下代码片段展示了如何在布局 XML 文件中包含线性布局：
- * ```xml
- * <LinearLayout xmlns:android="http:// schemas. android. com/ apk/ res/ android"
+ * &lt;LinearLayout xmlns:android="<http://schemas.android.com/apk/res/android>"
  *     android:layout_width="match_parent"
  *     android:layout_height="match_parent"
  *     android:paddingLeft="16dp"
  *     android:paddingRight="16dp"
  *     android:orientation="horizontal"
- *     android:gravity="center">
- *     <!-- 在此处添加其他小部件或布局标签。这些标签被视为线性布局的“子视图”或“子项” -->
- *   </ LinearLayout>
- * ```
- * 设置 android:orientation 以指定子视图是否显示在行或列中。要控制线性布局如何对齐其包含的所有视图，请为 android:gravity 设置一个值。例如，上面的代码片段将 android:gravity 设置为“center”。
+ *     android:gravity="center"&gt;
+ *     &lt;!-- 在此处添加其他小部件或布局标签.这些标签被视为线性布局的 "子视图" 或 "子项" --&gt;
+ *   &lt;/LinearLayout&gt;
+ * 设置 android:orientation 以指定子视图是否显示在行或列中。要控制线性布局如何对齐其包含的所有视图，请为 android:gravity 设置一个值。例如，上面的代码片段将 android:gravity 设置为 "center"。
  * 您设置的值会影响单行或单列内所有子视图的水平和垂直对齐。您可以在各个子视图上设置 android:layout_weight 以指定线性布局如何在其包含的视图之间划分剩余空间。有关示例，请参阅线性布局指南。请参阅 LinearLayout.LayoutParams 以了解您可以在子视图上设置的其他属性，以影响其在包含的线性布局中的位置和大小。
  * */
 #[java_class(name = "android/widget/LinearLayout", extends=ViewGroup)]
