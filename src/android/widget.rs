@@ -193,7 +193,9 @@ pub struct TextView_OnEditorActionListenerImpl(
 
 impl Default for TextView_OnEditorActionListenerImplDefault {
     fn default() -> Self {
-        Self(Box::new(|_, _, _| false))
+        Self(Box::new(|v, action_id, event| {
+            unimplemented!("{:?}, {}, {:?}", v, action_id, event)
+        }))
     }
 }
 

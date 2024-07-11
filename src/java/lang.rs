@@ -14,8 +14,8 @@
 /**
  * 提供用于获取有关类和对象的反射信息的类和接口。
  * */
+
 #[cfg(feature = "java_lang_reflect")]
-#[cfg_attr(docsrs, doc(cfg(feature = "java_lang_reflect")))]
 pub mod reflect;
 
 use droid_wrap_derive::{

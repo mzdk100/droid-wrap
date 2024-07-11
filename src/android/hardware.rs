@@ -14,5 +14,4 @@
 
 /// 振动器
 #[cfg(feature = "android_hardware_vibrator")]
-#[cfg_attr(docsrs, doc(cfg(feature = "android_hardware_vibrator")))]
 pub mod vibrator;

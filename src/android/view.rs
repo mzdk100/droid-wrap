@@ -15,8 +15,7 @@
 /**
  * 视图和输入法（如软键盘）之间交互的框架类。
  * */
-#[cfg(feature = "android_view_inputmethod")]
-#[cfg_attr(docsrs, doc(cfg(feature = "android_view_inputmethod")))]
+
 #[cfg(feature = "android_view_inputmethod")]
 pub mod inputmethod;
 
@@ -321,6 +320,51 @@ impl View {
      * */
     #[java_method]
     pub fn get_parent<VP: ViewParent>(&self) -> Option<VP> {}
+
+    /**
+     * 注册一个回调，当此视图中按下硬件键时调用该回调。软件输入法中的按键通常不会触发此侦听器的方法。
+     * `l` 要附加到此视图的按键侦听器
+     * */
+    #[java_method]
+    pub fn set_on_key_listener<L: View_OnKeyListener>(&self, l: &L) {}
+
+    /// 如果此视图位于当前具有 IME 可聚焦状态的窗口中，则为 true。
+    #[java_method]
+    pub fn has_ime_focus(&self) -> bool {}
+
+    /**
+     * 如果此视图具有嵌套滚动父级，则返回 true。
+     * 嵌套滚动父级的存在表明此视图已启动嵌套滚动，并且已被视图层次结构中更高层次的祖先视图接受。
+     * 返回：此视图是否具有嵌套滚动父级
+     * */
+    #[java_method]
+    pub fn has_nested_scrolling_parent(&self) -> bool {}
+
+    /// 二进制兼容性存根。当我们最终完成 O API 时将被删除。
+    #[java_method]
+    pub fn get_tooltip<CS: CharSequence>(&self) -> Option<CS> {}
+
+    /**
+     * 返回视图的工具提示文本。
+     * 注意：不要重写此方法，因为它不会影响工具提示中显示的文本。您必须调用 setTooltipText(CharSequence) 来修改工具提示文本。
+     * 返回：工具提示文本
+     * */
+    #[java_method]
+    pub fn get_tooltip_text<CS: CharSequence>(&self) -> Option<CS> {}
+
+    /// 二进制兼容性存根。当我们最终完成 O API 时将被删除。
+    #[java_method]
+    pub fn set_tooltip<CS: CharSequence>(&self, tooltip_text: Option<CS>) {}
+
+    /**
+     * 设置工具提示文本，该文本将显示在视图旁边的小弹出窗口中。工具提示将显示在：
+     * 长按时，除非另有处理（通过 OnLongClickListener 或上下文菜单）。
+     * 悬停时，在指针停止移动后的短暂延迟后
+     * 注意：不要覆盖此方法，因为它不会影响工具提示中显示的文本。
+     * `tooltip_text` 工具提示文本，如果不需要工具提示，则为 null。
+     * */
+    #[java_method]
+    pub fn set_tooltip_text<CS: CharSequence>(&self, tooltip_text: Option<CS>) {}
 }
 
 /// 定义视图父类的职责。这是视图想要与其父类交互时看到的 API。
@@ -4292,6 +4336,55 @@ impl Default for View_OnLongClickListenerImplDefault {
 impl View_OnLongClickListener for View_OnLongClickListenerImpl {
     fn on_long_click(&self, v: View) -> bool {
         self.0(v)
+    }
+}
+
+/**
+ * 当硬件按键事件被分派到此视图时，要调用的回调的接口定义。回调将在按键事件被提供给视图之前被调用。
+ * 这仅适用于硬件键盘；软件输入法没有义务触发此侦听器。
+ * */
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/view/View$OnKeyListener")]
+pub trait View_OnKeyListener {
+    /**
+     * 当硬件按键被分派到视图时调用。这允许侦听器有机会在目标视图之前做出响应。软件键盘中的按键通常不会触发此方法，尽管有些情况下可能会选择这样做。
+     * 不要假设软件输入法必须基于按键；即使如此，它也可能以不同于您预期的方式使用按键，因此无法可靠地捕获软输入按键。
+     * 返回：如果侦听器已使用事件，则返回 True，否则返回 false。
+     * `v` 按键被分派到的视图。
+     * `key_code` 按下的物理按键的代码
+     * `event` 包含有关事件的完整信息的 KeyEvent 对象。
+     * */
+    fn on_key(&self, v: View, key_code: i32, event: KeyEvent) -> bool;
+}
+
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+#[java_class(name = "android/widget/TextView$OnEditorActionListenerImpl")]
+pub struct View_OnKeyListenerImpl(Box<dyn Fn(View, i32, KeyEvent) -> bool + Send + Sync>);
+
+impl Default for View_OnKeyListenerImplDefault {
+    fn default() -> Self {
+        Self(Box::new(|v, key_code, event| {
+            unimplemented!("{:?}, {}, {:?}", v, key_code, event)
+        }))
+    }
+}
+
+impl View_OnKeyListenerImpl {
+    pub fn from_fn(
+        func: impl Fn(/* v */ View, /* key_code */ i32, /* event */ KeyEvent) -> bool
+            + Send
+            + Sync
+            + 'static,
+    ) -> Arc<Self> {
+        Self::new(View_OnKeyListenerImplDefault(Box::new(func)))
+    }
+}
+
+#[java_implement]
+impl View_OnKeyListener for View_OnKeyListenerImpl {
+    fn on_key(&self, v: View, key_code: i32, event: KeyEvent) -> bool {
+        self.0(v, key_code, event)
     }
 }
 
