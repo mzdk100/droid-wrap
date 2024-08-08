@@ -436,12 +436,10 @@ pub fn java_interface(attrs: TokenStream, input: TokenStream) -> TokenStream {
     item.supertraits
         .push(TypeParamBound::Verbatim(quote! {std::fmt::Debug}));
 
-    item.items.push(TraitItem::Verbatim(
-        quote! {
-            #[doc = #cls]
-            const CLASS: &'static str = #cls;
-        },
-    ));
+    item.items.push(TraitItem::Verbatim(quote! {
+        #[doc = #cls]
+        const CLASS: &'static str = #cls;
+    }));
     item.items.push(TraitItem::Verbatim(quote! {
         #[doc = concat!("L", #cls, ";")]
         const OBJECT_SIG: &'static str = concat!("L", #cls, ";");

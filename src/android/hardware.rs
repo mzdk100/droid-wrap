@@ -11,7 +11,6 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-
 /// 振动器
 #[cfg(feature = "android_hardware_vibrator")]
 pub mod vibrator;

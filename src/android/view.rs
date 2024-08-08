@@ -13,9 +13,8 @@
 
 //noinspection SpellCheckingInspection
 /**
- * 视图和输入法（如软键盘）之间交互的框架类。
- * */
-
+视图和输入法（如软键盘）之间交互的框架类。
+*/
 #[cfg(feature = "android_view_inputmethod")]
 pub mod inputmethod;
 
@@ -30,16 +29,16 @@ use droid_wrap_derive::{
 use std::sync::Arc;
 
 /**
- * 此类代表用户界面组件的基本构建块。View 占据屏幕上的矩形区域，负责绘制和事件处理。View 是小部件的基类，用于创建交互式 UI 组件（按钮、文本字段等）。ViewGroup 子类是布局的基类，布局是不可见的容器，用于容纳其他 View（或其他 ViewGroup）并定义其布局属性。
- * 开发人员指南
- * 有关使用此类开发应用程序用户界面的信息，请阅读用户界面开发人员指南。
- * 使用视图窗口中的所有视图都排列在一棵树中。您可以从代码中添加视图，也可以通过在一个或多个 XML 布局文件中指定视图树来添加视图。有许多专门的视图子类，它们充当控件或能够显示文本、图像或其他内容。创建视图树后，通常您可能希望执行以下几种常见操作：
- * - 设置属性：例如，设置 android.widget.TextView 的文本。不同视图子类的可用属性和设置方法会有所不同。请注意，在构建时已知的属性可以在 XML 布局文件中设置。
- * - 设置焦点：框架将处理移动焦点以响应用户输入。要强制将焦点移到特定视图，请调用 requestFocus。
- * - 设置侦听器：视图允许客户端设置侦听器，当视图发生有趣的事情时，这些侦听器将收到通知。例如，所有视图都允许您设置一个侦听器，以便在视图获得或失去焦点时收到通知。您可以使用 setOnFocusChangeListener(View.OnFocusChangeListener) 注册此类侦听器。其他视图子类提供更专业的侦听器。例如，按钮会公开一个侦听器，以便在单击按钮时通知客户端。
- * - 设置可见性：您可以使用 setVisibility(int) 隐藏或显示视图。注意：Android 框架负责测量、布局和绘制视图。除非您实际实施了 ViewGroup，否则您不应自己调用对视图执行这些操作的方法。
- * 有关更多信息，请查阅官方文档。
- * */
+此类代表用户界面组件的基本构建块。View 占据屏幕上的矩形区域，负责绘制和事件处理。View 是小部件的基类，用于创建交互式 UI 组件（按钮、文本字段等）。ViewGroup 子类是布局的基类，布局是不可见的容器，用于容纳其他 View（或其他 ViewGroup）并定义其布局属性。
+开发人员指南
+有关使用此类开发应用程序用户界面的信息，请阅读用户界面开发人员指南。
+使用视图窗口中的所有视图都排列在一棵树中。您可以从代码中添加视图，也可以通过在一个或多个 XML 布局文件中指定视图树来添加视图。有许多专门的视图子类，它们充当控件或能够显示文本、图像或其他内容。创建视图树后，通常您可能希望执行以下几种常见操作：
+- 设置属性：例如，设置 android.widget.TextView 的文本。不同视图子类的可用属性和设置方法会有所不同。请注意，在构建时已知的属性可以在 XML 布局文件中设置。
+- 设置焦点：框架将处理移动焦点以响应用户输入。要强制将焦点移到特定视图，请调用 requestFocus。
+- 设置侦听器：视图允许客户端设置侦听器，当视图发生有趣的事情时，这些侦听器将收到通知。例如，所有视图都允许您设置一个侦听器，以便在视图获得或失去焦点时收到通知。您可以使用 setOnFocusChangeListener(View.OnFocusChangeListener) 注册此类侦听器。其他视图子类提供更专业的侦听器。例如，按钮会公开一个侦听器，以便在单击按钮时通知客户端。
+- 设置可见性：您可以使用 setVisibility(int) 隐藏或显示视图。注意：Android 框架负责测量、布局和绘制视图。除非您实际实施了 ViewGroup，否则您不应自己调用对视图执行这些操作的方法。
+有关更多信息，请查阅官方文档。
+*/
 #[java_class(name = "android/view/View")]
 pub struct View;
 
@@ -60,271 +59,271 @@ impl View {
     pub const GONE: i32 = 0x00000008;
 
     /**
-     * 从代码创建视图时使用的简单构造函数。
-     * `context` 视图在其中运行的上下文，通过它可以访问当前主题、资源等。
-     * */
+    从代码创建视图时使用的简单构造函数。
+    `context` 视图在其中运行的上下文，通过它可以访问当前主题、资源等。
+    */
     #[java_constructor]
     pub fn new(context: &Context) -> Self {}
 
     /**
-     * 发送 AccessibilityEvent 的便捷方法。TYPE_ANNOUNCEMENT AccessibilityEvent 建议无障碍服务向其用户宣布指定的文本。
-     * 注意：使用此 API 生成的事件不具有语义含义，仅适用于特殊情况。应用通常可以通过准确提供其 UI 的语义来实现正确的无障碍行为。它们不需要指定向用户宣布的具体内容。一般来说，只宣布转换，不要为按钮按下等简单操作生成确认消息。相反，请简明扼要地标记控件，对于重大的 UI 更改（如窗口更改），请使用 android.app.Activity.setTitle(CharSequence) 和 setAccessibilityPaneTitle(CharSequence)。使用 setAccessibilityLiveRegion(int) 通知用户用户界面内关键视图的更改。这些仍应谨慎使用，因为它们可能会在每次更新视图时生成通知。
-     * `text` 通知文本。
-     * */
+    发送 AccessibilityEvent 的便捷方法。TYPE_ANNOUNCEMENT AccessibilityEvent 建议无障碍服务向其用户宣布指定的文本。
+    注意：使用此 API 生成的事件不具有语义含义，仅适用于特殊情况。应用通常可以通过准确提供其 UI 的语义来实现正确的无障碍行为。它们不需要指定向用户宣布的具体内容。一般来说，只宣布转换，不要为按钮按下等简单操作生成确认消息。相反，请简明扼要地标记控件，对于重大的 UI 更改（如窗口更改），请使用 android.app.Activity.setTitle(CharSequence) 和 setAccessibilityPaneTitle(CharSequence)。使用 setAccessibilityLiveRegion(int) 通知用户用户界面内关键视图的更改。这些仍应谨慎使用，因为它们可能会在每次更新视图时生成通知。
+    `text` 通知文本。
+    */
     #[java_method]
     pub fn announce_for_accessibility<CS: CharSequence>(&self, text: &CS) {}
 
     /**
-     * 返回视图的宽度。
-     * 返回：视图的宽度（以像素为单位）。
-     * */
+    返回视图的宽度。
+    返回：视图的宽度（以像素为单位）。
+    */
     #[java_method]
     pub fn get_width(&self) -> i32 {}
 
     /**
-     * 返回视图的高度。
-     * 返回：视图的高度（以像素为单位）。
-     * */
+    返回视图的高度。
+    返回：视图的高度（以像素为单位）。
+    */
     #[java_method]
     pub fn get_height(&self) -> i32 {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 调用此操作可以尝试将焦点集中到特定视图或其子视图之一。如果视图不可聚焦（isFocusable返回false），或者由于其他条件而无法聚焦（当设备处于触摸模式、不可见、未启用或没有大小时，在触摸模式下无法聚焦（isForusableInTouchMode）），则视图实际上不会聚焦。另请参阅focusSearch(int)，这是用来表示有焦点，并希望视图的父母寻找下一个焦点的方法。这相当于用参数FOCUS_DOWN和null调用requestFocus(int, Rect)。
-     * 返回：这个视图或它的一个后代是否真的成为焦点。
-     * */
+    调用此操作可以尝试将焦点集中到特定视图或其子视图之一。如果视图不可聚焦（isFocusable返回false），或者由于其他条件而无法聚焦（当设备处于触摸模式、不可见、未启用或没有大小时，在触摸模式下无法聚焦（isForusableInTouchMode）），则视图实际上不会聚焦。另请参阅focusSearch(int)，这是用来表示有焦点，并希望视图的父母寻找下一个焦点的方法。这相当于用参数FOCUS_DOWN和null调用requestFocus(int, Rect)。
+    返回：这个视图或它的一个后代是否真的成为焦点。
+    */
     #[java_method]
     pub fn request_focus(&self) -> bool {}
 
     /**
-     * 当此视图想要放弃焦点时调用。如果焦点被清除，则调用 onFocusChanged(boolean, int, Rect)。
-     * 注意：当不处于触摸模式时，框架将在焦点清除后尝试将焦点放在从顶部开始的第一个可聚焦视图上。因此，如果此视图是从顶部开始的第一个可获得焦点的视图，则将调用与清除焦点相关的所有回调，之后框架将焦点放在此视图上。
-     * */
+    当此视图想要放弃焦点时调用。如果焦点被清除，则调用 onFocusChanged(boolean, int, Rect)。
+    注意：当不处于触摸模式时，框架将在焦点清除后尝试将焦点放在从顶部开始的第一个可聚焦视图上。因此，如果此视图是从顶部开始的第一个可获得焦点的视图，则将调用与清除焦点相关的所有回调，之后框架将焦点放在此视图上。
+    */
     #[java_method]
     pub fn clear_focus(&self) {}
 
     /**
-     * 在以此视图为根的层次结构中查找当前具有焦点的视图。
-     * 返回：当前具有焦点的视图，如果找不到焦点视图，则返回 null。
-     * */
+    在以此视图为根的层次结构中查找当前具有焦点的视图。
+    返回：当前具有焦点的视图，如果找不到焦点视图，则返回 null。
+    */
     #[java_method]
     pub fn find_focus(&self) -> Option<Self> {}
 
     /**
-     * 指示此视图的激活状态。
-     * 返回：如果视图已激活，则返回 true，否则返回 false
-     * */
+    指示此视图的激活状态。
+    返回：如果视图已激活，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_activated(&self) -> bool {}
 
     /**
-     * 更改此视图的激活状态。视图可以激活也可以不激活。请注意，激活与选择不同。选择是一种瞬时属性，表示用户当前正在与之交互的视图（层次结构）。激活是一种长期状态，用户可以将视图移入或移出。例如，在启用单选或多选的列表视图中，当前选择集中的视图处于激活状态。（嗯，是的，我们对这里的术语深感抱歉。）激活状态会向下传播到设置该状态的视图的子级。
-     * `activated` 如果必须激活视图，则为 true，否则为 false
-     * */
+    更改此视图的激活状态。视图可以激活也可以不激活。请注意，激活与选择不同。选择是一种瞬时属性，表示用户当前正在与之交互的视图（层次结构）。激活是一种长期状态，用户可以将视图移入或移出。例如，在启用单选或多选的列表视图中，当前选择集中的视图处于激活状态。（嗯，是的，我们对这里的术语深感抱歉。）激活状态会向下传播到设置该状态的视图的子级。
+    `activated` 如果必须激活视图，则为 true，否则为 false
+    */
     #[java_method]
     pub fn set_activated(&self, activated: bool) {}
 
     /**
-     * 此视图的可视 x 位置（以像素为单位）。这相当于 TranslationX 属性加上当前 Left 属性。
-     * 返回：此视图的可视 x 位置（以像素为单位）。
-     * */
+    此视图的可视 x 位置（以像素为单位）。这相当于 TranslationX 属性加上当前 Left 属性。
+    返回：此视图的可视 x 位置（以像素为单位）。
+    */
     #[java_method]
     pub fn get_x(&self) -> f32 {}
 
     /**
-     * 设置此视图的可视 x 位置（以像素为单位）。这相当于将 TranslationX 属性设置为传入的 x 值与当前 left 属性之间的差值。
-     * `x` 此视图的可视 x 位置（以像素为单位）。
-     * */
+    设置此视图的可视 x 位置（以像素为单位）。这相当于将 TranslationX 属性设置为传入的 x 值与当前 left 属性之间的差值。
+    `x` 此视图的可视 x 位置（以像素为单位）。
+    */
     #[java_method]
     pub fn set_x(&self, x: f32) {}
 
     /**
-     * 此视图的视觉 y 位置（以像素为单位）。这相当于 TranslationY 属性加上当前的 Top 属性。
-     * 返回：此视图的视觉 y 位置（以像素为单位）。
-     * */
+    此视图的视觉 y 位置（以像素为单位）。这相当于 TranslationY 属性加上当前的 Top 属性。
+    返回：此视图的视觉 y 位置（以像素为单位）。
+    */
     #[java_method]
     pub fn get_y(&self) -> f32 {}
 
     /**
-     * 设置此视图的视觉 y 位置（以像素为单位）。这相当于将 TranslationY 属性设置为传入的 y 值与当前 top 属性之间的差值。
-     * `y` 此视图的视觉 y 位置（以像素为单位）。
-     * */
+    设置此视图的视觉 y 位置（以像素为单位）。这相当于将 TranslationY 属性设置为传入的 y 值与当前 top 属性之间的差值。
+    `y` 此视图的视觉 y 位置（以像素为单位）。
+    */
     #[java_method]
     pub fn set_y(&self, y: f32) {}
 
     /**
-     * 查找具有给定 ID 的第一个后代视图，如果 ID 与 getId() 匹配，则查找视图本身，如果 ID 无效 (< 0) 或层次结构中没有匹配的视图，则返回 null。
-     * 注意：在大多数情况下 - 取决于编译器支持 - 生成的视图会自动转换为目标类类型。如果目标类类型不受约束，则可能需要显式转换。
-     *  返回：如果找到，则返回具有给定 ID 的视图，否则返回 null
-     * `id` 要搜索的 ID
-     * */
+    查找具有给定 ID 的第一个后代视图，如果 ID 与 getId() 匹配，则查找视图本身，如果 ID 无效 (< 0) 或层次结构中没有匹配的视图，则返回 null。
+    注意：在大多数情况下 - 取决于编译器支持 - 生成的视图会自动转换为目标类类型。如果目标类类型不受约束，则可能需要显式转换。
+    返回：如果找到，则返回具有给定 ID 的视图，否则返回 null
+    `id` 要搜索的 ID
+    */
     #[java_method]
     pub fn find_view_by_id(&self, id: i32) -> Option<Self> {}
 
     /**
-     * 返回视图的内容描述。
-     * 注意：不要覆盖此方法，因为它不会影响呈现给无障碍服务的内容描述。您必须调用 setContentDescription(CharSequence) 来修改内容描述。
-     * 返回：内容描述
-     * */
+    返回视图的内容描述。
+    注意：不要覆盖此方法，因为它不会影响呈现给无障碍服务的内容描述。您必须调用 setContentDescription(CharSequence) 来修改内容描述。
+    返回：内容描述
+    */
     #[java_method]
     pub fn get_content_description<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
-     * 设置视图的内容描述。内容描述简要描述视图，主要用于辅助功能支持，以确定应如何向用户呈现视图。对于没有文本表示的视图（如 android.widget.ImageButton），有用的内容描述会解释视图的作用。例如，用于拨打电话的带有电话图标的图像按钮可以使用“呼叫”作为其内容描述。用于保存文件的软盘图像可以使用“保存”。这应该省略角色或状态。角色是指视图的用户界面元素类型，例如按钮或复选框。状态是指视图经常变化的属性，例如按钮的开/关状态或音量滑块的音频级别。内容描述更新并不频繁，并且在元素的语义内容（而不是状态）发生变化时使用。例如，在音乐播放期间，播放按钮可能会更改为暂停按钮。
-     * `content_description` 内容描述。
-     * */
+    设置视图的内容描述。内容描述简要描述视图，主要用于辅助功能支持，以确定应如何向用户呈现视图。对于没有文本表示的视图（如 android.widget.ImageButton），有用的内容描述会解释视图的作用。例如，用于拨打电话的带有电话图标的图像按钮可以使用“呼叫”作为其内容描述。用于保存文件的软盘图像可以使用“保存”。这应该省略角色或状态。角色是指视图的用户界面元素类型，例如按钮或复选框。状态是指视图经常变化的属性，例如按钮的开/关状态或音量滑块的音频级别。内容描述更新并不频繁，并且在元素的语义内容（而不是状态）发生变化时使用。例如，在音乐播放期间，播放按钮可能会更改为暂停按钮。
+    `content_description` 内容描述。
+    */
     #[java_method]
     pub fn set_content_description<CS: CharSequence>(&self, content_description: Option<CS>) {}
 
     /**
-     * 设置此视图的标识符。标识符在此视图的层次结构中不必唯一。标识符应为正数。
-     * `id` 用于标识视图的数字
-     * */
+    设置此视图的标识符。标识符在此视图的层次结构中不必唯一。标识符应为正数。
+    `id` 用于标识视图的数字
+    */
     #[java_method]
     pub fn set_id(&self, id: i32) {}
 
     /**
-     * 返回此视图的标识符。
-     * 返回：用于标识视图的正整数，如果视图没有 ID，则返回 NO_ID
-     * */
+    返回此视图的标识符。
+    返回：用于标识视图的正整数，如果视图没有 ID，则返回 NO_ID
+    */
     #[java_method]
     pub fn get_id(&self) -> i32 {}
 
     /**
-     * 单击此视图时注册要调用的回调。如果此视图不可点击，则将设为可点击。
-     * `l` 将运行的回调
-     * */
+    单击此视图时注册要调用的回调。如果此视图不可点击，则将设为可点击。
+    `l` 将运行的回调
+    */
     #[java_method]
     pub fn set_on_click_listener<L: View_OnClickListener + JProxy>(&self, l: &L) {}
 
     /**
-     * 注册一个回调，当此视图被点击并按住时调用。如果此视图不是长按可点击的，则变为长按可点击的。
-     * `l` 将运行的回调
-     * */
+    注册一个回调，当此视图被点击并按住时调用。如果此视图不是长按可点击的，则变为长按可点击的。
+    `l` 将运行的回调
+    */
     #[java_method]
     pub fn set_on_long_click_listener<L: View_OnLongClickListener + JProxy>(&self, l: &L) {}
 
     /**
-     * 获取与此视图关联的 LayoutParams。所有视图都应具有布局参数。这些参数为此视图的父级提供参数，指定应如何排列。
-     * ViewGroup.LayoutParams 有许多子类，这些子类对应于负责排列其子级的 ViewGroup 的不同子类。如果此视图未附加到父 ViewGroup 或 setLayoutParams(ViewGroup.LayoutParams) 未成功调用，则此方法可能返回 null。当视图附加到父 ViewGroup 时，此方法不得返回 null。
-     * 返回：与此视图关联的 LayoutParams，如果尚未设置参数，则返回 null
-     * */
+    获取与此视图关联的 LayoutParams。所有视图都应具有布局参数。这些参数为此视图的父级提供参数，指定应如何排列。
+    ViewGroup.LayoutParams 有许多子类，这些子类对应于负责排列其子级的 ViewGroup 的不同子类。如果此视图未附加到父 ViewGroup 或 setLayoutParams(ViewGroup.LayoutParams) 未成功调用，则此方法可能返回 null。当视图附加到父 ViewGroup 时，此方法不得返回 null。
+    返回：与此视图关联的 LayoutParams，如果尚未设置参数，则返回 null
+    */
     #[java_method]
     pub fn get_layout_params(&self) -> Option<ViewGroup_LayoutParams> {}
 
     /**
-     * 设置与此视图相关的布局参数。这些参数为该视图的父级提供参数，指定应如何排列。ViewGroup 有许多子类。LayoutParams，这些对应于负责排列其子级的 ViewGroup 的不同子类。
-     * `params` 此视图的布局参数，不能为空
-     * */
+    设置与此视图相关的布局参数。这些参数为该视图的父级提供参数，指定应如何排列。ViewGroup 有许多子类。LayoutParams，这些对应于负责排列其子级的 ViewGroup 的不同子类。
+    `params` 此视图的布局参数，不能为空
+    */
     #[java_method]
     pub fn set_layout_params(&self, params: &ViewGroup_LayoutParams) {}
 
     /**
-     * 设置此视图的可见性状态。
-     * `visibility` VISIBLE、INVISIBLE 或 GONE 之一。
-     * */
+    设置此视图的可见性状态。
+    `visibility` VISIBLE、INVISIBLE 或 GONE 之一。
+    */
     #[java_method]
     pub fn set_visibility(&self, visibility: i32) {}
 
     /**
-     * 返回此视图的可见性状态。
-     * 返回：VISIBLE、INVISIBLE 或 GONE 之一。
-     * */
+    返回此视图的可见性状态。
+    返回：VISIBLE、INVISIBLE 或 GONE 之一。
+    */
     #[java_method]
     pub fn get_visibility(&self) -> i32 {}
 
     /**
-     * 如果已定义，则调用此视图的 OnClickListener。执行与点击相关的所有常规操作：报告可访问性事件、播放声音等。
-     * 返回：如果已分配一个被调用的 OnClickListener，则返回 True，否则返回 false。
-     * */
+    如果已定义，则调用此视图的 OnClickListener。执行与点击相关的所有常规操作：报告可访问性事件、播放声音等。
+    返回：如果已分配一个被调用的 OnClickListener，则返回 True，否则返回 false。
+    */
     #[java_method]
     pub fn perform_click(&self) -> bool {}
 
     /**
-     * 指示此视图是否对点击事件作出反应。如果视图可点击，则返回 true，否则返回 false
-     * */
+    指示此视图是否对点击事件作出反应。如果视图可点击，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_clickable(&self) -> bool {}
 
     /**
-     * 启用或禁用此视图的点击事件。当视图可点击时，每次点击时它的状态都会更改为“按下”。子类应将视图设置为可点击，以便对用户的点击做出视觉反应。
-     * `clickable` true 表示视图可点击，否则为 false
-     * */
+    启用或禁用此视图的点击事件。当视图可点击时，每次点击时它的状态都会更改为“按下”。子类应将视图设置为可点击，以便对用户的点击做出视觉反应。
+    `clickable` true 表示视图可点击，否则为 false
+    */
     #[java_method]
     pub fn set_clickable(&self, clickable: bool) {}
 
     /**
-     * 禁用时启用或禁用此视图的单击事件。
-     * `clickable_when_disabled` true使视图可单击，否则为false
-     * */
+    禁用时启用或禁用此视图的单击事件。
+    `clickable_when_disabled` true使视图可单击，否则为false
+    */
     #[java_method]
     pub fn set_allow_click_when_disabled(&self, clickable_when_disabled: bool) {}
 
     /**
-     * 指示此视图是否对长按事件作出反应。
-     * 返回：如果视图可长按，则返回 true，否则返回 false
-     * */
+    指示此视图是否对长按事件作出反应。
+    返回：如果视图可长按，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_long_clickable(&self) -> bool {}
 
     /**
-     * 启用或禁用此视图的长按事件。当视图可长按时，它会对用户按住按钮的时间长于点击做出反应。此事件可以启动侦听器或上下文菜单。
-     * `long_clickable` true 表示视图可长按，否则为 false
-     * */
+    启用或禁用此视图的长按事件。当视图可长按时，它会对用户按住按钮的时间长于点击做出反应。此事件可以启动侦听器或上下文菜单。
+    `long_clickable` true 表示视图可长按，否则为 false
+    */
     #[java_method]
     pub fn set_long_clickable(&self, long_clickable: bool) {}
 
     /**
-     * 指示此视图是否对上下文点击反应。
-     * 返回：如果视图是上下文可单击的，则为false，否则否则
-     * */
+    指示此视图是否对上下文点击反应。
+    返回：如果视图是上下文可单击的，则为false，否则否则
+    */
     #[java_method]
     pub fn is_context_clickable(&self) -> bool {}
 
     /**
-     * 启用或禁用此视图的上下文点击。此事件可以启动侦听器。
-     * `context_clickable` true 表示使视图对上下文点击做出反应，否则为 false
-     * */
+    启用或禁用此视图的上下文点击。此事件可以启动侦听器。
+    `context_clickable` true 表示使视图对上下文点击做出反应，否则为 false
+    */
     #[java_method]
     pub fn set_context_clickable(&self, context_clickable: bool) {}
 
     /**
-     * 返回此视图是否具有附加的 OnClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
-     * */
+    返回此视图是否具有附加的 OnClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
+    */
     #[java_method]
     pub fn has_on_click_listeners(&self) -> bool {}
 
     /**
-     * 返回此视图是否具有附加的 OnLongClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
-     * */
+    返回此视图是否具有附加的 OnLongClickListener。如果有侦听器，则返回 true，如果没有，则返回 false。
+    */
     #[java_method]
     pub fn has_on_long_click_listeners(&self) -> bool {}
 
     /**
-     * 返回屏幕是否应保持开启，对应于 KEEP_SCREEN_ON 的当前值。
-     * 返回：如果设置了 KEEP_SCREEN_ON，则返回 true。
-     * */
+    返回屏幕是否应保持开启，对应于 KEEP_SCREEN_ON 的当前值。
+    返回：如果设置了 KEEP_SCREEN_ON，则返回 true。
+    */
     #[java_method]
     pub fn get_keep_screen_on(&self) -> bool {}
 
     /**
-     * 控制屏幕是否应保持开启，修改 KEEP_SCREEN_ON 的值。
-     * `keep_screen_on` 提供 true 以设置 KEEP_SCREEN_ON。
-     * */
+    控制屏幕是否应保持开启，修改 KEEP_SCREEN_ON 的值。
+    `keep_screen_on` 提供 true 以设置 KEEP_SCREEN_ON。
+    */
     #[java_method]
     pub fn set_keep_screen_on(keep_screen_on: bool) {}
 
     /**
-     * 获取此视图的父级。请注意，父级是 ViewParent，不一定是 View。
-     * 返回：此视图的父级。
-     * */
+    获取此视图的父级。请注意，父级是 ViewParent，不一定是 View。
+    返回：此视图的父级。
+    */
     #[java_method]
     pub fn get_parent<VP: ViewParent>(&self) -> Option<VP> {}
 
     /**
-     * 注册一个回调，当此视图中按下硬件键时调用该回调。软件输入法中的按键通常不会触发此侦听器的方法。
-     * `l` 要附加到此视图的按键侦听器
-     * */
+    注册一个回调，当此视图中按下硬件键时调用该回调。软件输入法中的按键通常不会触发此侦听器的方法。
+    `l` 要附加到此视图的按键侦听器
+    */
     #[java_method]
     pub fn set_on_key_listener<L: View_OnKeyListener>(&self, l: &L) {}
 
@@ -333,10 +332,10 @@ impl View {
     pub fn has_ime_focus(&self) -> bool {}
 
     /**
-     * 如果此视图具有嵌套滚动父级，则返回 true。
-     * 嵌套滚动父级的存在表明此视图已启动嵌套滚动，并且已被视图层次结构中更高层次的祖先视图接受。
-     * 返回：此视图是否具有嵌套滚动父级
-     * */
+    如果此视图具有嵌套滚动父级，则返回 true。
+    嵌套滚动父级的存在表明此视图已启动嵌套滚动，并且已被视图层次结构中更高层次的祖先视图接受。
+    返回：此视图是否具有嵌套滚动父级
+    */
     #[java_method]
     pub fn has_nested_scrolling_parent(&self) -> bool {}
 
@@ -345,10 +344,10 @@ impl View {
     pub fn get_tooltip<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
-     * 返回视图的工具提示文本。
-     * 注意：不要重写此方法，因为它不会影响工具提示中显示的文本。您必须调用 setTooltipText(CharSequence) 来修改工具提示文本。
-     * 返回：工具提示文本
-     * */
+    返回视图的工具提示文本。
+    注意：不要重写此方法，因为它不会影响工具提示中显示的文本。您必须调用 setTooltipText(CharSequence) 来修改工具提示文本。
+    返回：工具提示文本
+    */
     #[java_method]
     pub fn get_tooltip_text<CS: CharSequence>(&self) -> Option<CS> {}
 
@@ -357,12 +356,12 @@ impl View {
     pub fn set_tooltip<CS: CharSequence>(&self, tooltip_text: Option<CS>) {}
 
     /**
-     * 设置工具提示文本，该文本将显示在视图旁边的小弹出窗口中。工具提示将显示在：
-     * 长按时，除非另有处理（通过 OnLongClickListener 或上下文菜单）。
-     * 悬停时，在指针停止移动后的短暂延迟后
-     * 注意：不要覆盖此方法，因为它不会影响工具提示中显示的文本。
-     * `tooltip_text` 工具提示文本，如果不需要工具提示，则为 null。
-     * */
+    设置工具提示文本，该文本将显示在视图旁边的小弹出窗口中。工具提示将显示在：
+    长按时，除非另有处理（通过 OnLongClickListener 或上下文菜单）。
+    悬停时，在指针停止移动后的短暂延迟后
+    注意：不要覆盖此方法，因为它不会影响工具提示中显示的文本。
+    `tooltip_text` 工具提示文本，如果不需要工具提示，则为 null。
+    */
     #[java_method]
     pub fn set_tooltip_text<CS: CharSequence>(&self, tooltip_text: Option<CS>) {}
 }
@@ -381,96 +380,96 @@ pub trait ViewParent {
     fn is_layout_requested(&self) -> bool;
 
     /**
-     * 当子视图希望视图层次结构收集透明区域并将其报告给窗口合成器时调用。在视图层次结构中“打”洞的视图（例如 SurfaceView）可以使用此 API 来提高系统的性能。当层次结构中不存在此类视图时，此优化是不必要的，并且可能会略微降低视图层次结构的性能。
-     * `child` 请求透明区域计算的视图
-     * */
+    当子视图希望视图层次结构收集透明区域并将其报告给窗口合成器时调用。在视图层次结构中“打”洞的视图（例如 SurfaceView）可以使用此 API 来提高系统的性能。当层次结构中不存在此类视图时，此优化是不必要的，并且可能会略微降低视图层次结构的性能。
+    `child` 请求透明区域计算的视图
+    */
     fn request_transparent_region(&self, child: &View);
 
     /**
-     * 如果父级存在则返回该父级，否则返回 null。
-     * 返回：ViewParent，如果此 ViewParent 没有父级则返回 null。
-     * */
+    如果父级存在则返回该父级，否则返回 null。
+    返回：ViewParent，如果此 ViewParent 没有父级则返回 null。
+    */
     fn get_parent(&self) -> Option<Self::VP>;
 
     /**
-     * 当此父级的子级需要焦点时调用
-     * `child` 此 ViewParent 需要焦点的子级。此视图将包含焦点视图。它不一定是实际具有焦点的视图。
-     * `focused` 实际具有焦点的子级后代视图
-     * */
+    当此父级的子级需要焦点时调用
+    `child` 此 ViewParent 需要焦点的子级。此视图将包含焦点视图。它不一定是实际具有焦点的视图。
+    `focused` 实际具有焦点的子级后代视图
+    */
     fn request_child_focus(&self, child: &View, focused: &View);
 
     /**
-     * 告诉视图层次结构需要重新评估全局视图属性。
-     * `child` 属性已更改的视图。
-     * */
+    告诉视图层次结构需要重新评估全局视图属性。
+    `child` 属性已更改的视图。
+    */
     fn recompute_view_attributes(&self, child: &View);
 
     /**
-     * 当此父级的子级放弃焦点时调用
-     * `child` 放弃焦点的视图
-     * */
+    当此父级的子级放弃焦点时调用
+    `child` 放弃焦点的视图
+    */
     fn clear_child_focus(&self, child: &View);
 
     /**
-     * 查找指定方向上想要获得焦点的最近视图
-     * `v` 当前获得焦点的视图
-     * `direction` FOCUS_UP、FOCUS_DOWN、FOCUS_LEFT 和 FOCUS_RIGHT 之一
-     * */
+    查找指定方向上想要获得焦点的最近视图
+    `v` 当前获得焦点的视图
+    `direction` FOCUS_UP、FOCUS_DOWN、FOCUS_LEFT 和 FOCUS_RIGHT 之一
+    */
     fn focus_search(&self, v: &View, direction: i32) -> View;
 
     /**
-     * 更改子项的 z 顺序，使其位于所有其他子项之上。如果此容器使用顺序相关的布局方案（例如 LinearLayout），则此顺序更改可能会影响布局。在 android.os.Build.VERSION_CODES.KITKAT 之前，此方法应随后调用此父项的 requestLayout() 和 View.invalidate()，以强制父项使用新的子项顺序重新绘制。
-     * `child` 要置于 z 顺序顶部的子项
-     * */
+    更改子项的 z 顺序，使其位于所有其他子项之上。如果此容器使用顺序相关的布局方案（例如 LinearLayout），则此顺序更改可能会影响布局。在 android.os.Build.VERSION_CODES.KITKAT 之前，此方法应随后调用此父项的 requestLayout() 和 View.invalidate()，以强制父项使用新的子项顺序重新绘制。
+    `child` 要置于 z 顺序顶部的子项
+    */
     fn bring_child_to_front(&self, child: &View);
 
     /**
-     * 显示指定视图或其祖先的上下文菜单。在大多数情况下，子类不需要覆盖此。但是，如果将子类直接添加到窗口管理器（例如，ViewManager.addView(View, ViewGroup.LayoutParams)），则它应该覆盖此并显示上下文菜单。
-     * 返回：如果显示上下文菜单，则返回 true，否则返回 false
-     * `original_view` 首次调用上下文菜单的源视图
-     * */
+    显示指定视图或其祖先的上下文菜单。在大多数情况下，子类不需要覆盖此。但是，如果将子类直接添加到窗口管理器（例如，ViewManager.addView(View, ViewGroup.LayoutParams)），则它应该覆盖此并显示上下文菜单。
+    返回：如果显示上下文菜单，则返回 true，否则返回 false
+    `original_view` 首次调用上下文菜单的源视图
+    */
     fn show_context_menu_for_child(&self, original_view: &View) -> bool;
 
     /**
-     * 当子项的可绘制状态发生改变时，将在父项上调用此方法。
-     * `child` 可绘制状态发生改变的子项。
-     * */
+    当子项的可绘制状态发生改变时，将在父项上调用此方法。
+    `child` 可绘制状态发生改变的子项。
+    */
     fn child_drawable_state_changed(&self, child: &View);
 
     /**
-     * 当子级不希望此父级及其祖先使用 ViewGroup.onInterceptTouchEvent(MotionEvent) 拦截触摸事件时调用。此父级应将此调用传递给其父级。此父级必须在触摸期间遵守此请求（即，仅在此父级收到向上或取消后清除标志。
-     * `disallow_intercept` 如果子级不希望父级拦截触摸事件，则为 True。
-     * */
+    当子级不希望此父级及其祖先使用 ViewGroup.onInterceptTouchEvent(MotionEvent) 拦截触摸事件时调用。此父级应将此调用传递给其父级。此父级必须在触摸期间遵守此请求（即，仅在此父级收到向上或取消后清除标志。
+    `disallow_intercept` 如果子级不希望父级拦截触摸事件，则为 True。
+    */
     fn request_disallow_intercept_touch_event(&self, disallow_intercept: bool);
 
     /**
-     * 当子视图现在具有或不再跟踪瞬态时调用。 “瞬态”是视图可能持有的任何状态，但不应反映在视图当前呈现的数据模型中。此状态仅影响视图本身向用户呈现的内容，例如正在进行的动画的当前状态或文本选择操作的状态。瞬态可用于向视图系统的其他组件提示特定视图正在跟踪复杂但封装的内容。例如，ListView 可能承认具有瞬态的列表项视图应保留在其位置或稳定项 ID 中，而不是将该视图视为可由后备适配器轻松替换。
-     * 这使得适配器实现更简单，而不需要跟踪正在进行的项目视图动画的状态，以便在意外回收和重新绑定附加项目视图时可以恢复它们。当子视图或其子树中的视图开始或结束内部瞬态跟踪时，将在父视图上调用此方法。
-     * `child` 状态已改变的子视图
-     * `has_transient_state` 如果此子视图具有瞬时状态，则为 true
-     * */
+    当子视图现在具有或不再跟踪瞬态时调用。 “瞬态”是视图可能持有的任何状态，但不应反映在视图当前呈现的数据模型中。此状态仅影响视图本身向用户呈现的内容，例如正在进行的动画的当前状态或文本选择操作的状态。瞬态可用于向视图系统的其他组件提示特定视图正在跟踪复杂但封装的内容。例如，ListView 可能承认具有瞬态的列表项视图应保留在其位置或稳定项 ID 中，而不是将该视图视为可由后备适配器轻松替换。
+    这使得适配器实现更简单，而不需要跟踪正在进行的项目视图动画的状态，以便在意外回收和重新绑定附加项目视图时可以恢复它们。当子视图或其子树中的视图开始或结束内部瞬态跟踪时，将在父视图上调用此方法。
+    `child` 状态已改变的子视图
+    `has_transient_state` 如果此子视图具有瞬时状态，则为 true
+    */
     fn child_has_transient_state_changed(&self, child: &View, has_transient_state: bool);
 
     /**
-     * 要求执行新的 View.fitSystemWindows(Rect) 调度。
-     * */
+    要求执行新的 View.fitSystemWindows(Rect) 调度。
+    */
     fn request_fit_system_windows(&self);
 
     /**
-     * 获取给定 View 的父级，以实现可访问性。由于某些 View 未暴露给可访问性层，因此可访问性的父级不一定是 View 的直接父级，而是前任。
-     * 返回：父级，如果未找到，则返回 null。
-     * */
+    获取给定 View 的父级，以实现可访问性。由于某些 View 未暴露给可访问性层，因此可访问性的父级不一定是 View 的直接父级，而是前任。
+    返回：父级，如果未找到，则返回 null。
+    */
     fn get_parent_for_accessibility(&self) -> Option<Self::VP>;
 
     /**
-     * 通知视图父级，其某个后代的可访问性状态已更改，并且子树的结构不同。
-     * `child` 子树已更改的直接子级。
-     * `source` 发生更改的后代视图。不能为 null。
-     * `change_type` 发生的更改类型的位掩码。以下一个或多个：
-     * AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE
-     * AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_STARTED
-     * AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_CANCELLED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_DROPPED
-     * */
+    通知视图父级，其某个后代的可访问性状态已更改，并且子树的结构不同。
+    `child` 子树已更改的直接子级。
+    `source` 发生更改的后代视图。不能为 null。
+    `change_type` 发生的更改类型的位掩码。以下一个或多个：
+    AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE
+    AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT AccessibilityEvent.CONTENT_CHANGE_TYPE_UNDEFINED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_STARTED
+    AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_CANCELLED AccessibilityEvent.CONTENT_CHANGE_TYPE_DRAG_DROPPED
+    */
     fn notify_subtree_accessibility_state_changed(
         &self,
         child: &View,
@@ -479,87 +478,87 @@ pub trait ViewParent {
     );
 
     /**
-     * 告知此视图父级是否可以解析布局方向。请参阅 View.setLayoutDirection(int)
-     * 返回：如果此视图父级可以解析布局方向，则返回 True。
-     * */
+    告知此视图父级是否可以解析布局方向。请参阅 View.setLayoutDirection(int)
+    返回：如果此视图父级可以解析布局方向，则返回 True。
+    */
     fn can_resolve_layout_direction(&self) -> bool;
 
     /**
-     * 告知此视图父级布局方向是否已解析。请参阅 View.setLayoutDirection(int)
-     * 返回：如果此视图父级布局方向已解析，则返回 True。
-     * */
+    告知此视图父级布局方向是否已解析。请参阅 View.setLayoutDirection(int)
+    返回：如果此视图父级布局方向已解析，则返回 True。
+    */
     fn is_layout_direction_resolved(&self) -> bool;
 
     /**
-     * 返回此视图的父布局方向。请参阅 View.getLayoutDirection()
-     * 返回：如果布局方向为 RTL，则返回 View.LAYOUT_DIRECTION_RTL；如果布局方向不是 RTL，则返回 View.LAYOUT_DIRECTION_LTR。
-     * */
+    返回此视图的父布局方向。请参阅 View.getLayoutDirection()
+    返回：如果布局方向为 RTL，则返回 View.LAYOUT_DIRECTION_RTL；如果布局方向不是 RTL，则返回 View.LAYOUT_DIRECTION_LTR。
+    */
     fn get_layout_direction(&self) -> i32;
 
     /**
-     * 告知此视图父级是否可以解析文本方向。请参阅 View.setTextDirection(int)
-     * 返回：如果此视图父级可以解析文本方向，则返回 True。
-     * */
+    告知此视图父级是否可以解析文本方向。请参阅 View.setTextDirection(int)
+    返回：如果此视图父级可以解析文本方向，则返回 True。
+    */
     fn can_resolve_text_direction(&self) -> bool;
 
     /**
-     * 告知此视图父文本方向是否已解析。请参阅 View.setTextDirection(int)
-     * 返回：如果此视图父文本方向已解析，则返回 true。
-     * */
+    告知此视图父文本方向是否已解析。请参阅 View.setTextDirection(int)
+    返回：如果此视图父文本方向已解析，则返回 true。
+    */
     fn is_text_direction_resolved(&self) -> bool;
 
     /**
-     * 返回此视图父文本方向。参见 View.getTextDirection()
-     * 返回：已解析的文本方向。返回以下之一：
-     * View.TEXT_DIRECTION_FIRST_STRONG View.TEXT_DIRECTION_ANY_RTL、View.TEXT_DIRECTION_LTR、View.TEXT_DIRECTION_RTL、View.TEXT_DIRECTION_LOCALE
-     * */
+    返回此视图父文本方向。参见 View.getTextDirection()
+    返回：已解析的文本方向。返回以下之一：
+    View.TEXT_DIRECTION_FIRST_STRONG View.TEXT_DIRECTION_ANY_RTL、View.TEXT_DIRECTION_LTR、View.TEXT_DIRECTION_RTL、View.TEXT_DIRECTION_LOCALE
+    */
     fn get_text_direction(&self) -> i32;
 
     /**
-     * 告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
-     * 返回：如果此视图父级可以解决文本对齐问题，则返回 True。
-     * */
+    告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
+    返回：如果此视图父级可以解决文本对齐问题，则返回 True。
+    */
     fn can_resolve_text_alignment(&self) -> bool;
 
     /**
-     * 告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
-     * 返回：如果此视图父级可以解决文本对齐问题，则返回 True。
-     * */
+    告知此视图父级是否可以解决文本对齐问题。请参阅 View.setTextAlignment(int)
+    返回：如果此视图父级可以解决文本对齐问题，则返回 True。
+    */
     fn is_text_alignment_resolved(&self) -> bool;
 
     /**
-     * 对启动嵌套滚动操作的子视图做出反应，在适当的情况下声明嵌套滚动操作。此方法将在子视图调用 View.startNestedScroll(int) 时调用。视图层次结构中的每个父视图都将有机会通过返回 true 来响应和声明嵌套滚动操作。
-     * 此方法可能被 ViewParent 实现覆盖，以指示视图何时愿意支持即将开始的嵌套滚动操作。如果它返回 true，则此 ViewParent 将成为目标视图的嵌套滚动父视图，直至滚动操作完成。当嵌套滚动完成时，此 ViewParent 将收到对 onStopNestedScroll(View) 的调用。
-     * 如果此 ViewParent 接受嵌套滚动操作，则返回 true
-     * `child` 包含目标的此 ViewParent 的直接子视图
-     * `target` 发起嵌套滚动的视图
-     * `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
-     * */
+    对启动嵌套滚动操作的子视图做出反应，在适当的情况下声明嵌套滚动操作。此方法将在子视图调用 View.startNestedScroll(int) 时调用。视图层次结构中的每个父视图都将有机会通过返回 true 来响应和声明嵌套滚动操作。
+    此方法可能被 ViewParent 实现覆盖，以指示视图何时愿意支持即将开始的嵌套滚动操作。如果它返回 true，则此 ViewParent 将成为目标视图的嵌套滚动父视图，直至滚动操作完成。当嵌套滚动完成时，此 ViewParent 将收到对 onStopNestedScroll(View) 的调用。
+    如果此 ViewParent 接受嵌套滚动操作，则返回 true
+    `child` 包含目标的此 ViewParent 的直接子视图
+    `target` 发起嵌套滚动的视图
+    `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
+    */
     fn on_start_nested_scroll(&self, child: &View, target: &View, nested_scroll_axes: i32) -> bool;
 
     /**
-     * 对成功声明嵌套滚动操作做出反应。此方法将在 onStartNestedScroll 返回 true 后调用。它为视图及其超类提供了对嵌套滚动执行初始配置的机会。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
-     * `child` 此 ViewParent 的直接子级，包含 target
-     * `target` 启动嵌套滚动的视图
-     * `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
-     * */
+    对成功声明嵌套滚动操作做出反应。此方法将在 onStartNestedScroll 返回 true 后调用。它为视图及其超类提供了对嵌套滚动执行初始配置的机会。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
+    `child` 此 ViewParent 的直接子级，包含 target
+    `target` 启动嵌套滚动的视图
+    `nested_scroll_axes` 由 View.SCROLL_AXIS_HORIZONTAL、View.SCROLL_AXIS_VERTICAL 或两者组成的标志
+    */
     fn on_nested_scroll_accepted(&self, child: &View, target: &View, nested_scroll_axes: i32);
 
     /**
-     * 对嵌套滚动操作结束做出反应。在嵌套滚动操作后执行清理。当嵌套滚动停止时，将调用此方法，例如当嵌套触摸滚动以 MotionEvent.ACTION_UP 或 MotionEvent.ACTION_CANCEL 事件结束时。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
-     * `target` 启动嵌套滚动的视图
-     * */
+    对嵌套滚动操作结束做出反应。在嵌套滚动操作后执行清理。当嵌套滚动停止时，将调用此方法，例如当嵌套触摸滚动以 MotionEvent.ACTION_UP 或 MotionEvent.ACTION_CANCEL 事件结束时。此方法的实现应始终调用其超类对此方法的实现（如果存在）。
+    `target` 启动嵌套滚动的视图
+    */
     fn on_stop_nested_scroll(&self, target: &View);
 
     /**
-     * 对正在进行的嵌套滚动做出反应。当 ViewParent 的当前嵌套滚动子视图分派嵌套滚动事件时，将调用此方法。要接收对此方法的调用，ViewParent 必须先前已为 onStartNestedScroll(View, View, int) 调用返回 true。
-     * 滚动距离的已消耗部分和未消耗部分均报告给 ViewParent。例如，实现可以选择使用已消耗部分来匹配或追踪多个子元素的滚动位置。未消耗部分可用于允许连续拖动多个滚动或可拖动元素，例如滚动垂直抽屉内的列表，一旦到达内部滚动内容的边缘，抽屉便开始拖动。
-     * `target` 控制嵌套滚动的后代视图
-     * `dx_consumed` 目标已消耗的水平滚动距离（以像素为单位）
-     * `dy_consumed` 目标已消耗的垂直滚动距离（以像素为单位）
-     * `dx_unconsumed` 目标未消耗的水平滚动距离（以像素为单位）
-     * `dy_unconsumed` 目标未消耗的垂直滚动距离（以像素为单位）
-     * */
+    对正在进行的嵌套滚动做出反应。当 ViewParent 的当前嵌套滚动子视图分派嵌套滚动事件时，将调用此方法。要接收对此方法的调用，ViewParent 必须先前已为 onStartNestedScroll(View, View, int) 调用返回 true。
+    滚动距离的已消耗部分和未消耗部分均报告给 ViewParent。例如，实现可以选择使用已消耗部分来匹配或追踪多个子元素的滚动位置。未消耗部分可用于允许连续拖动多个滚动或可拖动元素，例如滚动垂直抽屉内的列表，一旦到达内部滚动内容的边缘，抽屉便开始拖动。
+    `target` 控制嵌套滚动的后代视图
+    `dx_consumed` 目标已消耗的水平滚动距离（以像素为单位）
+    `dy_consumed` 目标已消耗的垂直滚动距离（以像素为单位）
+    `dx_unconsumed` 目标未消耗的水平滚动距离（以像素为单位）
+    `dy_unconsumed` 目标未消耗的垂直滚动距离（以像素为单位）
+    */
     fn on_nested_scroll(
         &self,
         target: &View,
@@ -570,14 +569,14 @@ pub trait ViewParent {
     );
 
     /**
-     * 从嵌套滚动请求一次抛出。此方法表示嵌套滚动子视图已检测到适合抛出的条件。通常，这意味着触摸滚动已在滚动方向上以达到或超过可滚动轴上的最小抛出速度的速度结束。
-     * 如果嵌套滚动子视图通常会抛出但位于其自身内容的边缘，则可以使用此方法将抛出委托给其嵌套滚动父视图。父视图可以选择使用抛出或观察子视图的抛出。
-     * 返回：如果此父视图消耗了抛出或以其他方式对抛出做出反应，则为 true
-     * `target` 发起嵌套滚动的视图。
-     * `velocity_x` 水平速度（以像素/秒为单位）。
-     * `velocity_y` 垂直速度（以像素/秒为单位）。
-     * `consumed` 如果子视图消耗了抛出，则为 true，否则为 false。
-     * */
+    从嵌套滚动请求一次抛出。此方法表示嵌套滚动子视图已检测到适合抛出的条件。通常，这意味着触摸滚动已在滚动方向上以达到或超过可滚动轴上的最小抛出速度的速度结束。
+    如果嵌套滚动子视图通常会抛出但位于其自身内容的边缘，则可以使用此方法将抛出委托给其嵌套滚动父视图。父视图可以选择使用抛出或观察子视图的抛出。
+    返回：如果此父视图消耗了抛出或以其他方式对抛出做出反应，则为 true
+    `target` 发起嵌套滚动的视图。
+    `velocity_x` 水平速度（以像素/秒为单位）。
+    `velocity_y` 垂直速度（以像素/秒为单位）。
+    `consumed` 如果子视图消耗了抛出，则为 true，否则为 false。
+    */
     fn on_nested_fling(
         &self,
         target: &View,
@@ -587,23 +586,23 @@ pub trait ViewParent {
     ) -> bool;
 
     /**
-     * 在目标视图使用嵌套的快速滑动之前对其做出反应。此方法表示嵌套滚动子视图已检测到沿每个轴具有给定速度的快速滑动。通常，这意味着触摸滚动已在滚动方向上以达到或超过沿可滚动轴的最小快速滑动速度的速度结束。
-     * 如果嵌套滚动父视图正在将运动作为预滚动的一部分使用，则它可能也适合使用预快速滑动以完成相同的运动。通过从此方法返回 true，父视图表示子视图也不应该快速滑动其自己的内部内容。
-     * 返回：如果此父视图在目标视图之前使用了快速滑动，则返回 true
-     * `target` 发起嵌套滚动的视图。
-     * `velocity_x` 水平速度（以像素/秒为单位）。
-     * `velocity_y` 垂直速度（以像素/秒为单位）。
-     * */
+    在目标视图使用嵌套的快速滑动之前对其做出反应。此方法表示嵌套滚动子视图已检测到沿每个轴具有给定速度的快速滑动。通常，这意味着触摸滚动已在滚动方向上以达到或超过沿可滚动轴的最小快速滑动速度的速度结束。
+    如果嵌套滚动父视图正在将运动作为预滚动的一部分使用，则它可能也适合使用预快速滑动以完成相同的运动。通过从此方法返回 true，父视图表示子视图也不应该快速滑动其自己的内部内容。
+    返回：如果此父视图在目标视图之前使用了快速滑动，则返回 true
+    `target` 发起嵌套滚动的视图。
+    `velocity_x` 水平速度（以像素/秒为单位）。
+    `velocity_y` 垂直速度（以像素/秒为单位）。
+    */
     fn on_nested_pre_fling(&self, target: &View, velocity_x: f32, velocity_y: f32) -> bool;
 
     /**
-     * 在目标处理目标后代视图委托的可访问性操作之前，对它做出反应。如果目标希望让其父链中的视图有机会在正常处理发生之前对事件做出反应，则目标后代视图可以调用此方法。
-     * 最常见的是滚动事件，例如 android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD。支持充当嵌套滚动父级的 ViewParent 应覆盖此方法并采取相应行动，以通过可访问性系统实​​现滚动。
-     * 返回：true，如果此 ViewParent 使用了此操作
-     * `target` 调度此操作的目标视图。
-     * `action` 正在执行的操作；请参阅 android.view.accessibility.AccessibilityNodeInfo。
-     * `arguments` 可选的操作参数。
-     * */
+    在目标处理目标后代视图委托的可访问性操作之前，对它做出反应。如果目标希望让其父链中的视图有机会在正常处理发生之前对事件做出反应，则目标后代视图可以调用此方法。
+    最常见的是滚动事件，例如 android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD。支持充当嵌套滚动父级的 ViewParent 应覆盖此方法并采取相应行动，以通过可访问性系统实​​现滚动。
+    返回：true，如果此 ViewParent 使用了此操作
+    `target` 调度此操作的目标视图。
+    `action` 正在执行的操作；请参阅 android.view.accessibility.AccessibilityNodeInfo。
+    `arguments` 可选的操作参数。
+    */
     fn on_nested_pre_perform_accessibility_action(
         &self,
         target: &View,
@@ -617,9 +616,9 @@ pub trait ViewParent {
 #[java_interface(name = "android/view/View$OnClickListener")]
 pub trait View_OnClickListener {
     /**
-     * 当单击某个视图时调用。
-     * `v` 被单击的视图。
-     * */
+    当单击某个视图时调用。
+    `v` 被单击的视图。
+    */
     fn on_click(&self, v: View);
 }
 
@@ -648,16 +647,16 @@ impl View_OnClickListener for View_OnClickListenerImpl {
 }
 
 /**
- * 接口允许您向 Activity 添加和删除子视图。要获取此类的实例，请调用 Context.getSystemService()。
- * */
+接口允许您向 Activity 添加和删除子视图。要获取此类的实例，请调用 Context.getSystemService()。
+*/
 #[java_interface(name = "android/view/ViewManager")]
 pub trait ViewManager {
     /**
-     * 将传递的 LayoutParams 分配给传递的 View，并将该视图添加到窗口。对于某些编程错误，例如在未移除第一个视图的情况下向窗口添加第二个视图，将抛出 WindowManager.BadTokenException。
-     * 如果窗口位于辅助显示器上并且找不到指定的显示器，则抛出 WindowManager.InvalidDisplayException（请参阅 android.app.Presentation）。
-     * `view` 要添加到此窗口的视图。
-     * `params` 要分配给视图的 LayoutParams。
-     * */
+    将传递的 LayoutParams 分配给传递的 View，并将该视图添加到窗口。对于某些编程错误，例如在未移除第一个视图的情况下向窗口添加第二个视图，将抛出 WindowManager.BadTokenException。
+    如果窗口位于辅助显示器上并且找不到指定的显示器，则抛出 WindowManager.InvalidDisplayException（请参阅 android.app.Presentation）。
+    `view` 要添加到此窗口的视图。
+    `params` 要分配给视图的 LayoutParams。
+    */
     fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams);
 
     #[doc(hidden)]
@@ -668,25 +667,25 @@ pub trait ViewManager {
 }
 
 /**
- * 应用用于与窗口管理器通信的接口。每个窗口管理器实例都绑定到一个 Display。要获取与显示器关联的 WindowManager，请调用 Context.createWindowContext(Display, int, Bundle) 以获取显示器的 UI 上下文，然后在 UI 上下文上调用 Context.getSystemService(String) 或 Context.getSystemService(Class)。
- * 在特定显示器上显示窗口的最简单方法是创建一个 Presentation，它会自动获取显示器的 WindowManager 和上下文。
- * */
+应用用于与窗口管理器通信的接口。每个窗口管理器实例都绑定到一个 Display。要获取与显示器关联的 WindowManager，请调用 Context.createWindowContext(Display, int, Bundle) 以获取显示器的 UI 上下文，然后在 UI 上下文上调用 Context.getSystemService(String) 或 Context.getSystemService(Class)。
+在特定显示器上显示窗口的最简单方法是创建一个 Presentation，它会自动获取显示器的 WindowManager 和上下文。
+*/
 #[java_interface(name = "android/view/WindowManager")]
 pub trait WindowManager: ViewManager {
     #[doc(hidden)]
     const PARCEL_KEY_SHORTCUTS_ARRAY: &'static str = "shortcuts_array";
 
     /**
-     * removeView 的特殊变体，在返回之前立即调用给定视图层次结构的 View.onDetachedFromWindow() 方法。这不适用于普通应用程序；正确使用它需要非常小心。
-     * `view` 要删除的视图。
-     * */
+    removeView 的特殊变体，在返回之前立即调用给定视图层次结构的 View.onDetachedFromWindow() 方法。这不适用于普通应用程序；正确使用它需要非常小心。
+    `view` 要删除的视图。
+    */
     fn remove_view_immediate(&self, view: &View);
 
     /**
-     * 返回此WindowManager实例将创建新窗口的显示器。尽管有此方法的名称，但返回的显示器不一定是系统的主要显示器（请参见Display.DEFAULT_DISPLAY）。
-     * 返回的显示可能是此窗口管理器实例正在管理的辅助显示。将其视为此WindowManager实例默认使用的显示。要在其他显示器上创建窗口，您需要为该显示器获得一个WindowManager。 （有关更多信息，请参见WindowManager类文档。）
-     * 返回：此窗口管理器正在管理的显示器。
-     * */
+    返回此WindowManager实例将创建新窗口的显示器。尽管有此方法的名称，但返回的显示器不一定是系统的主要显示器（请参见Display.DEFAULT_DISPLAY）。
+    返回的显示可能是此窗口管理器实例正在管理的辅助显示。将其视为此WindowManager实例默认使用的显示。要在其他显示器上创建窗口，您需要为该显示器获得一个WindowManager。 （有关更多信息，请参见WindowManager类文档。）
+    返回：此窗口管理器正在管理的显示器。
+    */
     #[deprecated(note = "改用 Context.getDisplay()。")]
     #[java_method]
     fn get_default_display(&self) -> Display {}
@@ -713,40 +712,40 @@ impl WindowManager for WindowManagerImpl {
 }
 
 /**
- * ViewGroup 是一种特殊视图，可以包含其他视图（称为子视图）。视图组是布局和视图容器的基类。
- * 此类还定义了 ViewGroup.LayoutParams 类，该类用作布局参数的基类。另请参阅 ViewGroup.LayoutParams 以了解布局属性。
- *
- * 开发者指南
- * 有关创建用户界面布局的更多信息，请阅读 XML 布局开发者指南。以下是自定义 ViewGroup 的完整实现，它实现了简单的 android.widget.FrameLayout，并能够在左右边缘堆叠子视图。
- * @sample development/samples/ApiDemos/src/com/example/android/apis/view/CustomLayout.java 完整版
- * 如果您正在实现示例中所示的 XML 布局属性，则这是它们在 res/values/attrs.xml 中的对应定义：
- * @sample development/samples/ApiDemos/res/values/attrs.xml CustomLayout
- * 最后，布局管理器可以在 XML 布局中使用，如下所示：
- * @sample development/samples/ApiDemos/res/layout/custom_layout.xml 完整版
- * */
+ViewGroup 是一种特殊视图，可以包含其他视图（称为子视图）。视图组是布局和视图容器的基类。
+此类还定义了 ViewGroup.LayoutParams 类，该类用作布局参数的基类。另请参阅 ViewGroup.LayoutParams 以了解布局属性。
+
+开发者指南
+有关创建用户界面布局的更多信息，请阅读 XML 布局开发者指南。以下是自定义 ViewGroup 的完整实现，它实现了简单的 android.widget.FrameLayout，并能够在左右边缘堆叠子视图。
+@sample development/samples/ApiDemos/src/com/example/android/apis/view/CustomLayout.java 完整版
+如果您正在实现示例中所示的 XML 布局属性，则这是它们在 res/values/attrs.xml 中的对应定义：
+@sample development/samples/ApiDemos/res/values/attrs.xml CustomLayout
+最后，布局管理器可以在 XML 布局中使用，如下所示：
+@sample development/samples/ApiDemos/res/layout/custom_layout.xml 完整版
+*/
 #[java_class(name = "android/view/ViewGroup", extends=View)]
 pub struct ViewGroup;
 
 impl ViewGroup {
     /**
-     * 添加子视图。如果子视图上尚未设置布局参数，则此 ViewGroup 的默认参数将设置在该子视图上。
-     * 注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
-     * `child` 要添加的子视图
-     * */
+    添加子视图。如果子视图上尚未设置布局参数，则此 ViewGroup 的默认参数将设置在该子视图上。
+    注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
+    `child` 要添加的子视图
+    */
     #[java_method]
     pub fn add_view(&self, child: &View) {}
 
     /**
-     * 调用此方法可从 ViewGroup 中删除所有子视图。
-     * 注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
-     * */
+    调用此方法可从 ViewGroup 中删除所有子视图。
+    注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
+    */
     #[java_method]
     pub fn remove_all_views(&self) {}
 
     /**
-     * 当 ViewGroup 子类必须先知道其在屏幕上的大小，然后才能计算要渲染的子视图数量时，此方法会由 ViewGroup 子类调用，以从自身移除子视图。例如 Gallery 或 ListView，它们可能“有”50 个子视图，但实际上只渲染当前可容纳在屏幕上的对象内的子视图数量。除非您正在扩展 ViewGroup 并了解视图测量和布局管道，否则请不要调用此方法。
-     * 注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
-     * */
+    当 ViewGroup 子类必须先知道其在屏幕上的大小，然后才能计算要渲染的子视图数量时，此方法会由 ViewGroup 子类调用，以从自身移除子视图。例如 Gallery 或 ListView，它们可能“有”50 个子视图，但实际上只渲染当前可容纳在屏幕上的对象内的子视图数量。除非您正在扩展 ViewGroup 并了解视图测量和布局管道，否则请不要调用此方法。
+    注意：不要从 draw(Canvas)、onDraw(Canvas)、dispatchDraw(Canvas) 或任何相关方法调用此方法。
+    */
     pub fn remove_all_views_in_layout(&self) {}
 }
 
@@ -887,17 +886,17 @@ impl ViewParent for ViewGroup {
 }
 
 /**
- * 视图使用 LayoutParams 来告诉其父级它们希望如何布局。请参阅 ViewGroup 布局属性，了解此类支持的所有子视图属性的列表。
- * 基本 LayoutParams 类仅描述视图希望的宽度和高度。对于每个维度，它可以指定以下之一：
- * FILL_PARENT（在 API 级别 8 及更高版本中重命名为 MATCH_PARENT），这意味着视图希望与其父级一样大（减去填充）
- * WRAP_CONTENT，这意味着视图希望足够大以包含其内容（加上填充）
- *
- * 一个确切的数字
- * 对于不同的 ViewGroup 子类，有 LayoutParams 的子类。例如，AbsoluteLayout 有自己的 LayoutParams 子类，它添加了 X 和 Y 值。
- *
- * 开发人员指南
- * 有关创建用户界面布局的更多信息，请阅读 XML 布局开发人员指南。
- * */
+视图使用 LayoutParams 来告诉其父级它们希望如何布局。请参阅 ViewGroup 布局属性，了解此类支持的所有子视图属性的列表。
+基本 LayoutParams 类仅描述视图希望的宽度和高度。对于每个维度，它可以指定以下之一：
+FILL_PARENT（在 API 级别 8 及更高版本中重命名为 MATCH_PARENT），这意味着视图希望与其父级一样大（减去填充）
+WRAP_CONTENT，这意味着视图希望足够大以包含其内容（加上填充）
+
+一个确切的数字
+对于不同的 ViewGroup 子类，有 LayoutParams 的子类。例如，AbsoluteLayout 有自己的 LayoutParams 子类，它添加了 X 和 Y 值。
+
+开发人员指南
+有关创建用户界面布局的更多信息，请阅读 XML 布局开发人员指南。
+*/
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/view/ViewGroup$LayoutParams")]
 pub struct ViewGroup_LayoutParams;
@@ -930,17 +929,17 @@ impl ViewGroup_LayoutParams {
     pub fn set_height(&self, value: i32) {}
 
     /**
-     * 创建一组具有指定宽度和高度的新布局参数。
-     * `width` 宽度，可以是 WRAP_CONTENT、FILL_PARENT（在 API 级别 8 中由 MATCH_PARENT 替换），也可以是固定大小（以像素为单位）
-     * `height` 高度，可以是 WRAP_CONTENT、FILL_PARENT（在 API 级别 8 中由 MATCH_PARENT 替换），也可以是固定大小（以像素为单位）
-     * */
+    创建一组具有指定宽度和高度的新布局参数。
+    `width` 宽度，可以是 WRAP_CONTENT、FILL_PARENT（在 API 级别 8 中由 MATCH_PARENT 替换），也可以是固定大小（以像素为单位）
+    `height` 高度，可以是 WRAP_CONTENT、FILL_PARENT（在 API 级别 8 中由 MATCH_PARENT 替换），也可以是固定大小（以像素为单位）
+    */
     #[java_constructor]
     pub fn new(width: i32, height: i32) -> Self {}
 }
 
 /**
- * 支持边距的布局的每个子视图布局信息。请参阅 ViewGroup 边距布局属性，查看此类支持的所有子视图属性的列表。
- * */
+支持边距的布局的每个子视图布局信息。请参阅 ViewGroup 边距布局属性，查看此类支持的所有子视图属性的列表。
+*/
 #[allow(non_camel_case_types)]
 #[java_class(name = "android/view/ViewGroup$MarginLayoutParams", extends=ViewGroup_LayoutParams)]
 pub struct ViewGroup_MarginLayoutParams;
@@ -1093,10 +1092,10 @@ impl WindowManager_LayoutParams {
     pub const TYPE_STATUS_BAR_PANEL: i32 = Self::FIRST_SYSTEM_WINDOW + 14;
 
     /**
-     * 窗口类型：安全系统覆盖窗口，需要显示在所有其他窗口之上。这些窗口不得获取输入焦点，否则会干扰键盘保护。
-     * 这与 TYPE_SYSTEM_OVERLAY 完全相同，不同之处在于只有系统本身才被允许创建这些覆盖层。应用程序无法获得创建安全系统覆盖层的权限。
-     * 在多用户系统中仅显示在所属用户的窗口上。
-     * */
+    窗口类型：安全系统覆盖窗口，需要显示在所有其他窗口之上。这些窗口不得获取输入焦点，否则会干扰键盘保护。
+    这与 TYPE_SYSTEM_OVERLAY 完全相同，不同之处在于只有系统本身才被允许创建这些覆盖层。应用程序无法获得创建安全系统覆盖层的权限。
+    在多用户系统中仅显示在所属用户的窗口上。
+    */
     pub const TYPE_SECURE_SYSTEM_OVERLAY: i32 = Self::FIRST_SYSTEM_WINDOW + 15;
 
     /// 窗口类型：拖放式伪窗口。最多只有一个拖放层，并放置在所有其他窗口之上。在多用户系统中，仅显示在拥有该窗口的用户窗口上。
@@ -1194,26 +1193,26 @@ impl WindowManager_LayoutParams {
     pub const FLAG_BLUR_BEHIND: u32 = 0x00000004;
 
     /**
-     * 窗口标志：此窗口永远不会获得按键输入焦点，因此用户无法向其发送按键或其他按钮事件。这些事件将转至其后面的任何可获得焦点的窗口。此标志还将启用 FLAG_NOT_TOUCH_MODAL，无论是否明确设置。
-     * 设置此标志还意味着窗口将不需要与软输入法交互，因此它将按 Z 顺序排列并独立于任何活动输入法定位（通常这意味着它在输入法之上按 Z 顺序排列，因此它可以使用全屏显示其内容并在需要时覆盖输入法。您可以使用 FLAG_ALT_FOCUSABLE_IM 来修改此行为。
-     * */
+    窗口标志：此窗口永远不会获得按键输入焦点，因此用户无法向其发送按键或其他按钮事件。这些事件将转至其后面的任何可获得焦点的窗口。此标志还将启用 FLAG_NOT_TOUCH_MODAL，无论是否明确设置。
+    设置此标志还意味着窗口将不需要与软输入法交互，因此它将按 Z 顺序排列并独立于任何活动输入法定位（通常这意味着它在输入法之上按 Z 顺序排列，因此它可以使用全屏显示其内容并在需要时覆盖输入法。您可以使用 FLAG_ALT_FOCUSABLE_IM 来修改此行为。
+    */
     pub const FLAG_NOT_FOCUSABLE: u32 = 0x00000008;
 
     /**
-     * 窗口标志：此窗口永远不能接收触摸事件。
-     * 此标志的目的是将触摸留给该窗口下方的某个窗口来处理（按 Z 顺序）。
-     * 从Android Build.VERSION_CODES#S开始，出于安全原因，触摸事件通过包含此标志的窗口(即。在该窗口的边界内)将仅在以下一项(或多项)为真的情况下被递送到该触摸消费窗口：
-     * 相同的UID：该窗口属于拥有该触摸消费窗口的同一UID。
-     * 受信任的窗口：此窗口受信任。可信窗口包括(但不限于)辅助窗口(TYPE_ACCESSIBILITY_OVERLAY)、输入法(TYPE_INPUT_METHOD)和辅助窗口(TYPE_VOICE_INTERACTION)。类型为_APPLICATION_OVERLAY的窗口不受信任，请参见下文。
-     * 不可见窗口：该窗口是视图#消失或视图#不可见。
-     * 全透明窗口：此窗口的LayoutParams#Alpha等于0。
-     * 一个具有足够透明度的SAW窗口：该窗口的类型为_APPLICATION_OVERLAY，其LayoutParams#Alpha小于或等于最大遮挡不透明度(见下文)，并且它是触摸路径中该UID的唯一类型为_APPLICATION_OVERLAY的窗口。
-     * 具有足够透明度的多个SAW窗口：从该UID开始的触摸路径中的多个重叠的TYPE_APPLICATION_OVERLAY窗口具有低于或等于最大遮挡不透明度的组合遮挡不透明度。有关如何计算该值的信息，请参见下面的组合遮挡不透明度一节。
-     * 如果这些情况都不成立，则不会传递触摸，并且会将一条消息记录到LogCAT。
-     * 最大遮挡不透明度此值为 0.8。如果应用希望从系统收集此值（而不是对其进行硬编码），则可能需要使用 android.hardware.input.InputManager#getMaximumObscuringOpacityForTouch()。
-     * 组合遮挡不透明度
-     * 一组窗口的组合遮挡不透明度是通过使用结合和交换运算将该集合中所有窗口的不透明度值组合而获得的，定义为：opacity({A,B}) = 1 - (1 - opacity(A))*(1 - opacity(B))，其中 ` `) = 1 - (1 - opacity(W1)) * ... * (1 - opacity(Wn))
-     * */
+    窗口标志：此窗口永远不能接收触摸事件。
+    此标志的目的是将触摸留给该窗口下方的某个窗口来处理（按 Z 顺序）。
+    从Android Build.VERSION_CODES#S开始，出于安全原因，触摸事件通过包含此标志的窗口(即。在该窗口的边界内)将仅在以下一项(或多项)为真的情况下被递送到该触摸消费窗口：
+    相同的UID：该窗口属于拥有该触摸消费窗口的同一UID。
+    受信任的窗口：此窗口受信任。可信窗口包括(但不限于)辅助窗口(TYPE_ACCESSIBILITY_OVERLAY)、输入法(TYPE_INPUT_METHOD)和辅助窗口(TYPE_VOICE_INTERACTION)。类型为_APPLICATION_OVERLAY的窗口不受信任，请参见下文。
+    不可见窗口：该窗口是视图#消失或视图#不可见。
+    全透明窗口：此窗口的LayoutParams#Alpha等于0。
+    一个具有足够透明度的SAW窗口：该窗口的类型为_APPLICATION_OVERLAY，其LayoutParams#Alpha小于或等于最大遮挡不透明度(见下文)，并且它是触摸路径中该UID的唯一类型为_APPLICATION_OVERLAY的窗口。
+    具有足够透明度的多个SAW窗口：从该UID开始的触摸路径中的多个重叠的TYPE_APPLICATION_OVERLAY窗口具有低于或等于最大遮挡不透明度的组合遮挡不透明度。有关如何计算该值的信息，请参见下面的组合遮挡不透明度一节。
+    如果这些情况都不成立，则不会传递触摸，并且会将一条消息记录到LogCAT。
+    最大遮挡不透明度此值为 0.8。如果应用希望从系统收集此值（而不是对其进行硬编码），则可能需要使用 android.hardware.input.InputManager#getMaximumObscuringOpacityForTouch()。
+    组合遮挡不透明度
+    一组窗口的组合遮挡不透明度是通过使用结合和交换运算将该集合中所有窗口的不透明度值组合而获得的，定义为：opacity({A,B}) = 1 - (1 - opacity(A))*(1 - opacity(B))，其中 ` `) = 1 - (1 - opacity(W1)) * ... * (1 - opacity(Wn))
+    */
     pub const FLAG_NOT_TOUCHABLE: u32 = 0x00000010;
 
     /// 窗口标志：即使此窗口可聚焦（其 FLAG_NOT_FOCUSABLE 未设置），也允许将窗口外的任何指针事件发送到其后面的窗口。否则它将自己消耗所有指针事件，无论它们是否在窗口内。
@@ -1227,18 +1226,18 @@ impl WindowManager_LayoutParams {
     pub const FLAG_KEEP_SCREEN_ON: u32 = 0x00000080;
 
     /**
-     * 附加窗口的窗口标志：将窗口放置在整个屏幕内，忽略来自父窗口的任何限制。
-     * 注意：在具有displayCutout的显示器上，可以将窗口放置，以便在必要时根据LayoutInDisplayCutOutMode避免显示屏区域。
-     * */
+    附加窗口的窗口标志：将窗口放置在整个屏幕内，忽略来自父窗口的任何限制。
+    注意：在具有displayCutout的显示器上，可以将窗口放置，以便在必要时根据LayoutInDisplayCutOutMode避免显示屏区域。
+    */
     pub const FLAG_LAYOUT_IN_SCREEN: u32 = 0x00000100;
 
     /// 窗口标志：允许窗口延伸到屏幕之外。
     pub const FLAG_LAYOUT_NO_LIMITS: u32 = 0x00000200;
 
     /**
-     * 窗口标志：显示此窗口时隐藏所有屏幕装饰（例如状态栏）。这允许窗口为自己使用整个显示空间 - 当设置了此标志的应用窗口位于顶层时，状态栏将被隐藏。全屏窗口将忽略窗口的 softInputMode 字段的 SOFT_INPUT_ADJUST_RESIZE 值；窗口将保持全屏并且不会调整大小。
-     * 您可以通过 android.R.attr#windowFullscreen 属性在您的主题中控制此标志；此属性会在标准全屏主题中自动为您设置，例如 android.R.style#Theme_NoTitleBar_Fullscreen、android.R.style#Theme_Black_NoTitleBar_Fullscreen、android.R.style#Theme_Light_NoTitleBar_Fullscreen、android.R.style#Theme_Holo_NoActionBar_Fullscreen、android.R.style#Theme_Holo_Light_NoActionBar_Fullscreen、android.R.style#Theme_DeviceDefault_NoActionBar_Fullscreen 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_Fullscreen。
-     * */
+    窗口标志：显示此窗口时隐藏所有屏幕装饰（例如状态栏）。这允许窗口为自己使用整个显示空间 - 当设置了此标志的应用窗口位于顶层时，状态栏将被隐藏。全屏窗口将忽略窗口的 softInputMode 字段的 SOFT_INPUT_ADJUST_RESIZE 值；窗口将保持全屏并且不会调整大小。
+    您可以通过 android.R.attr#windowFullscreen 属性在您的主题中控制此标志；此属性会在标准全屏主题中自动为您设置，例如 android.R.style#Theme_NoTitleBar_Fullscreen、android.R.style#Theme_Black_NoTitleBar_Fullscreen、android.R.style#Theme_Light_NoTitleBar_Fullscreen、android.R.style#Theme_Holo_NoActionBar_Fullscreen、android.R.style#Theme_Holo_Light_NoActionBar_Fullscreen、android.R.style#Theme_DeviceDefault_NoActionBar_Fullscreen 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_Fullscreen。
+    */
     #[deprecated(note = "将WindowInsetsController#hide(int)与Type#statusBars()一起使用。")]
     pub const FLAG_FULLSCREEN: u32 = 0x00000400;
 
@@ -1251,9 +1250,9 @@ impl WindowManager_LayoutParams {
     pub const FLAG_DITHER: u32 = 0x00001000;
 
     /**
-     * 窗口标志：将窗口内容视为安全，防止其出现在屏幕截图中或在非安全显示器上查看。
-     * 有关安全表面和安全显示的更多详细信息，请参阅 android.view.Display#FLAG_SECURE。
-     * */
+    窗口标志：将窗口内容视为安全，防止其出现在屏幕截图中或在非安全显示器上查看。
+    有关安全表面和安全显示的更多详细信息，请参阅 android.view.Display#FLAG_SECURE。
+    */
     pub const FLAG_SECURE: u32 = 0x00002000;
 
     /// 窗口标志：一种特殊模式，其中布局参数用于在表面合成到屏幕时执行表面的缩放。
@@ -1267,10 +1266,10 @@ impl WindowManager_LayoutParams {
     pub const FLAG_LAYOUT_INSET_DECOR: u32 = 0x00010000;
 
     /**
-     * 窗口标志：设置后，反转窗口的输入法可聚焦性。
-     * 设置此标志的效果取决于是否设置了 FLAG_NOT_FOCUSABLE：如果未设置 FLAG_NOT_FOCUSABLE，即当窗口可聚焦时，设置此标志将阻止此窗口成为输入法的目标。因此，它将无法与输入法交互，并将位于输入法之上（除非其上方有另一个输入法目标）。
-     * 如果设置了 FLAG_NOT_FOCUSABLE，则设置此标志会要求窗口成为输入法目标，即使窗口无法聚焦。因此，它将位于输入法之下。注意：设置了 FLAG_NOT_FOCUSABLE 的窗口无法与输入法交互，无论此标志如何。
-     * */
+    窗口标志：设置后，反转窗口的输入法可聚焦性。
+    设置此标志的效果取决于是否设置了 FLAG_NOT_FOCUSABLE：如果未设置 FLAG_NOT_FOCUSABLE，即当窗口可聚焦时，设置此标志将阻止此窗口成为输入法的目标。因此，它将无法与输入法交互，并将位于输入法之上（除非其上方有另一个输入法目标）。
+    如果设置了 FLAG_NOT_FOCUSABLE，则设置此标志会要求窗口成为输入法目标，即使窗口无法聚焦。因此，它将位于输入法之下。注意：设置了 FLAG_NOT_FOCUSABLE 的窗口无法与输入法交互，无论此标志如何。
+    */
     pub const FLAG_ALT_FOCUSABLE_IM: u32 = 0x00020000;
 
     /// 窗口标志：如果您已设置 FLAG_NOT_TOUCH_MODAL，则可以设置此标志以接收单个特殊 MotionEvent，其动作为 MotionEvent#ACTION_OUTSIDE MotionEvent.ACTION_OUTSIDE，用于发生在窗口外的触摸。请注意，您不会收到完整的向下/移动/向上手势，只会收到第一个向下的位置作为 ACTION_OUTSIDE。
@@ -1283,10 +1282,10 @@ impl WindowManager_LayoutParams {
     pub const FLAG_SHOW_WHEN_LOCKED: u32 = 0x00080000;
 
     /**
-     * 窗口标志：要求系统壁纸显示在窗口后面。窗口表面必须是半透明的，才能真正看到其后面的壁纸；此标志仅确保如果此窗口实际上有半透明区域，壁纸表面就会出现。
-     * 您可以通过 android.R.attr#windowShowWallpaper 属性在您的主题中控制此标志；此属性会在标准壁纸主题中自动为您设置，例如 android.R.style#Theme_Wallpaper、android.R.style#Theme_Wallpaper_NoTitleBar、android.R.style#Theme_Wallpaper_NoTitleBar_Fullscreen、android.R.style#Theme_Holo_Wallpaper、android.R.style#Theme_Holo_Wallpaper_NoTitleBar、android.R.style#Theme_DeviceDefault_Wallpaper 和 android.R.style#Theme_DeviceDefault_Wallpaper_NoTitleBar。
-     * 设置此标志后，发送到此窗口的所有触摸事件也会发送到壁纸，用于与动态壁纸交互。检查 LayoutParams#areWallpaperTouchEventsEnabled()，默认情况下设置为 ` `。在窗口上显示敏感信息时，如果您想禁用将触摸事件发送到壁纸，请使用 LayoutParams#setWallpaperTouchEventsEnabled(boolean)。
-     * */
+    窗口标志：要求系统壁纸显示在窗口后面。窗口表面必须是半透明的，才能真正看到其后面的壁纸；此标志仅确保如果此窗口实际上有半透明区域，壁纸表面就会出现。
+    您可以通过 android.R.attr#windowShowWallpaper 属性在您的主题中控制此标志；此属性会在标准壁纸主题中自动为您设置，例如 android.R.style#Theme_Wallpaper、android.R.style#Theme_Wallpaper_NoTitleBar、android.R.style#Theme_Wallpaper_NoTitleBar_Fullscreen、android.R.style#Theme_Holo_Wallpaper、android.R.style#Theme_Holo_Wallpaper_NoTitleBar、android.R.style#Theme_DeviceDefault_Wallpaper 和 android.R.style#Theme_DeviceDefault_Wallpaper_NoTitleBar。
+    设置此标志后，发送到此窗口的所有触摸事件也会发送到壁纸，用于与动态壁纸交互。检查 LayoutParams#areWallpaperTouchEventsEnabled()，默认情况下设置为 ` `。在窗口上显示敏感信息时，如果您想禁用将触摸事件发送到壁纸，请使用 LayoutParams#setWallpaperTouchEventsEnabled(boolean)。
+    */
     pub const FLAG_SHOW_WALLPAPER: u32 = 0x00100000;
 
     /// 窗口标志：当设置为添加窗口或使窗口可见时，一旦窗口显示出来，系统就会触发电源管理器的用户活动（就像用户唤醒了设备一样）来打开屏幕。
@@ -1305,43 +1304,43 @@ impl WindowManager_LayoutParams {
     pub const FLAG_SPLIT_TOUCH: u32 = 0x00800000;
 
     /**
-     * 指示该窗口是否应加速硬件。请求硬件加速并不能保证它会发生。
-     * 此标志只能通过编程控制以启用硬件加速。要通过编程为给定窗口启用硬件加速，请执行以下操作：
-     * Window w = activity.getWindow(); // 在 Activity 的 onCreate() 中
-     * 例如
-     * w.setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-     * 重要的是要记住，必须在设置活动或对话框的内容视图之前设置此标志。
-     * 在使用 android.R.attr#hardwareAccelerated 在清单中启用硬件加速后，此标志不能用于禁用硬件加速。如果您需要有选择地以编程方式禁用硬件加速（例如用于自动测试），请确保在清单中将其关闭，并在需要时使用上述方法在活动或对话框中启用它。
-     * 如果活动或应用程序上的 android.R.attr#hardwareAccelerated android:hardwareAccelerated XML 属性设置为 true，则系统会自动设置此标志。
-     * */
+    指示该窗口是否应加速硬件。请求硬件加速并不能保证它会发生。
+    此标志只能通过编程控制以启用硬件加速。要通过编程为给定窗口启用硬件加速，请执行以下操作：
+    Window w = activity.getWindow(); // 在 Activity 的 onCreate() 中
+    例如
+    w.setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+    重要的是要记住，必须在设置活动或对话框的内容视图之前设置此标志。
+    在使用 android.R.attr#hardwareAccelerated 在清单中启用硬件加速后，此标志不能用于禁用硬件加速。如果您需要有选择地以编程方式禁用硬件加速（例如用于自动测试），请确保在清单中将其关闭，并在需要时使用上述方法在活动或对话框中启用它。
+    如果活动或应用程序上的 android.R.attr#hardwareAccelerated android:hardwareAccelerated XML 属性设置为 true，则系统会自动设置此标志。
+    */
     pub const FLAG_HARDWARE_ACCELERATED: u32 = 0x01000000;
 
     //noinspection SpellCheckingInspection
     /**
-     * 窗口标志：允许窗口内容延伸到屏幕的过扫描区域（如果有）。窗口仍应正确定位其内容以将过扫描区域考虑在内。
-     * 可以通过android.R.attr#windowOverscan属性在您的主题中控制该标志;该属性是在标准过扫描主题中为您自动设置的，例如android.R.style#Theme_Holo_NoActionBar_Overscan、android.R.style#Theme_Holo_Light_NoActionBar_Overscan、android.R.style#Theme_DeviceDefault_NoActionBar_Overscan和android.R.style#Theme_DeviceDefault_Light_NoActionBar_Overscan。
-     * 当为窗口启用此标志时，其正常内容可能会被显示屏的过扫描区域在一定程度上遮挡。为了确保用户可以看到该内容的关键部分，您可以使用 View#setFitsSystemWindows(boolean) View.setFitsSystemWindows(boolean) 在视图层次结构中设置应应用适当偏移的点。（这可以通过直接调用此函数、使用视图层次结构中的 android.R.attr#fitsSystemWindows 属性或实现您自己的 View#fitSystemWindows(android.graphics.Rect) View.fitSystemWindows(Rect) 方法来完成）。
-     * 这种定位内容元素的机制与布局和 View#setSystemUiVisibility(int) View.setSystemUiVisibility(int) 的等效用法相同；这里有一个示例布局，它将在设置此过扫描标志的情况下正确定位其 UI 元素：
-     * development/samples/ApiDemos/res/layout/overscan_activity.xml 完整版
-     * */
+    窗口标志：允许窗口内容延伸到屏幕的过扫描区域（如果有）。窗口仍应正确定位其内容以将过扫描区域考虑在内。
+    可以通过android.R.attr#windowOverscan属性在您的主题中控制该标志;该属性是在标准过扫描主题中为您自动设置的，例如android.R.style#Theme_Holo_NoActionBar_Overscan、android.R.style#Theme_Holo_Light_NoActionBar_Overscan、android.R.style#Theme_DeviceDefault_NoActionBar_Overscan和android.R.style#Theme_DeviceDefault_Light_NoActionBar_Overscan。
+    当为窗口启用此标志时，其正常内容可能会被显示屏的过扫描区域在一定程度上遮挡。为了确保用户可以看到该内容的关键部分，您可以使用 View#setFitsSystemWindows(boolean) View.setFitsSystemWindows(boolean) 在视图层次结构中设置应应用适当偏移的点。（这可以通过直接调用此函数、使用视图层次结构中的 android.R.attr#fitsSystemWindows 属性或实现您自己的 View#fitSystemWindows(android.graphics.Rect) View.fitSystemWindows(Rect) 方法来完成）。
+    这种定位内容元素的机制与布局和 View#setSystemUiVisibility(int) View.setSystemUiVisibility(int) 的等效用法相同；这里有一个示例布局，它将在设置此过扫描标志的情况下正确定位其 UI 元素：
+    development/samples/ApiDemos/res/layout/overscan_activity.xml 完整版
+    */
     #[deprecated(note = "从Android 11开始，任何Android产品都不再设置过范围的区域。")]
     pub const FLAG_LAYOUT_IN_OVERSCAN: u32 = 0x02000000;
 
     /**
-     * 窗口标志：请求一个半透明的状态栏，并带有系统提供的最少的背景保护。
-     * 您可以通过 android.R.attr#windowTranslucentStatus 属性在您的主题中控制此标志；此属性会在标准半透明装饰主题中自动为您设置，例如 android.R.style#Theme_Holo_NoActionBar_TranslucentDecor、android.R.style#Theme_Holo_Light_NoActionBar_TranslucentDecor、android.R.style#Theme_DeviceDefault_NoActionBar_TranslucentDecor 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_TranslucentDecor。
-     * 当为窗口启用此标志时，它会自动设置系统 UI 可见性标志 View#SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View#SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN。
-     * 注意：对于支持 android.content.pm.PackageManager#FEATURE_AUTOMOTIVE 的设备，可以忽略此标志。
-     * */
+    窗口标志：请求一个半透明的状态栏，并带有系统提供的最少的背景保护。
+    您可以通过 android.R.attr#windowTranslucentStatus 属性在您的主题中控制此标志；此属性会在标准半透明装饰主题中自动为您设置，例如 android.R.style#Theme_Holo_NoActionBar_TranslucentDecor、android.R.style#Theme_Holo_Light_NoActionBar_TranslucentDecor、android.R.style#Theme_DeviceDefault_NoActionBar_TranslucentDecor 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_TranslucentDecor。
+    当为窗口启用此标志时，它会自动设置系统 UI 可见性标志 View#SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View#SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN。
+    注意：对于支持 android.content.pm.PackageManager#FEATURE_AUTOMOTIVE 的设备，可以忽略此标志。
+    */
     #[deprecated(note = "改用半透明颜色的 Window#setStatusBarColor(int)。")]
     pub const FLAG_TRANSLUCENT_STATUS: u32 = 0x04000000;
 
     /**
-     * 窗口标志：请求一个半透明的导航栏，并带有系统提供的最少的背景保护。
-     * 您可以通过 android.R.attr#windowTranslucentNavigation 属性在您的主题中控制此标志；此属性会在标准半透明装饰主题中自动为您设置，例如 android.R.style#Theme_Holo_NoActionBar_TranslucentDecor、android.R.style#Theme_Holo_Light_NoActionBar_TranslucentDecor、android.R.style#Theme_DeviceDefault_NoActionBar_TranslucentDecor 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_TranslucentDecor。
-     * 当为窗口启用此标志时，它会自动设置系统 UI 可见性标志 View#SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View#SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION。
-     * 注意：对于支持 android.content.pm.PackageManager#FEATURE_AUTOMOTIVE 的设备，汽车制造商可以禁用此标志。
-     * */
+    窗口标志：请求一个半透明的导航栏，并带有系统提供的最少的背景保护。
+    您可以通过 android.R.attr#windowTranslucentNavigation 属性在您的主题中控制此标志；此属性会在标准半透明装饰主题中自动为您设置，例如 android.R.style#Theme_Holo_NoActionBar_TranslucentDecor、android.R.style#Theme_Holo_Light_NoActionBar_TranslucentDecor、android.R.style#Theme_DeviceDefault_NoActionBar_TranslucentDecor 和 android.R.style#Theme_DeviceDefault_Light_NoActionBar_TranslucentDecor。
+    当为窗口启用此标志时，它会自动设置系统 UI 可见性标志 View#SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View#SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION。
+    注意：对于支持 android.content.pm.PackageManager#FEATURE_AUTOMOTIVE 的设备，汽车制造商可以禁用此标志。
+    */
     #[deprecated(note = "改用半透明颜色的 Window#setNavigationBarColor(int)。")]
     pub const FLAG_TRANSLUCENT_NAVIGATION: u32 = 0x08000000;
 
@@ -1349,9 +1348,9 @@ impl WindowManager_LayoutParams {
     pub const FLAG_LOCAL_FOCUS_MODE: u32 = 0x10000000;
 
     /**
-     * 窗口标志：允许触摸在手势过程中从一个窗口滑入相邻窗口，而不是在手势持续期间被捕获。
-     * 此标志仅更改此窗口的触摸焦点行为。触摸可以滑出窗口但不一定滑回（除非具有触摸焦点的其他窗口允许）。
-     * */
+    窗口标志：允许触摸在手势过程中从一个窗口滑入相邻窗口，而不是在手势持续期间被捕获。
+    此标志仅更改此窗口的触摸焦点行为。触摸可以滑出窗口但不一定滑回（除非具有触摸焦点的其他窗口允许）。
+    */
     pub const FLAG_SLIPPERY: u32 = 0x20000000;
 
     /// 窗口标志：当请求使用附加窗口进行布局时，附加窗口可能会与父窗口的屏幕装饰（例如导航栏）重叠。通过包含此标志，窗口管理器将在父窗口的装饰框架内布局附加窗口，使其不与屏幕装饰重叠。
@@ -1417,16 +1416,16 @@ impl WindowManager_LayoutParams {
 
     //noinspection SpellCheckingInspection
     /**
-     * 标记指示在未缩放的屏幕坐标上计算可放大区域时将排除此窗口，这可以避免放大边界上的剪切。它应该用于不可放大的叠加层。
-     * 注意与 PRIVATE_FLAG_NOT_MAGNIFIABLE 不同，此标志不影响放大功能。如果您希望窗口不可放大且不导致剪切，则需要将两者结合起来。
-     * */
+    标记指示在未缩放的屏幕坐标上计算可放大区域时将排除此窗口，这可以避免放大边界上的剪切。它应该用于不可放大的叠加层。
+    注意与 PRIVATE_FLAG_NOT_MAGNIFIABLE 不同，此标志不影响放大功能。如果您希望窗口不可放大且不导致剪切，则需要将两者结合起来。
+    */
     pub const PRIVATE_FLAG_EXCLUDE_FROM_SCREEN_MAGNIFICATION: i32 = 1 << 21;
 
     //noinspection SpellCheckingInspection
     /**
-     * 标记以防止窗口被辅助功能放大镜放大。
-     * TODO(b/190623172): 这只是暂时的解决办法，需要寻找其他方法。
-     * */
+    标记以防止窗口被辅助功能放大镜放大。
+    TODO(b/190623172): 这只是暂时的解决办法，需要寻找其他方法。
+    */
     pub const PRIVATE_FLAG_NOT_MAGNIFIABLE: i32 = 1 << 22;
 
     /// 标记表示状态栏窗口处于强制显示导航栏的状态，除非导航栏窗口明确设置为 View#GONE。仅当通过 LayoutParams#TYPE_STATUS_BAR 设置时才会生效。
@@ -1454,9 +1453,9 @@ impl WindowManager_LayoutParams {
     pub const PRIVATE_FLAG_INSET_PARENT_FRAME_BY_IME: i32 = 1 << 30;
 
     /**
-     * 标记表示我们想要拦截和处理所有用户的全局拖放。此标记允许窗口即使不可见也考虑拖放事件，并将接收系统中所有活动用户的拖放。
-     * 使用此标志向窗口提供附加数据，包括 ClipData（包含具有 DragEvent#ACTION_DRAG_STARTED 事件的所有项目）和具有 DragEvent#ACTION_DROP 事件的实际拖动表面。如果窗口消耗了拖放，则拖动表面的清理（作为 DragEvent#ACTION_DROP 的一部分提供）将由窗口承担。
-     * */
+    标记表示我们想要拦截和处理所有用户的全局拖放。此标记允许窗口即使不可见也考虑拖放事件，并将接收系统中所有活动用户的拖放。
+    使用此标志向窗口提供附加数据，包括 ClipData（包含具有 DragEvent#ACTION_DRAG_STARTED 事件的所有项目）和具有 DragEvent#ACTION_DROP 事件的实际拖动表面。如果窗口消耗了拖放，则拖动表面的清理（作为 DragEvent#ACTION_DROP 的一部分提供）将由窗口承担。
+    */
     pub const PRIVATE_FLAG_INTERCEPT_GLOBAL_DRAG_AND_DROP: i32 = 1 << 31;
 
     /// 确定此窗口的软输入区域所需的可见性状态的位的 softInputMode 掩码。
@@ -1475,15 +1474,15 @@ impl WindowManager_LayoutParams {
     pub const SOFT_INPUT_STATE_ALWAYS_HIDDEN: i32 = 3;
 
     /**
-     * softInputMode 的可见性状态：请在正常适当的时候显示软输入区域（当用户向前导航到您的窗口时）。
-     * 对于以 android.os.Build.VERSION_CODES#P 及更高版本为目标的应用程序，除非存在一个焦点视图，并且在窗口聚焦时从 View#onCheckIsTextEditor() 返回“ ” ，否则此标志将被忽略。
-     * */
+    softInputMode 的可见性状态：请在正常适当的时候显示软输入区域（当用户向前导航到您的窗口时）。
+    对于以 android.os.Build.VERSION_CODES#P 及更高版本为目标的应用程序，除非存在一个焦点视图，并且在窗口聚焦时从 View#onCheckIsTextEditor() 返回“ ” ，否则此标志将被忽略。
+    */
     pub const SOFT_INPUT_STATE_VISIBLE: i32 = 4;
 
     /**
-     * SoftInputMode的可见性状态：当此窗口接收输入焦点时，请始终使软输入区域可见。
-     * 对于以 android.os.Build.VERSION_CODES#P 及更高版本为目标的应用程序，除非存在一个焦点视图，并且在窗口聚焦时从 View#onCheckIsTextEditor() 返回“ ” ，否则此标志将被忽略。
-     * */
+    SoftInputMode的可见性状态：当此窗口接收输入焦点时，请始终使软输入区域可见。
+    对于以 android.os.Build.VERSION_CODES#P 及更高版本为目标的应用程序，除非存在一个焦点视图，并且在窗口聚焦时从 View#onCheckIsTextEditor() 返回“ ” ，否则此标志将被忽略。
+    */
     pub const SOFT_INPUT_STATE_ALWAYS_VISIBLE: i32 = 5;
 
     /// 软输入模式 (softInputMode) 的掩码，用于确定应如何调整窗口以适应软输入窗口。
@@ -1538,41 +1537,41 @@ impl WindowManager_LayoutParams {
     pub const DISPLAY_FLAG_DISABLE_HDR_CONVERSION: i32 = 1 << 0;
 
     /**
-     * 仅当 DisplayCutout 完全包含在系统栏内或 DisplayCutout 深度不超过 16 dp 时，窗口才可以延伸到 DisplayCutout 区域，但这取决于 OEM 的选择。否则，窗口的布局不会与 DisplayCutout 区域重叠。
-     * 实际上，这意味着如果窗口未设置 FLAG_FULLSCREEN 或 View#SYSTEM_UI_FLAG_FULLSCREEN，则如果切口位于顶部边缘，则它可以延伸到纵向切口区域。对于 View#SYSTEM_UI_FLAG_HIDE_NAVIGATION 和屏幕底部的切口，情况也是如此。否则（即全屏或横向），它会被布置成不与切口区域重叠。
-     * 通常采取的不与状态栏和导航栏重叠的预防措施足以确保没有重要内容与 DisplayCutout 重叠。
-     * 注意：当 DisplayCutout 与系统栏位于不同侧时，OEM 可以选择让窗口始终延伸到 DisplayCutout 区域，无论是否设置了凹口标志，前提是 DisplayCutout 与窗口的重叠部分最多为 16dp。在这种情况下，OEM 必须为用户提供选择加入/退出的选项。
-     * android:windowLayoutInDisplayCutoutMode
-     * */
+    仅当 DisplayCutout 完全包含在系统栏内或 DisplayCutout 深度不超过 16 dp 时，窗口才可以延伸到 DisplayCutout 区域，但这取决于 OEM 的选择。否则，窗口的布局不会与 DisplayCutout 区域重叠。
+    实际上，这意味着如果窗口未设置 FLAG_FULLSCREEN 或 View#SYSTEM_UI_FLAG_FULLSCREEN，则如果切口位于顶部边缘，则它可以延伸到纵向切口区域。对于 View#SYSTEM_UI_FLAG_HIDE_NAVIGATION 和屏幕底部的切口，情况也是如此。否则（即全屏或横向），它会被布置成不与切口区域重叠。
+    通常采取的不与状态栏和导航栏重叠的预防措施足以确保没有重要内容与 DisplayCutout 重叠。
+    注意：当 DisplayCutout 与系统栏位于不同侧时，OEM 可以选择让窗口始终延伸到 DisplayCutout 区域，无论是否设置了凹口标志，前提是 DisplayCutout 与窗口的重叠部分最多为 16dp。在这种情况下，OEM 必须为用户提供选择加入/退出的选项。
+    android:windowLayoutInDisplayCutoutMode
+    */
     pub const LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT: i32 = 0;
 
     /**
-     * 窗口始终可以延伸到屏幕短边的 DisplayCutout 区域。
-     * 窗口永远不会延伸到屏幕长边上的 DisplayCutout 区域，除非 DisplayCutout 的深度不超过 16 dp，但这取决于 OEM 的选择。
-     * 注意：OEM 可以选择让窗口延伸到长边的 DisplayCutout 区域，但前提是凹口与窗口的重叠部分最多为 16dp。在这种情况下，OEM 必须为用户提供选择加入/退出的选项。
-     * 窗口必须确保没有重要内容与DisplayCutout重叠。
-     * 在此模式下，无论窗口是否隐藏了系统栏，窗口都会在纵向和横向显示屏短边的切口下延伸：
-     * 角落中的切口被视为位于短边：
-     * 另一方面，如果切口位于显示器的长边上，则会应用信箱，使得窗口不会延伸到任一长边的切口中：
-     * 注意：Android 可能不允许内容视图在视图级别与系统栏重叠。要覆盖此行为并允许内容能够延伸到切口区域，请使用 ` ` 调用 Window#setDecorFitsSystemWindows(boolean)。
-     * android:windowLayoutInDisplayCutoutMode
-     * */
+    窗口始终可以延伸到屏幕短边的 DisplayCutout 区域。
+    窗口永远不会延伸到屏幕长边上的 DisplayCutout 区域，除非 DisplayCutout 的深度不超过 16 dp，但这取决于 OEM 的选择。
+    注意：OEM 可以选择让窗口延伸到长边的 DisplayCutout 区域，但前提是凹口与窗口的重叠部分最多为 16dp。在这种情况下，OEM 必须为用户提供选择加入/退出的选项。
+    窗口必须确保没有重要内容与DisplayCutout重叠。
+    在此模式下，无论窗口是否隐藏了系统栏，窗口都会在纵向和横向显示屏短边的切口下延伸：
+    角落中的切口被视为位于短边：
+    另一方面，如果切口位于显示器的长边上，则会应用信箱，使得窗口不会延伸到任一长边的切口中：
+    注意：Android 可能不允许内容视图在视图级别与系统栏重叠。要覆盖此行为并允许内容能够延伸到切口区域，请使用 ` ` 调用 Window#setDecorFitsSystemWindows(boolean)。
+    android:windowLayoutInDisplayCutoutMode
+    */
     pub const LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES: i32 = 1;
 
     /**
-     * 窗口永远不会与DisplayCutout区域重叠。
-     * 这应该与暂时设置 View#SYSTEM_UI_FLAG_FULLSCREEN 或 View#SYSTEM_UI_FLAG_HIDE_NAVIGATION 的窗口一起使用，以避免在设置或清除相应标志时重新布局窗口。
-     * android:windowLayoutInDisplayCutoutMode
-     * */
+    窗口永远不会与DisplayCutout区域重叠。
+    这应该与暂时设置 View#SYSTEM_UI_FLAG_FULLSCREEN 或 View#SYSTEM_UI_FLAG_HIDE_NAVIGATION 的窗口一起使用，以避免在设置或清除相应标志时重新布局窗口。
+    android:windowLayoutInDisplayCutoutMode
+    */
     pub const LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER: i32 = 2;
 
     /**
-     * 窗口始终可以延伸到屏幕所有边缘的 DisplayCutout 区域。
-     * 窗口必须确保没有重要内容与DisplayCutout重叠。
-     * 在这种模式下，无论窗口是否隐藏了系统栏，窗口都会在纵向和横向显示屏的所有边缘的切口下延伸。
-     * 注意：Android 可能不允许内容视图在视图级别与系统栏重叠。要覆盖此行为并允许内容能够延伸到切口区域，请使用 ` ` 调用 Window#setDecorFitsSystemWindows(boolean)。
-     * android:windowLayoutInDisplayCutoutMode
-     * */
+    窗口始终可以延伸到屏幕所有边缘的 DisplayCutout 区域。
+    窗口必须确保没有重要内容与DisplayCutout重叠。
+    在这种模式下，无论窗口是否隐藏了系统栏，窗口都会在纵向和横向显示屏的所有边缘的切口下延伸。
+    注意：Android 可能不允许内容视图在视图级别与系统栏重叠。要覆盖此行为并允许内容能够延伸到切口区域，请使用 ` ` 调用 Window#setDecorFitsSystemWindows(boolean)。
+    android:windowLayoutInDisplayCutoutMode
+    */
     pub const LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS: i32 = 3;
 
     /// 不为该窗口构建输入通道。因此该通道将无法接收输入。
@@ -1695,9 +1694,9 @@ impl WindowManager_LayoutParams {
     pub fn set_type(&self, value: i32) {}
 
     /**
-     * 如果窗口类型是警报窗口，则返回 true。
-     * `type` 窗口类型。如果窗口类型是警报窗口，则返回 true。
-     * */
+    如果窗口类型是警报窗口，则返回 true。
+    `type` 窗口类型。如果窗口类型是警报窗口，则返回 true。
+    */
     #[java_method]
     pub fn is_system_alert_window_type(r#type: i32) {}
 
@@ -1726,10 +1725,10 @@ impl WindowManager_LayoutParams {
     pub fn set_private_flags(&self, value: i32) {}
 
     /**
-     * 给定一组特定的窗口管理器标志，确定此类窗口在获得焦点时是否可以成为输入法的目标。具体来说，这会检查 FLAG_NOT_FOCUSABLE 和 FLAG_ALT_FOCUSABLE_IM 标志，如果两者的组合对应于可以使用输入法的窗口，则返回 true。
-     * 返回:如果具有给定标志的窗口能够使用输入法，则返回 true，否则返回 false。
-     * `flags` 当前窗口管理器标志。
-     * */
+    给定一组特定的窗口管理器标志，确定此类窗口在获得焦点时是否可以成为输入法的目标。具体来说，这会检查 FLAG_NOT_FOCUSABLE 和 FLAG_ALT_FOCUSABLE_IM 标志，如果两者的组合对应于可以使用输入法的窗口，则返回 true。
+    返回:如果具有给定标志的窗口能够使用输入法，则返回 true，否则返回 false。
+    `flags` 当前窗口管理器标志。
+    */
     #[java_method]
     pub fn may_use_input_method(flags: i32) -> bool {}
 
@@ -1994,38 +1993,38 @@ impl WindowManager_LayoutParams {
     pub fn set_insets_rounded_corner_frame(&self, value: bool) {}
 
     /**
-     * 指定此窗口在布局期间应避免重叠的插入类型。
-     * `types` 哪些 WindowInsets。此窗口应避免的插入类型。此对象的初始值包括所有系统栏。
-     * */
+    指定此窗口在布局期间应避免重叠的插入类型。
+    `types` 哪些 WindowInsets。此窗口应避免的插入类型。此对象的初始值包括所有系统栏。
+    */
     #[java_method]
     pub fn set_fit_insets_types(&self, types: i32) {}
 
     /**
-     * 指定此窗口在布局期间应避免重叠的边。
-     * `sides` 此窗口应避免与指定类型的边重叠。此对象的初始值包括所有边。
-     * */
+    指定此窗口在布局期间应避免重叠的边。
+    `sides` 此窗口应避免与指定类型的边重叠。此对象的初始值包括所有边。
+    */
     #[java_method]
     pub fn set_fit_insets_sides(&self, sides: i32) {}
 
     /**
-     * 指定此窗口是否应适合窗口插入，无论它们是否可见。
-     * `ignore` 如果为 true，此窗口将适合给定的类型，即使它们不可见。
-     * */
+    指定此窗口是否应适合窗口插入，无论它们是否可见。
+    `ignore` 如果为 true，此窗口将适合给定的类型，即使它们不可见。
+    */
     #[java_method]
     pub fn set_fit_insets_ignoring_visibility(&self, ignore: bool) {}
 
     /**
-     * 指定应将窗口视为受信任的系统覆盖层。考虑窗口在输入调度期间是否被遮挡时，将忽略受信任的系统覆盖层。需要 android.Manifest.permission.INTERNAL_SYSTEM_WINDOW 权限。
-     * @see android.view.MotionEvent#FLAG_WINDOW_IS_OBSCURED
-     * @see android.view.MotionEvent#FLAG_WINDOW_IS_PARTIALLY_OBSCURED
-     * */
+    指定应将窗口视为受信任的系统覆盖层。考虑窗口在输入调度期间是否被遮挡时，将忽略受信任的系统覆盖层。需要 android.Manifest.permission.INTERNAL_SYSTEM_WINDOW 权限。
+    @see android.view.MotionEvent#FLAG_WINDOW_IS_OBSCURED
+    @see android.view.MotionEvent#FLAG_WINDOW_IS_PARTIALLY_OBSCURED
+    */
     #[java_method]
     pub fn set_trusted_overlay(&self) {}
 
     /**
-     * 当在 TYPE_APPLICATION_OVERLAY 窗口上设置时，它们保持可见，即使为另一个可见窗口设置了 SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS。
-     * `is_system_application_overlay` 系统应用覆盖。
-     * */
+    当在 TYPE_APPLICATION_OVERLAY 窗口上设置时，它们保持可见，即使为另一个可见窗口设置了 SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS。
+    `is_system_application_overlay` 系统应用覆盖。
+    */
     #[java_method]
     pub fn set_system_application_overlay(&self, is_system_application_overlay: bool) {}
 
@@ -2034,23 +2033,23 @@ impl WindowManager_LayoutParams {
     pub fn is_system_application_overlay(&self) -> bool {}
 
     /**
-     * 设置是否应向系统壁纸发送触摸事件（可以由第三方应用程序提供），以启用背景中显示壁纸的窗口。默认情况下，这将设置为true。检查flag_show_wallpaper以获取有关显示窗口后面系统壁纸的更多信息。
-     * `enable` 是否可以向系统壁纸发送触摸事件。
-     * */
+    设置是否应向系统壁纸发送触摸事件（可以由第三方应用程序提供），以启用背景中显示壁纸的窗口。默认情况下，这将设置为true。检查flag_show_wallpaper以获取有关显示窗口后面系统壁纸的更多信息。
+    `enable` 是否可以向系统壁纸发送触摸事件。
+    */
     #[java_method]
     pub fn set_wallpaper_touch_events_enabled(&self, enable: bool) {}
 
     /**
-     * 返回是否允许在后台显示壁纸的窗口向系统壁纸（可由第三方应用提供）发送触摸事件。检查 FLAG_SHOW_WALLPAPER 以获取有关在窗口后面显示系统壁纸的更多信息。
-     * 返回：是否允许向系统壁纸发送触摸事件。
-     * */
+    返回是否允许在后台显示壁纸的窗口向系统壁纸（可由第三方应用提供）发送触摸事件。检查 FLAG_SHOW_WALLPAPER 以获取有关在窗口后面显示系统壁纸的更多信息。
+    返回：是否允许向系统壁纸发送触摸事件。
+    */
     #[java_method]
     pub fn are_wallpaper_touch_events_enabled(&self) -> bool {}
 
     /**
-     * 设置是否可以为该窗口的位置变化播放动画。
-     * `enable` 如果禁用，窗口将立即移动到其新位置而不播放动画。
-     * */
+    设置是否可以为该窗口的位置变化播放动画。
+    `enable` 如果禁用，窗口将立即移动到其新位置而不播放动画。
+    */
     #[java_method]
     pub fn set_can_play_move_animation(&self, enable: bool) {}
 
@@ -2083,8 +2082,8 @@ impl WindowManager_LayoutParams {
     pub fn get_title<CS: CharSequence>(&self) -> Option<CS> {}
 
     /**
-     * 根据输入视图的高度（视觉 z 位置）设置表面插图。
-     * */
+    根据输入视图的高度（视觉 z 位置）设置表面插图。
+    */
     #[java_method]
     pub fn set_surface_insets(&self, view: &View, manual: bool, preserve_previous: bool) {}
 
@@ -2097,9 +2096,9 @@ impl WindowManager_LayoutParams {
     pub fn set_hdr_conversion_enabled(&self, enabled: bool) {}
 
     /**
-     * 设置窗口的颜色模式。设置颜色模式可能会覆盖窗口的像素格式。
-     * `color_mode` 颜色模式必须是 ActivityInfo.COLOR_MODE_DEFAULT、ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT 或 ActivityInfo.COLOR_MODE_HDR 之一。
-     * */
+    设置窗口的颜色模式。设置颜色模式可能会覆盖窗口的像素格式。
+    `color_mode` 颜色模式必须是 ActivityInfo.COLOR_MODE_DEFAULT、ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT 或 ActivityInfo.COLOR_MODE_HDR 之一。
+    */
     #[java_method]
     pub fn set_color_mode(&self, color_mode: i32) {}
 
@@ -2108,11 +2107,11 @@ impl WindowManager_LayoutParams {
     pub fn get_color_mode(&self) -> i32 {}
 
     /**
-     * 使窗口后面的屏幕模糊。效果类似于 dimAmount，但不是变暗，而是使窗口后面的内容模糊（或与暗淡量相结合，如果指定了）。模糊的密度由模糊半径设置。半径定义相邻区域的大小，从中对像素进行平均以形成每个像素的最终颜色。该操作近似于高斯模糊。半径为 0 表示无模糊。半径越大，模糊越密集。
-     * 请注意与 Window.setBackgroundBlurRadius 的区别，它仅在窗口范围内模糊。后面模糊会使窗口后面的整个屏幕模糊。需要设置 FLAG_BLUR_BEHIND。由于 GPU 限制，某些设备可能不支持跨窗口模糊。它也可以在运行时禁用，例如在省电模式下、使用多媒体隧道时或请求最少的后期处理时。在这种情况下，不会计算或绘制任何模糊，导致窗口与其后面的内容之间没有深度分离。为了避免这种情况，应用程序可能需要在其窗口上使用更多的 dimAmount。
-     * 要监听跨窗口模糊启用/禁用事件，请使用 addCrossWindowBlurEnabledListener。
-     * `blur_behind_radius` 用于模糊后方的模糊半径（以像素为单位）
-     * */
+    使窗口后面的屏幕模糊。效果类似于 dimAmount，但不是变暗，而是使窗口后面的内容模糊（或与暗淡量相结合，如果指定了）。模糊的密度由模糊半径设置。半径定义相邻区域的大小，从中对像素进行平均以形成每个像素的最终颜色。该操作近似于高斯模糊。半径为 0 表示无模糊。半径越大，模糊越密集。
+    请注意与 Window.setBackgroundBlurRadius 的区别，它仅在窗口范围内模糊。后面模糊会使窗口后面的整个屏幕模糊。需要设置 FLAG_BLUR_BEHIND。由于 GPU 限制，某些设备可能不支持跨窗口模糊。它也可以在运行时禁用，例如在省电模式下、使用多媒体隧道时或请求最少的后期处理时。在这种情况下，不会计算或绘制任何模糊，导致窗口与其后面的内容之间没有深度分离。为了避免这种情况，应用程序可能需要在其窗口上使用更多的 dimAmount。
+    要监听跨窗口模糊启用/禁用事件，请使用 addCrossWindowBlurEnabledListener。
+    `blur_behind_radius` 用于模糊后方的模糊半径（以像素为单位）
+    */
     #[java_method]
     pub fn set_blur_behind_radius(&self, blur_behind_radius: i32) {}
 
@@ -2127,15 +2126,15 @@ impl WindowManager_LayoutParams {
     pub fn copy_from(&self, o: &Self) -> i32 {}
 
     /**
-     * 缩放布局参数的坐标和大小。
-     * `scale` 缩放系数。
-     * */
+    缩放布局参数的坐标和大小。
+    `scale` 缩放系数。
+    */
     #[java_method]
     pub fn scale(&self, scale: f32) {}
 
     /**
-     * 如果布局参数将导致窗口覆盖整个屏幕，则为 True；否则为 false。
-     * */
+    如果布局参数将导致窗口覆盖整个屏幕，则为 True；否则为 false。
+    */
     #[java_method]
     pub fn is_fullscreen(&self) -> bool {}
 
@@ -2145,11 +2144,11 @@ impl WindowManager_LayoutParams {
 }
 
 /**
- * 提供有关逻辑显示器的大小和密度的信息。显示区域有两种不同的描述方式。应用程序显示区域指定可能包含应用程序窗口的显示器部分，不包括系统装饰。应用程序显示区域可能小于实际显示区域，因为系统减去了状态栏等装饰元素所需的空间。
- * 使用 WindowMetrics.getBounds() 查询应用程序窗口边界。实际显示区域指定应用程序在当前系统状态下可访问的显示器部分。在某些情况下，实际显示区域可能小于显示器的物理尺寸。使用 WindowManager.getCurrentWindowMetrics() 确定活动窗口的当前大小。
- * 与 UI 相关的工作（例如选择 UI 布局）应依赖于 WindowMetrics.getBounds()。有关详细信息，请参阅 getRealSize / getRealMetrics。逻辑显示器不一定代表特定的物理显示设备，例如内部显示器或外部显示器。
- * 根据当前连接的设备以​​及是否启用镜像，逻辑显示器的内容可能会显示在一个或多个物理显示器上。
- * */
+提供有关逻辑显示器的大小和密度的信息。显示区域有两种不同的描述方式。应用程序显示区域指定可能包含应用程序窗口的显示器部分，不包括系统装饰。应用程序显示区域可能小于实际显示区域，因为系统减去了状态栏等装饰元素所需的空间。
+使用 WindowMetrics.getBounds() 查询应用程序窗口边界。实际显示区域指定应用程序在当前系统状态下可访问的显示器部分。在某些情况下，实际显示区域可能小于显示器的物理尺寸。使用 WindowManager.getCurrentWindowMetrics() 确定活动窗口的当前大小。
+与 UI 相关的工作（例如选择 UI 布局）应依赖于 WindowMetrics.getBounds()。有关详细信息，请参阅 getRealSize / getRealMetrics。逻辑显示器不一定代表特定的物理显示设备，例如内部显示器或外部显示器。
+根据当前连接的设备以​​及是否启用镜像，逻辑显示器的内容可能会显示在一个或多个物理显示器上。
+*/
 #[java_class(name = "android/view/Display")]
 pub struct Display;
 
@@ -2213,18 +2212,18 @@ impl Display {
     pub const FLAG_TOUCH_FEEDBACK_DISABLED: i32 = 1 << 10;
 
     /**
-     * 标志：表示显示器维持自己的焦点和触摸模式。
-     * 此标志在行为上与 com.android.internal.R.bool.config_perDisplayFocusEnabled 类似，但仅适用于特定显示器，而不是系统范围的所有显示器。
-     * 注意：必须信任显示器才能拥有自己的焦点。
-     * */
+    标志：表示显示器维持自己的焦点和触摸模式。
+    此标志在行为上与 com.android.internal.R.bool.config_perDisplayFocusEnabled 类似，但仅适用于特定显示器，而不是系统范围的所有显示器。
+    注意：必须信任显示器才能拥有自己的焦点。
+    */
     pub const FLAG_OWN_FOCUS: i32 = 1 << 11;
 
     /**
-     * 标志：表示显示器不应通过从另一个显示器窃取顶部焦点而成为顶部焦点显示器。
-     * 结果是只有目标输入事件（输入事件的 displayId 与显示器的 displayId 匹配）才能到达此显示器。如果系统仅由一个显示器组成，或者所有显示器都设置了此标志，则设置了此标志的显示器仍可成为顶部聚焦显示器。在这两种情况下，默认显示器都会成为顶部聚焦显示器。
-     * 注意：如果显示器是顶部聚焦显示器，或者显示器管理自己的焦点（通过 FLAG_OWN_FOCUS）或所有显示器管理自己的焦点（通过 ` ` 标志），则显示器仅具有聚焦窗口。如果显示器没有聚焦窗口，则不会向其发送任何输入事件。因此，此标志仅与 FLAG_OWN_FOCUS 一起使用才有用，如果未设置，将被忽略。
-     * 注意：框架仅支持顶部聚焦显示屏上的 IME（b/262520411）。因此，在显示屏上启用此标志会隐式禁用显示任何 IME。这不是预期的行为，但在实施 b/262520411 之前无法修复。如果您需要在显示屏上使用 IME，请不要设置此标志。
-     * */
+    标志：表示显示器不应通过从另一个显示器窃取顶部焦点而成为顶部焦点显示器。
+    结果是只有目标输入事件（输入事件的 displayId 与显示器的 displayId 匹配）才能到达此显示器。如果系统仅由一个显示器组成，或者所有显示器都设置了此标志，则设置了此标志的显示器仍可成为顶部聚焦显示器。在这两种情况下，默认显示器都会成为顶部聚焦显示器。
+    注意：如果显示器是顶部聚焦显示器，或者显示器管理自己的焦点（通过 FLAG_OWN_FOCUS）或所有显示器管理自己的焦点（通过 ` ` 标志），则显示器仅具有聚焦窗口。如果显示器没有聚焦窗口，则不会向其发送任何输入事件。因此，此标志仅与 FLAG_OWN_FOCUS 一起使用才有用，如果未设置，将被忽略。
+    注意：框架仅支持顶部聚焦显示屏上的 IME（b/262520411）。因此，在显示屏上启用此标志会隐式禁用显示任何 IME。这不是预期的行为，但在实施 b/262520411 之前无法修复。如果您需要在显示屏上使用 IME，请不要设置此标志。
+    */
     pub const FLAG_STEAL_TOP_FOCUS_DISABLED: i32 = 1 << 12;
 
     /// 显示器标志：表示显示器为后置显示器。此标志标识背对用户的互补显示器。
@@ -2319,76 +2318,76 @@ impl Display {
     pub const DISPLAY_MODE_ID_FOR_FRAME_RATE_OVERRIDE: i32 = 0xFF;
 
     /**
-     * 获取显示 ID。
-     * 每个逻辑显示都有一个唯一 ID。默认显示 ID 为 DEFAULT_DISPLAY。
-     * */
+    获取显示 ID。
+    每个逻辑显示都有一个唯一 ID。默认显示 ID 为 DEFAULT_DISPLAY。
+    */
     #[java_method]
     pub fn get_display_id(&self) -> i32 {}
 
     /**
-     * 获取显示器唯一 ID。
-     * 唯一 ID 与显示器 ID 不同，因为物理显示器在重新启动后具有稳定的唯一 ID。
-     * */
+    获取显示器唯一 ID。
+    唯一 ID 与显示器 ID 不同，因为物理显示器在重新启动后具有稳定的唯一 ID。
+    */
     #[java_method]
     pub fn get_unique_id(&self) -> Option<String> {}
 
     /**
-     * 如果此显示仍然有效，则返回 true；如果显示已被移除，则返回 false。如果显示无效，则此类的方法将继续报告最近观察到的显示信息。但是，在显示消亡后继续使用 Display 对象是不明智的（而且毫无意义）。如果重新连接具有相同 ID 的显示，则之前无效的显示可能会再次有效。
-     * 返回：如果显示仍然有效，则返回 True。
-     * */
+    如果此显示仍然有效，则返回 true；如果显示已被移除，则返回 false。如果显示无效，则此类的方法将继续报告最近观察到的显示信息。但是，在显示消亡后继续使用 Display 对象是不明智的（而且毫无意义）。如果重新连接具有相同 ID 的显示，则之前无效的显示可能会再次有效。
+    返回：如果显示仍然有效，则返回 True。
+    */
     #[java_method]
     pub fn is_valid(&self) -> bool {}
 
     /**
-     * 获取显示器的层堆栈。每个显示器都有自己独立的层堆栈，表面放置在其上，由表面投射器进行管理。
-     * 返回：显示器的层堆栈编号。
-     * */
+    获取显示器的层堆栈。每个显示器都有自己独立的层堆栈，表面放置在其上，由表面投射器进行管理。
+    返回：显示器的层堆栈编号。
+    */
     #[java_method]
     pub fn get_layer_stack(&self) -> i32 {}
 
     /**
-     * 返回描述显示器功能的标志组合。
-     * 返回：显示标志。
-     * */
+    返回描述显示器功能的标志组合。
+    返回：显示标志。
+    */
     #[java_method]
     pub fn get_flags(&self) -> i32 {}
 
     /**
-     * 获取显示类型。
-     * 返回：显示类型。
-     * */
+    获取显示类型。
+    返回：显示类型。
+    */
     #[java_method]
     pub fn get_type(&self) -> i32 {}
 
     /**
-     * 获取拥有此显示屏的应用程序的 UID，如果显示屏归系统所有，则获得零。如果显示屏是私有的，则只有所有者可以使用它。
-     * */
+    获取拥有此显示屏的应用程序的 UID，如果显示屏归系统所有，则获得零。如果显示屏是私有的，则只有所有者可以使用它。
+    */
     #[java_method]
     pub fn get_owner_uid(&self) -> i32 {}
 
     /**
-     * 获取拥有此显示屏的应用程序的软件包名称，如果显示屏归系统所有，则返回 null。如果显示屏是私有的，则只有所有者可以使用它。
-     * */
+    获取拥有此显示屏的应用程序的软件包名称，如果显示屏归系统所有，则返回 null。如果显示屏是私有的，则只有所有者可以使用它。
+    */
     #[java_method]
     pub fn get_owner_package_name(&self) -> Option<String> {}
 
     /**
-     * 获取显示器的名称。请注意，某些显示器可能会被用户重命名。
-     * 返回：显示器的名称。
-     * */
+    获取显示器的名称。请注意，某些显示器可能会被用户重命名。
+    返回：显示器的名称。
+    */
     #[java_method]
     pub fn get_name(&self) -> String {}
 
     /**
-     * 获取显示器配置的默认亮度。
-     * 返回：默认亮度介于 0.0-1.0 之间
-     * */
+    获取显示器配置的默认亮度。
+    返回：默认亮度介于 0.0-1.0 之间
+    */
     #[java_method]
     pub fn get_brightness_default(&self) -> f32 {}
 
     /**
-     * 返回将发生的最大屏幕尺寸。这主要用于壁纸。
-     * */
+    返回将发生的最大屏幕尺寸。这主要用于壁纸。
+    */
     #[java_method]
     pub fn get_maximum_size_dimension(&self) -> i32 {}
 
@@ -2403,9 +2402,9 @@ impl Display {
     pub fn get_height(&self) -> i32 {}
 
     /**
-     * 返回屏幕从其“自然”方向的旋转。返回值可能是 Surface.ROTATION_0（无旋转）、Surface.ROTATION_90、Surface.ROTATION_180 或 Surface.ROTATION_270。
-     * 例如，如果设备具有自然高大的屏幕，并且用户已将其侧放以进入横向方向，则此处返回的值可能是 Surface.ROTATION_90 或 Surface.ROTATION_270，具体取决于旋转的方向。角度是屏幕上绘制图形的旋转，与设备的物理旋转方向相反。例如，如果设备逆时针旋转 90 度，为了补偿渲染将顺时针旋转 90 度，因此此处返回的值将是 Surface.ROTATION_90。此旋转值将与 getMetrics 的结果相匹配：这意味着如果通过活动访问，旋转值将与活动相对应。
-     * */
+    返回屏幕从其“自然”方向的旋转。返回值可能是 Surface.ROTATION_0（无旋转）、Surface.ROTATION_90、Surface.ROTATION_180 或 Surface.ROTATION_270。
+    例如，如果设备具有自然高大的屏幕，并且用户已将其侧放以进入横向方向，则此处返回的值可能是 Surface.ROTATION_90 或 Surface.ROTATION_270，具体取决于旋转的方向。角度是屏幕上绘制图形的旋转，与设备的物理旋转方向相反。例如，如果设备逆时针旋转 90 度，为了补偿渲染将顺时针旋转 90 度，因此此处返回的值将是 Surface.ROTATION_90。此旋转值将与 getMetrics 的结果相匹配：这意味着如果通过活动访问，旋转值将与活动相对应。
+    */
     #[java_method]
     pub fn get_rotation(&self) -> i32 {}
 
@@ -2419,36 +2418,36 @@ impl Display {
     pub fn get_orientation(&self) -> i32 {}
 
     /**
-     * 获取显示器的像素格式。
-     * 返回：PixelFormat 中定义的常量之一。
-     * */
+    获取显示器的像素格式。
+    返回：PixelFormat 中定义的常量之一。
+    */
     #[deprecated(note = "此方法不再受支持。结果始终为 PixelFormat。RGBA_8888。")]
     #[java_method]
     pub fn get_pixel_format(&self) -> i32 {}
 
     /**
-     * 获取此显示器的刷新率（以每秒帧数为单位）。
-     * */
+    获取此显示器的刷新率（以每秒帧数为单位）。
+    */
     #[java_method]
     pub fn get_refresh_rate(&self) -> f32 {}
 
     /**
-     * 如果可以将连接的显示器切换到使用最小的后处理方式的模式，则返回true。如果显示器接收器通过HDMI连接，则如果显示屏支持自动低潜伏期模式或游戏内容类型，则此方法将返回true。如果显示器接收器具有内部连接或使用HDMI以外的其他协议，则如果可以将接收器切换到实现定义的低延迟图像处理模式，则此方法将返回true。
-     * 通过系统设置菜单中的用户设置，可以禁用使用最小后处理模式的模式的能力。在这种情况下，此方法返回false。
-     * */
+    如果可以将连接的显示器切换到使用最小的后处理方式的模式，则返回true。如果显示器接收器通过HDMI连接，则如果显示屏支持自动低潜伏期模式或游戏内容类型，则此方法将返回true。如果显示器接收器具有内部连接或使用HDMI以外的其他协议，则如果可以将接收器切换到实现定义的低延迟图像处理模式，则此方法将返回true。
+    通过系统设置菜单中的用户设置，可以禁用使用最小后处理模式的模式的能力。在这种情况下，此方法返回false。
+    */
     #[java_method]
     pub fn is_minimal_post_processing_supported(&self) -> bool {}
 
     /**
-     * 请求显示器应用颜色模式。
-     * `color_mode` 颜色模式。
-     * */
+    请求显示器应用颜色模式。
+    `color_mode` 颜色模式。
+    */
     #[java_method]
     pub fn request_color_mode(&self, color_mode: i32) {}
 
     /**
-     * 返回此显示的活跃颜色模式
-     * */
+    返回此显示的活跃颜色模式
+    */
     #[java_method]
     pub fn get_color_mode(&self) -> i32 {}
 
@@ -2458,62 +2457,62 @@ impl Display {
     pub fn get_remove_mode(&self) -> i32 {}
 
     /**
-     * 返回此显示器是否支持任何 HDR 类型。
-     * */
+    返回此显示器是否支持任何 HDR 类型。
+    */
     #[java_method]
     pub fn is_hdr(&self) -> bool {}
 
     /**
-     * 显示器是否支持报告 hdr/sdr 比率。如果为 false，则 getHdrSdrRatio() 将始终为 1.0f
-     * */
+    显示器是否支持报告 hdr/sdr 比率。如果为 false，则 getHdrSdrRatio() 将始终为 1.0f
+    */
     #[java_method]
     pub fn is_hdr_sdr_ratio_available(&self) -> bool {}
 
     /**
-     * 删除显示器的用户首选显示模式。
-     * */
+    删除显示器的用户首选显示模式。
+    */
     #[java_method]
     pub fn clear_user_preferred_display_mode(&self) {}
 
     /**
-     * 返回此显示器是否可用于显示广色域内容。这并不一定意味着设备本身可以渲染广色域内容。要确保可以生成广色域内容，请参阅 Configuration.isScreenWideColorGamut()。
-     * */
+    返回此显示器是否可用于显示广色域内容。这并不一定意味着设备本身可以渲染广色域内容。要确保可以生成广色域内容，请参阅 Configuration.isScreenWideColorGamut()。
+    */
     #[java_method]
     pub fn is_wide_color_gamut(&self) -> bool {}
 
     /**
-     * 获取应用 VSYNC 偏移量（以纳秒为单位）。这是一个正值，表示 Choreographer 提供的 VSYNC 事件相对于显示刷新的相位偏移量。
-     * 例如，如果 Choreographer 报告刷新发生在时间 N，则它实际上发生在 (N - appVsyncOffset)。应用通常不需要知道这一点。它仅适用于细粒度的 A/V 同步。
-     * */
+    获取应用 VSYNC 偏移量（以纳秒为单位）。这是一个正值，表示 Choreographer 提供的 VSYNC 事件相对于显示刷新的相位偏移量。
+    例如，如果 Choreographer 报告刷新发生在时间 N，则它实际上发生在 (N - appVsyncOffset)。应用通常不需要知道这一点。它仅适用于细粒度的 A/V 同步。
+    */
     #[java_method]
     pub fn get_app_vsync_offset_nanos(&self) -> i64 {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 这是缓冲区必须提前多久排队等待在给定时间进行演示。如果您希望缓冲区在时间 N 出现在屏幕上，则必须在 (N - presentationDeadline) 之前提交缓冲区。
-     * 可以使用 android.opengl.EGLExt.eglPresentationTimeANDROID 设置 GLES 渲染所需的演示时间。对于视频解码，请使用 android.media.MediaCodec.releaseOutputBuffer(int, long)。时间以纳秒为单位表示，使用系统单调时钟 (System.nanoTime)。
-     * */
+    这是缓冲区必须提前多久排队等待在给定时间进行演示。如果您希望缓冲区在时间 N 出现在屏幕上，则必须在 (N - presentationDeadline) 之前提交缓冲区。
+    可以使用 android.opengl.EGLExt.eglPresentationTimeANDROID 设置 GLES 渲染所需的演示时间。对于视频解码，请使用 android.media.MediaCodec.releaseOutputBuffer(int, long)。时间以纳秒为单位表示，使用系统单调时钟 (System.nanoTime)。
+    */
     #[java_method]
     pub fn get_presentation_deadline_nanos(&self) -> i64 {}
 
     /**
-     * 确定是否应将 WindowConfiguration.getMaxBounds() 报告为显示尺寸。当应用需要沙盒化时，最大边界字段可能小于逻辑尺寸。取决于 com.android.server.wm.ConfigurationContainer.providesMaxBounds() 中设置的 WindowConfiguration.getMaxBounds()。
-     * 在大多数情况下，此值反映当前 DisplayArea 的大小。当应应用最大边界时，返回 true。
-     * */
+    确定是否应将 WindowConfiguration.getMaxBounds() 报告为显示尺寸。当应用需要沙盒化时，最大边界字段可能小于逻辑尺寸。取决于 com.android.server.wm.ConfigurationContainer.providesMaxBounds() 中设置的 WindowConfiguration.getMaxBounds()。
+    在大多数情况下，此值反映当前 DisplayArea 的大小。当应应用最大边界时，返回 true。
+    */
     #[java_method]
     pub fn should_report_max_bounds(&self) -> bool {}
 
     /**
-     * 获取显示器的状态，例如是打开还是关闭。
-     * 返回：显示器的状态：STATE_OFF、STATE_ON、STATE_DOZE、STATE_DOZE_SUSPEND、STATE_ON_SUSPEND 或 STATE_UNKNOWN 之一。
-     * */
+    获取显示器的状态，例如是打开还是关闭。
+    返回：显示器的状态：STATE_OFF、STATE_ON、STATE_DOZE、STATE_DOZE_SUSPEND、STATE_ON_SUSPEND 或 STATE_UNKNOWN 之一。
+    */
     #[java_method]
     pub fn get_state(&self) -> i32 {}
 
     /**
-     * 如果指定的 UID 有权访问此显示，则返回 true。
-     * `uid` UID。
-     * */
+    如果指定的 UID 有权访问此显示，则返回 true。
+    `uid` UID。
+    */
     #[java_method]
     pub fn has_access(&self, uid: i32) -> bool {}
 
@@ -2538,58 +2537,58 @@ impl Display {
     pub fn state_to_string(state: i32) -> String {}
 
     /**
-     * 如果在指定的显示器电源状态下可以暂停显示更新，则返回 true。在 SUSPEND 状态下，绝对禁止更新。
-     * `state` 状态。
-     * */
+    如果在指定的显示器电源状态下可以暂停显示更新，则返回 true。在 SUSPEND 状态下，绝对禁止更新。
+    `state` 状态。
+    */
     #[java_method]
     pub fn is_suspended_state(state: i32) -> bool {}
 
     /**
-     * 如果在指定的显示器电源状态下显示器可能处于降低的操作模式，则返回 true。
-     * `state` 状态。
-     * */
+    如果在指定的显示器电源状态下显示器可能处于降低的操作模式，则返回 true。
+    `state` 状态。
+    */
     #[java_method]
     pub fn is_doze_state(state: i32) {}
 
     /**
-     * 如果显示器处于活动状态（例如 STATE_ON 或 STATE_VR），则返回 true。
-     * `state` 状态。
-     * */
+    如果显示器处于活动状态（例如 STATE_ON 或 STATE_VR），则返回 true。
+    `state` 状态。
+    */
     #[java_method]
     pub fn is_active_state(state: i32) {}
 
     /**
-     * 如果显示器处于关闭状态（例如 STATE_OFF），则返回 true。
-     * `state` 状态。
-     * */
+    如果显示器处于关闭状态（例如 STATE_OFF），则返回 true。
+    `state` 状态。
+    */
     #[java_method]
     pub fn is_off_state(state: i32) -> bool {}
 
     /**
-     * 如果显示器处于开启状态（例如 STATE_ON 或 STATE_VR 或 STATE_ON_SUSPEND），则返回 true。
-     * `state` 状态。
-     * */
+    如果显示器处于开启状态（例如 STATE_ON 或 STATE_VR 或 STATE_ON_SUSPEND），则返回 true。
+    `state` 状态。
+    */
     #[java_method]
     pub fn is_on_state(state: i32) -> bool {}
 
     /**
-     * 如果指定的宽度有效，则返回 true。
-     * `width` 宽度。
-     * */
+    如果指定的宽度有效，则返回 true。
+    `width` 宽度。
+    */
     #[java_method]
     pub fn is_width_valid(width: i32) -> bool {}
 
     /**
-     * 如果指定的高度有效，则返回 true。
-     * `height` 高度。
-     * */
+    如果指定的高度有效，则返回 true。
+    `height` 高度。
+    */
     #[java_method]
     pub fn is_height_valid(height: i32) -> bool {}
 
     /**
-     * 如果指定的刷新率有效，则返回 true。
-     * `refresh_rate` 刷新率。
-     * */
+    如果指定的刷新率有效，则返回 true。
+    `refresh_rate` 刷新率。
+    */
     #[java_method]
     pub fn is_refresh_rate_valid(refresh_rate: f32) -> bool {}
 }
@@ -2600,107 +2599,107 @@ pub struct InputEvent;
 
 impl InputEvent {
     /**
-     * 获取此事件所来自设备的 ID。ID 为零表示事件不是来自物理设备并映射到默认键盘映射。其他数字是任意的，您不应该依赖这些值。
-     * 返回：设备 ID。
-     * */
+    获取此事件所来自设备的 ID。ID 为零表示事件不是来自物理设备并映射到默认键盘映射。其他数字是任意的，您不应该依赖这些值。
+    返回：设备 ID。
+    */
     #[java_method]
     pub fn get_device_id(&self) -> i32 {}
 
     /**
-     * 获取事件源。
-     * 返回：事件源或输入设备。如果未知，则返回 SOURCE_UNKNOWN。
-     * */
+    获取事件源。
+    返回：事件源或输入设备。如果未知，则返回 SOURCE_UNKNOWN。
+    */
     #[java_method]
     pub fn get_source(&self) -> i32 {}
 
     /**
-     * 修改事件的来源。
-     * `source` 新来源。
-     * */
+    修改事件的来源。
+    `source` 新来源。
+    */
     #[java_method]
     pub fn set_source(&self, source: i32) {}
 
     /**
-     * 确定事件是否来自给定的源。
-     * 返回：事件是否来自给定的源。
-     * `source` 要检查的输入源。这可以是特定的设备类型，例如 InputDevice.SOURCE_TOUCH_NAVIGATION，也可以是更通用的设备类，例如 InputDevice.SOURCE_CLASS_POINTER。
-     * */
+    确定事件是否来自给定的源。
+    返回：事件是否来自给定的源。
+    `source` 要检查的输入源。这可以是特定的设备类型，例如 InputDevice.SOURCE_TOUCH_NAVIGATION，也可以是更通用的设备类，例如 InputDevice.SOURCE_CLASS_POINTER。
+    */
     #[java_method]
     pub fn is_from_source(&self, source: i32) -> bool {}
 
     /**
-     * 获取事件的显示 ID。
-     * 返回：与事件关联的显示 ID。
-     * */
+    获取事件的显示 ID。
+    返回：与事件关联的显示 ID。
+    */
     #[java_method]
     pub fn get_display_id(&self) -> i32 {}
 
     /**
-     * 修改与事件关联的显示 ID
-     * `display_id`
-     * */
+    修改与事件关联的显示 ID
+    `display_id`
+    */
     #[java_method]
     pub fn set_display_id(&self, display_id: i32) {}
 
     /**
-     * 回收事件。此方法仅应由系统使用，因为应用程序不希望回收 KeyEvent 对象，但可以回收 MotionEvent 对象。
-     * 有关详细信息，请参阅 KeyEvent.recycle()。
-     * */
+    回收事件。此方法仅应由系统使用，因为应用程序不希望回收 KeyEvent 对象，但可以回收 MotionEvent 对象。
+    有关详细信息，请参阅 KeyEvent.recycle()。
+    */
     #[java_method]
     pub fn recycle(&self) {}
 
     /**
-     * 在将事件分发给应用程序后，如果合适，则有条件地回收事件。如果事件是 MotionEvent，则回收该事件。如果事件是 KeyEvent，则不回收该事件，因为应用程序希望按键事件是不可变的，因此一旦将事件分发给应用程序，我们就不能再回收它了。
-     * */
+    在将事件分发给应用程序后，如果合适，则有条件地回收事件。如果事件是 MotionEvent，则回收该事件。如果事件是 KeyEvent，则不回收该事件，因为应用程序希望按键事件是不可变的，因此一旦将事件分发给应用程序，我们就不能再回收它了。
+    */
     #[java_method]
     pub fn recycle_if_needed_after_dispatch(&self) {}
 
     /**
-     * 获取一个私有标志，该标志指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
-     * 返回：如果此事件被污染，则返回 True。
-     * */
+    获取一个私有标志，该标志指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
+    返回：如果此事件被污染，则返回 True。
+    */
     #[java_method]
     pub fn is_tainted(&self) -> bool {}
 
     /**
-     * 设置一个私有标志，指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
-     * `tainted` 如果此事件被污染，则为 True。
-     * */
+    设置一个私有标志，指示系统何时检测到此输入事件可能与先前传递的输入事件的序列不一致，例如，当发送了按键释放事件但按键未按下时，或者当发送了指针移动事件但指针未按下时。
+    `tainted` 如果此事件被污染，则为 True。
+    */
     #[java_method]
     pub fn set_tainted(&self, tainted: bool) {}
 
     /**
-     * 以 android.os.SystemClock.uptimeMillis 时间基准查询此事件发生的时间。
-     * 返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
-     * */
+    以 android.os.SystemClock.uptimeMillis 时间基准查询此事件发生的时间。
+    返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
+    */
     #[java_method]
     pub fn get_event_time(&self) -> i64 {}
 
     /**
-     * 查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
-     * 返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
-     * */
+    查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
+    返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
+    */
     #[java_method]
     pub fn get_event_time_nanos(&self) -> i64 {}
 
     /**
-     * 将输入事件标记为已取消。
-     * */
+    将输入事件标记为已取消。
+    */
     #[java_method]
     pub fn cancel(&self) {}
 
     /**
-     * 获取此事件的唯一序列号。进程创建或接收的每个输入事件都有唯一的序列号。此外，每次回收事件对象时都会获得一个新的序列号。序列号仅保证在进程内本地唯一。打包事件时不会保留序列号。
-     * 返回：此事件的唯一序列号。
-     * */
+    获取此事件的唯一序列号。进程创建或接收的每个输入事件都有唯一的序列号。此外，每次回收事件对象时都会获得一个新的序列号。序列号仅保证在进程内本地唯一。打包事件时不会保留序列号。
+    返回：此事件的唯一序列号。
+    */
     #[java_method]
     pub fn get_sequence_number(&self) -> i32 {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 获取此事件的 ID。此 ID 在事件创建时生成，并保存到事件的最后阶段。它不会因为事件跨越进程边界而改变，但在进行修改复制时应该会改变。为了避免将应用程序使用情况暴露给其他进程，此 ID 由 CSPRNG 生成。因此，虽然 ID 冲突的可能性相当低，但不能 100% 保证此 ID 的唯一性。经验法则是不要依赖生产逻辑的唯一性，而要依赖跟踪事件（例如日志记录和分析）的良好来源。
-     * 返回：此事件的 ID。
-     * */
+    获取此事件的 ID。此 ID 在事件创建时生成，并保存到事件的最后阶段。它不会因为事件跨越进程边界而改变，但在进行修改复制时应该会改变。为了避免将应用程序使用情况暴露给其他进程，此 ID 由 CSPRNG 生成。因此，虽然 ID 冲突的可能性相当低，但不能 100% 保证此 ID 的唯一性。经验法则是不要依赖生产逻辑的唯一性，而要依赖跟踪事件（例如日志记录和分析）的良好来源。
+    返回：此事件的 ID。
+    */
     #[java_method]
     pub fn get_id(&self) -> i32 {}
 
@@ -2711,14 +2710,14 @@ impl InputEvent {
 
 //noinspection SpellCheckingInspection
 /**
- * 用于报告按键和按钮事件的对象。每次按键都由一系列按键事件描述。按键以 ACTION_DOWN 按键事件开始。如果按键保持的时间足够长，以至于重复，则初始按下之后是其他按键事件，其中 ACTION_DOWN 和非零 getRepeatCount() 值。最后一个按键事件是按键弹起的 ACTION_UP。
- * 如果取消按键，则按键弹起事件将设置 FLAG_CANCELED 标志。按键事件通常伴随着按键代码 (getKeyCode())、扫描代码 (getScanCode()) 和元状态 (getMetaState())。按键代码常量在此类中定义。扫描代码常量是从操作系统获得的原始设备特定代码，因此除非使用 KeyCharacterMap 进行解释，否则通常对应用程序没有意义。
- * 元状态描述按键修饰符（如 META_SHIFT_ON 或 META_ALT_ON）的按下状态。按键代码通常与输入设备上的各个按键一一对应。许多按键和按键组合在不同的输入设备上具有完全不同的功能，因此在解释它们时必须小心谨慎。将按键映射到字符时，请始终使用与输入设备关联的 KeyCharacterMap。
- * 请注意，可能同时有多个按键输入设备处于活动状态，并且每个设备都有自己的按键字符映射。由于软输入法可以使用多种创新的文本输入方式，因此无法保证软键盘上的任何按键都会生成按键事件：这由 IME 自行决定，实际上不鼓励发送此类事件。您永远不应该依赖于接收软输入法上任何按键的 KeyEvent。
- * 特别是，默认软件键盘永远不会向任何针对 Jelly Bean 或更高版本的应用程序发送任何按键事件，并且只会向针对 Ice Cream Sandwich 或更早版本的应用程序发送某些删除和返回键按下事件。请注意，其他软件输入法可能永远不会发送按键事件，无论版本如何。考虑使用编辑器操作，如 android.view.inputmethod.EditorInfo。
- * 如果您需要与软件键盘进行特定交互，则可以使用 IME_ACTION_DONE，因为它可以让用户更清楚地了解您的应用程序如何对按键做出反应。与 IME 交互时，框架可能会使用特殊操作 ACTION_MULTIPLE 传递按键事件，该操作指定单个重复的按键代码或要插入的字符序列。一般来说，框架无法保证它传递给视图的按键事件始终构成完整的按键序列，因为某些事件可能会在传递之前被包含视图删除或修改。视图实现应该准备好处理 FLAG_CANCELED，并且应该容忍异常情况，例如在没有先收到上一次按键的 ACTION_UP 的情况下收到新的 ACTION_DOWN。
- * 有关不同类型的输入设备和源如何表示按键和按钮的更多信息，请参阅 InputDevice。
- * */
+用于报告按键和按钮事件的对象。每次按键都由一系列按键事件描述。按键以 ACTION_DOWN 按键事件开始。如果按键保持的时间足够长，以至于重复，则初始按下之后是其他按键事件，其中 ACTION_DOWN 和非零 getRepeatCount() 值。最后一个按键事件是按键弹起的 ACTION_UP。
+如果取消按键，则按键弹起事件将设置 FLAG_CANCELED 标志。按键事件通常伴随着按键代码 (getKeyCode())、扫描代码 (getScanCode()) 和元状态 (getMetaState())。按键代码常量在此类中定义。扫描代码常量是从操作系统获得的原始设备特定代码，因此除非使用 KeyCharacterMap 进行解释，否则通常对应用程序没有意义。
+元状态描述按键修饰符（如 META_SHIFT_ON 或 META_ALT_ON）的按下状态。按键代码通常与输入设备上的各个按键一一对应。许多按键和按键组合在不同的输入设备上具有完全不同的功能，因此在解释它们时必须小心谨慎。将按键映射到字符时，请始终使用与输入设备关联的 KeyCharacterMap。
+请注意，可能同时有多个按键输入设备处于活动状态，并且每个设备都有自己的按键字符映射。由于软输入法可以使用多种创新的文本输入方式，因此无法保证软键盘上的任何按键都会生成按键事件：这由 IME 自行决定，实际上不鼓励发送此类事件。您永远不应该依赖于接收软输入法上任何按键的 KeyEvent。
+特别是，默认软件键盘永远不会向任何针对 Jelly Bean 或更高版本的应用程序发送任何按键事件，并且只会向针对 Ice Cream Sandwich 或更早版本的应用程序发送某些删除和返回键按下事件。请注意，其他软件输入法可能永远不会发送按键事件，无论版本如何。考虑使用编辑器操作，如 android.view.inputmethod.EditorInfo。
+如果您需要与软件键盘进行特定交互，则可以使用 IME_ACTION_DONE，因为它可以让用户更清楚地了解您的应用程序如何对按键做出反应。与 IME 交互时，框架可能会使用特殊操作 ACTION_MULTIPLE 传递按键事件，该操作指定单个重复的按键代码或要插入的字符序列。一般来说，框架无法保证它传递给视图的按键事件始终构成完整的按键序列，因为某些事件可能会在传递之前被包含视图删除或修改。视图实现应该准备好处理 FLAG_CANCELED，并且应该容忍异常情况，例如在没有先收到上一次按键的 ACTION_UP 的情况下收到新的 ACTION_DOWN。
+有关不同类型的输入设备和源如何表示按键和按钮的更多信息，请参阅 InputDevice。
+*/
 #[java_class(name = "android/view/KeyEvent", extends=InputEvent)]
 pub struct KeyEvent;
 
@@ -3850,21 +3849,21 @@ impl KeyEvent {
     pub fn get_dead_char(accent: i32, c: i32) -> i32 {}
 
     /**
-     * 创建一个新的按键事件。
-     * `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
-     * `code` 按键代码。
-     * */
+    创建一个新的按键事件。
+    `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+    `code` 按键代码。
+    */
     #[java_constructor]
     pub fn new(action: i32, code: i32) -> Self {}
 
     /**
-     * 创建一个新的按键事件。
-     * `down_time` 此按键代码最初按下的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * `event_time` 此事件发生的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
-     * `code` 按键代码。
-     * `repeat` 按下事件的重复计数（如果是在首次按下之后，则 > 0）或多个事件的事件计数。
-     * */
+    创建一个新的按键事件。
+    `down_time` 此按键代码最初按下的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    `event_time` 此事件发生的时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    `action` 操作代码：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+    `code` 按键代码。
+    `repeat` 按下事件的重复计数（如果是在首次按下之后，则 > 0）或多个事件的事件计数。
+    */
     #[java_constructor]
     pub fn new_with_time(
         down_time: i64,
@@ -3898,21 +3897,21 @@ impl KeyEvent {
     pub fn obtain_other(other: &Self) -> Self {}
 
     /**
-     * 创建与给定事件相同的新按键事件，但其事件时间和重复次数将替换为给定值。
-     * `event` 要复制的现有事件。这不会被修改。
-     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * `new_repeat` 事件的新重复次数。
-     * */
+    创建与给定事件相同的新按键事件，但其事件时间和重复次数将替换为给定值。
+    `event` 要复制的现有事件。这不会被修改。
+    `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    `new_repeat` 事件的新重复次数。
+    */
     #[java_method]
     pub fn change_time_repeat(event: &Self, event_time: i64, new_repeat: i32) -> Self {}
 
     /**
-     * 创建与给定事件相同的新键事件，但其事件时间和重复次数将替换为给定值。
-     * `event` 要复制的现有事件。这不会被修改。
-     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * `new_repeat` 事件的新重复次数。
-     * `new_flags` 事件的新标志，替换原始事件中的整个值。
-     * */
+    创建与给定事件相同的新键事件，但其事件时间和重复次数将替换为给定值。
+    `event` 要复制的现有事件。这不会被修改。
+    `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    `new_repeat` 事件的新重复次数。
+    `new_flags` 事件的新标志，替换原始事件中的整个值。
+    */
     #[java_method]
     pub fn change_time_repeat_with_flags(
         event: &Self,
@@ -3923,31 +3922,31 @@ impl KeyEvent {
     }
 
     /**
-     * 创建一个与给定事件相同的新键事件，但其操作将替换为给定值。
-     * `event` 要复制的现有事件。这不会被修改。
-     * `action` 事件的新操作代码。
-     * */
+    创建一个与给定事件相同的新键事件，但其操作将替换为给定值。
+    `event` 要复制的现有事件。这不会被修改。
+    `action` 事件的新操作代码。
+    */
     #[java_method]
     pub fn change_action(event: &Self, action: i32) -> Self {}
 
     /**
-     * 创建一个与给定事件相同的新键事件，但其标志将被替换为给定值。
-     * `event` 要复制的现有事件。这不会被修改。
-     * `flags` 新的标志常量。
-     * */
+    创建一个与给定事件相同的新键事件，但其标志将被替换为给定值。
+    `event` 要复制的现有事件。这不会被修改。
+    `flags` 新的标志常量。
+    */
     #[java_method]
     pub fn change_flags(event: &Self, flags: u32) -> Self {}
 
     /**
-     * 返回：如果操作是 ACTION_DOWN，则返回 true；否则返回 false。
-     * */
+    返回：如果操作是 ACTION_DOWN，则返回 true；否则返回 false。
+    */
     #[deprecated(note = "不要在新代码中使用，而是明确检查 getAction()。")]
     #[java_method]
     pub fn is_down(&self) -> bool {}
 
     /**
-     * 这是系统键吗？系统键不能用作菜单快捷键。
-     * */
+    这是系统键吗？系统键不能用作菜单快捷键。
+    */
     #[java_method]
     pub fn is_system(&self) -> bool {}
 
@@ -3956,21 +3955,21 @@ impl KeyEvent {
     pub fn is_wake(&self) -> bool {}
 
     /**
-     * 如果指定的键码是游戏手柄按钮，则返回 true。
-     * 返回：如果键码是游戏手柄按钮（例如 KEYCODE_BUTTON_A），则返回 True。
-     * */
+    如果指定的键码是游戏手柄按钮，则返回 true。
+    返回：如果键码是游戏手柄按钮（例如 KEYCODE_BUTTON_A），则返回 True。
+    */
     #[java_method]
     pub fn is_gamepad_button(key_code: i32) -> bool {}
 
     /**
-     * 默认情况下，按键是否会触发对焦点视图的点击。
-     * */
+    默认情况下，按键是否会触发对焦点视图的点击。
+    */
     #[java_method]
     pub fn is_confirm_key(key_code: i32) -> bool {}
 
     /**
-     * 返回此键是否将被发送到android.media.session.MediaSession。若未处理则回调。
-     * */
+    返回此键是否将被发送到android.media.session.MediaSession。若未处理则回调。
+    */
     #[java_method]
     pub fn is_media_session_key(key_code: i32) -> bool {}
 
@@ -4016,22 +4015,22 @@ impl KeyEvent {
     pub fn get_meta_state(&self) -> i32 {}
 
     /**
-     * 返回修饰键的状态。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数专门屏蔽了 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。返回的值由使用 normalizeMetaState(int) 规范化的元状态（来自 getMetaState）组成，然后使用 getModifierMetaStateMask 进行屏蔽，以便仅保留有效的修饰位。
-     * 返回：一个整数，其中设置为 1 的每个位代表按下的修饰键。
-     * */
+    返回修饰键的状态。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数专门屏蔽了 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。返回的值由使用 normalizeMetaState(int) 规范化的元状态（来自 getMetaState）组成，然后使用 getModifierMetaStateMask 进行屏蔽，以便仅保留有效的修饰位。
+    返回：一个整数，其中设置为 1 的每个位代表按下的修饰键。
+    */
     #[java_method]
     pub fn get_modifiers(&self) -> i32 {}
 
     /**
-     * 修改事件的标志。
-     * `new_flags` 事件的新标志，替换整个值。
-     * */
+    修改事件的标志。
+    `new_flags` 事件的新标志，替换整个值。
+    */
     #[java_method]
     pub fn set_flags(&self, new_flags: u32) {}
 
     /**
-     * 返回此键事件的标志。
-     * */
+    返回此键事件的标志。
+    */
     #[java_method]
     pub fn get_flags(&self) -> i32 {}
 
@@ -4041,37 +4040,37 @@ impl KeyEvent {
     pub fn get_modifier_meta_state_mask() -> i32 {}
 
     /**
-     * 如果此键码是修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数对这些键返回 false。
-     * 返回：如果键码是 KEYCODE_SHIFT_LEFT、KEYCODE_SHIFT_RIGHT、KEYCODE_ALT_LEFT、KEYCODE_ALT_RIGHT、KEYCODE_CTRL_LEFT、KEYCODE_CTRL_RIGHT、KEYCODE_META_LEFT 或 KEYCODE_META_RIGHT、KEYCODE_SYM、KEYCODE_NUM、KEYCODE_FUNCTION 之一，则返回 True。
-     * */
+    如果此键码是修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数对这些键返回 false。
+    返回：如果键码是 KEYCODE_SHIFT_LEFT、KEYCODE_SHIFT_RIGHT、KEYCODE_ALT_LEFT、KEYCODE_ALT_RIGHT、KEYCODE_CTRL_LEFT、KEYCODE_CTRL_RIGHT、KEYCODE_META_LEFT 或 KEYCODE_META_RIGHT、KEYCODE_SYM、KEYCODE_NUM、KEYCODE_FUNCTION 之一，则返回 True。
+    */
     #[java_method]
     pub fn is_modifier_key(key_code: i32) -> bool {}
 
     /**
-     * 规范化指定的元状态。元状态被规范化，这样如果设置了左或右修饰符元状态位，则结果还将包括该修饰符的通用位。如果指定的元状态包含 META_ALT_LEFT_ON，则结果除了 META_ALT_LEFT_ON 和输入中指定的其他位之外，还将包含 META_ALT_ON。
-     * 对 shift、control 和 meta 执行相同的过程。如果指定的元状态包含 MetaKeyKeyListener 定义的合成元状态，则这些状态将在此处转换，并从结果中删除原始合成元状态。MetaKeyKeyListener.META_CAP_LOCKED 转换为 META_CAPS_LOCK_ON。MetaKeyKeyListener.META_ALT_LOCKED 转换为 META_ALT_ON。MetaKeyKeyListener.META_SYM_LOCKED 转换为 META_SYM_ON。未定义的元状态位被删除。
-     * 返回：规范化的元状态。
-     * `meta_state` 元状态。
-     * */
+    规范化指定的元状态。元状态被规范化，这样如果设置了左或右修饰符元状态位，则结果还将包括该修饰符的通用位。如果指定的元状态包含 META_ALT_LEFT_ON，则结果除了 META_ALT_LEFT_ON 和输入中指定的其他位之外，还将包含 META_ALT_ON。
+    对 shift、control 和 meta 执行相同的过程。如果指定的元状态包含 MetaKeyKeyListener 定义的合成元状态，则这些状态将在此处转换，并从结果中删除原始合成元状态。MetaKeyKeyListener.META_CAP_LOCKED 转换为 META_CAPS_LOCK_ON。MetaKeyKeyListener.META_ALT_LOCKED 转换为 META_ALT_ON。MetaKeyKeyListener.META_SYM_LOCKED 转换为 META_SYM_ON。未定义的元状态位被删除。
+    返回：规范化的元状态。
+    `meta_state` 元状态。
+    */
     #[java_method]
     pub fn normalize_meta_state(meta_state: i32) -> i32 {}
 
     /**
-     * 如果根据指定的元状态未按下任何修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。使用 normalizeMetaState(int) 比较之前，元状态已标准化。
-     * 返回：如果没有按下任何修饰键，则返回 True。
-     * `meta_state` 要考虑的元状态。
-     * */
+    如果根据指定的元状态未按下任何修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。使用 normalizeMetaState(int) 比较之前，元状态已标准化。
+    返回：如果没有按下任何修饰键，则返回 True。
+    `meta_state` 要考虑的元状态。
+    */
     #[java_method]
     pub fn meta_state_has_no_modifiers(meta_state: i32) -> bool {}
 
     /**
-     * 如果根据指定的元状态仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
-     * 如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包含同一类型键的方向和非方向修饰符，例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON，则此方法将抛出非法参数异常。
-     * 返回：如果仅按下了指定的修饰键，则返回 True。
-     * 抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰符
-     * `meta_state` 要考虑的元状态。
-     * `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰符元状态的组合。可以为 0，以确保没有按下修饰键。
-     * */
+    如果根据指定的元状态仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+    如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包含同一类型键的方向和非方向修饰符，例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON，则此方法将抛出非法参数异常。
+    返回：如果仅按下了指定的修饰键，则返回 True。
+    抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰符
+    `meta_state` 要考虑的元状态。
+    `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰符元状态的组合。可以为 0，以确保没有按下修饰键。
+    */
     #[java_method]
     pub fn meta_state_has_modifiers(
         meta_state: i32,
@@ -4080,76 +4079,76 @@ impl KeyEvent {
     }
 
     /**
-     * 如果没有按下修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
-     * 使用 normalizeMetaState(int) 进行比较之前，元状态已标准化。
-     * 返回：如果没有按下修饰键，则返回 True。
-     * */
+    如果没有按下修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+    使用 normalizeMetaState(int) 进行比较之前，元状态已标准化。
+    返回：如果没有按下修饰键，则返回 True。
+    */
     #[java_method]
     pub fn has_no_modifiers(&self) -> bool {}
 
     /**
-     * 如果仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
-     * 如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包括同一类型键的方向修饰符和非方向修饰符（例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON），则此方法将引发非法参数异常。
-     * 返回：如果仅按下了指定的修饰键，则为 True。
-     * 抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰键
-     * `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰键元状态的组合。可能为 0，以确保未按下任何修饰键。
-     * */
+    如果仅按下了指定的修饰键，则返回 true。如果按下了不同的修饰键组合，则返回 false。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
+    如果指定的修饰符掩码包括方向修饰符（例如 META_SHIFT_LEFT_ON），则此方法可确保在该侧按下修饰符。如果指定的修饰符掩码包括非方向修饰符（例如 META_SHIFT_ON），则此方法可确保在任一侧按下修饰符。如果指定的修饰符掩码包括同一类型键的方向修饰符和非方向修饰符（例如 META_SHIFT_ON 和 META_SHIFT_LEFT_ON），则此方法将引发非法参数异常。
+    返回：如果仅按下了指定的修饰键，则为 True。
+    抛出：IllegalArgumentException – 如果 modifiers 参数包含无效修饰键
+    `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰键元状态的组合。可能为 0，以确保未按下任何修饰键。
+    */
     #[java_method]
     pub fn has_modifiers(&self, modifiers: i32) -> Result<bool, <Self as JType>::Error> {}
 
     /**
-     * 返回 ALT 元键的按下状态。如果按下了 ALT 键，则返回 true，否则返回 false
-     * */
+    返回 ALT 元键的按下状态。如果按下了 ALT 键，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_alt_pressed(&self) -> bool {}
 
     /**
-     * 返回 SHIFT 元键的按下状态。如果按下了 SHIFT 键，则返回 true，否则返回 false
-     * */
+    返回 SHIFT 元键的按下状态。如果按下了 SHIFT 键，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_shift_pressed(&self) -> bool {}
 
     /**
-     * 返回 SYM 元键的按下状态。
-     * 返回：如果 SYM 键被按下，则返回 true，否则返回 false
-     * */
+    返回 SYM 元键的按下状态。
+    返回：如果 SYM 键被按下，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_sym_pressed(&self) -> bool {}
 
     /**
-     * 返回 CTRL 元键的按下状态。如果按下了 CTRL 键，则返回 true，否则返回 false
-     * */
+    返回 CTRL 元键的按下状态。如果按下了 CTRL 键，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_ctrl_pressed(&self) -> bool {}
 
     /**
-     * 返回 META 元键的按下状态。如果按下 META 键则返回 true，否则返回 false
-     * */
+    返回 META 元键的按下状态。如果按下 META 键则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_meta_pressed(&self) -> bool {}
 
     /**
-     * 返回 FUNCTION 元键的按下状态。如果 FUNCTION 键被按下，则返回 true，否则返回 false
-     * */
+    返回 FUNCTION 元键的按下状态。如果 FUNCTION 键被按下，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_function_pressed(&self) -> bool {}
 
     /**
-     * 返回 CAPS LOCK 元键的锁定状态。如果 CAPS LOCK 键处于打开状态，则返回 true，否则返回 false
-     * */
+    返回 CAPS LOCK 元键的锁定状态。如果 CAPS LOCK 键处于打开状态，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_caps_lock_on(&self) -> bool {}
 
     /**
-     * 返回 SCROLL LOCK 元键的锁定状态。如果 SCROLL LOCK 键处于打开状态，则返回 true，否则返回 false
-     * */
+    返回 SCROLL LOCK 元键的锁定状态。如果 SCROLL LOCK 键处于打开状态，则返回 true，否则返回 false
+    */
     #[java_method]
     pub fn is_num_lock_on(&self) -> bool {}
 
     /**
-     * 查询此按键事件的操作。可能是 ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
-     * 返回：事件操作：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
-     * */
+    查询此按键事件的操作。可能是 ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+    返回：事件操作：ACTION_DOWN、ACTION_UP 或 ACTION_MULTIPLE。
+    */
     #[java_method]
     pub fn get_action(&self) -> i32 {}
 
@@ -4158,8 +4157,8 @@ impl KeyEvent {
     pub fn is_canceled(&self) -> bool {}
 
     /**
-     * 为按键事件设置 FLAG_CANCELED 标志。
-     * */
+    为按键事件设置 FLAG_CANCELED 标志。
+    */
     #[java_method]
     pub fn cancel(&self) {}
 
@@ -4168,8 +4167,8 @@ impl KeyEvent {
     pub fn start_tracking(&self) {}
 
     /**
-     * 对于 ACTION_UP 事件，表示该事件仍按照 FLAG_TRACKING 从其初始向下事件进行跟踪。
-     * */
+    对于 ACTION_UP 事件，表示该事件仍按照 FLAG_TRACKING 从其初始向下事件进行跟踪。
+    */
     #[java_method]
     pub fn is_tracking(&self) -> bool {}
 
@@ -4198,113 +4197,113 @@ impl KeyEvent {
     pub fn get_repeat_count(&self) -> i32 {}
 
     /**
-     * 修改事件的按下时间和事件时间。
-     * `down_time` 事件的新按下时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
-     * */
+    修改事件的按下时间和事件时间。
+    `down_time` 事件的新按下时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    `event_time` 事件的新事件时间（以 android.os.SystemClock.uptimeMillis 为单位）。
+    */
     #[java_method]
     pub fn set_time(down_time: i64, event_time: i64) {}
 
     /**
-     * 查询最近一次按键按下事件的时间，以 android.os.SystemClock.uptimeMillis 时间为基准。如果这是按下事件，则此方法与 getEventTime() 相同。
-     * 请注意，当按下按键时，此值是最近按下的按键的按下时间，该按键可能不是此事件的同一物理按键。
-     * 返回：返回最近一次按键按下时间，以 android.os.SystemClock.uptimeMillis 时间为基准
-     * */
+    查询最近一次按键按下事件的时间，以 android.os.SystemClock.uptimeMillis 时间为基准。如果这是按下事件，则此方法与 getEventTime() 相同。
+    请注意，当按下按键时，此值是最近按下的按键的按下时间，该按键可能不是此事件的同一物理按键。
+    返回：返回最近一次按键按下时间，以 android.os.SystemClock.uptimeMillis 时间为基准
+    */
     #[java_method]
     pub fn get_down_time(&self) -> i64 {}
 
     /**
-     * 以 android.os.SystemClock.uptimeMillis 时间基准检索此事件发生的时间。
-     * 返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
-     * */
+    以 android.os.SystemClock.uptimeMillis 时间基准检索此事件发生的时间。
+    返回：以 android.os.SystemClock.uptimeMillis 时间基准返回此事件发生的时间。
+    */
     #[java_method]
     pub fn get_event_time(&self) -> i64 {}
 
     /**
-     * 查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
-     * 返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
-     * */
+    查询此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。该值以纳秒为精度，但可能不具有纳秒的精度。
+    返回：返回此事件发生的时间，以 android.os.SystemClock.uptimeMillis 时间为基础，但精度为纳秒（而不是毫秒）。
+    */
     #[java_method]
     pub fn get_event_time_nanos(&self) -> i64 {}
 
     /**
-     * 已重命名为 getDeviceId。
-     * */
+    已重命名为 getDeviceId。
+    */
     #[deprecated(note = "请改用 getDeviceId()。")]
     #[java_method]
     pub fn get_keyboard_device(&self) -> i32 {}
 
     /**
-     * 获取此键的主要字符。换句话说，就是实际打印在其上的标签。
-     * 返回：显示标签字符，如果没有则返回 0（例如，对于非打印键）。
-     * */
+    获取此键的主要字符。换句话说，就是实际打印在其上的标签。
+    返回：显示标签字符，如果没有则返回 0（例如，对于非打印键）。
+    */
     #[java_method]
     pub fn get_display_label(&self) -> char {}
 
     /**
-     * 获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。
-     * 如果该键不是用于键入 Unicode 字符的键，则返回 0。如果返回值已设置位 KeyCharacterMap.COMBINING_ACCENT，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 进行屏蔽后，应将其与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
-     * 返回：相关字符或组合重音符，如果没有，则返回 0。
-     * */
+    获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。
+    如果该键不是用于键入 Unicode 字符的键，则返回 0。如果返回值已设置位 KeyCharacterMap.COMBINING_ACCENT，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 进行屏蔽后，应将其与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
+    返回：相关字符或组合重音符，如果没有，则返回 0。
+    */
     #[java_method]
     pub fn get_unicode_char(&self) -> i32 {}
 
     /**
-     * 获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。如果该键不是用于键入 Unicode 字符的键，则返回 0。
-     * 如果返回值已设置 KeyCharacterMap.COMBINING_ACCENT 位，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 屏蔽后，应与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
-     * 返回：相关字符或组合重音符，如果没有，则返回 0。
-     * `meta_state` 元键修饰符状态。
-     * */
+    获取由指定键和元键状态组合生成的 Unicode 字符。返回当指定元位（参见 MetaKeyKeyListener）处于活动状态时，指定键将生成的 Unicode 字符。如果该键不是用于键入 Unicode 字符的键，则返回 0。
+    如果返回值已设置 KeyCharacterMap.COMBINING_ACCENT 位，则该键是“死键”，在使用 KeyCharacterMap.COMBINING_ACCENT_MASK 屏蔽后，应与另一个键组合以实际生成字符（参见 KeyCharacterMap.getDeadChar）。
+    返回：相关字符或组合重音符，如果没有，则返回 0。
+    `meta_state` 元键修饰符状态。
+    */
     #[java_method(overload=getUnicodeChar)]
     pub fn get_unicode_char_from(meta_state: i32) -> i32 {}
 
     /**
-     * 获取与该键关联的数字或符号。返回的是字符值，而不是数值。如果该键不是数字，而是符号，则返回该符号。
-     * 此方法旨在支持键盘上的拨号盘和其他数字或符号输入，其中某些键兼具字母和符号键的功能。此方法返回与该键关联的数字或符号，与用户是否按下了所需的修饰键无关。
-     * 例如，在一个特定的键盘上，按下 ALT 时，QWERTY 顶部行上的键会生成数字，因此 ALT-Q 会映射到“1”。因此，对于该键盘，当使用 KEYCODE_Q 调用 getNumber 时，它会返回“1”，以便用户可以在有意义时不按 ALT 来输入数字。
-     * 返回：关联的数字或符号字符，如果没有，则返回 0。
-     * */
+    获取与该键关联的数字或符号。返回的是字符值，而不是数值。如果该键不是数字，而是符号，则返回该符号。
+    此方法旨在支持键盘上的拨号盘和其他数字或符号输入，其中某些键兼具字母和符号键的功能。此方法返回与该键关联的数字或符号，与用户是否按下了所需的修饰键无关。
+    例如，在一个特定的键盘上，按下 ALT 时，QWERTY 顶部行上的键会生成数字，因此 ALT-Q 会映射到“1”。因此，对于该键盘，当使用 KEYCODE_Q 调用 getNumber 时，它会返回“1”，以便用户可以在有意义时不按 ALT 来输入数字。
+    返回：关联的数字或符号字符，如果没有，则返回 0。
+    */
     #[java_method]
     pub fn get_number(&self) -> char {}
 
     /**
-     * 如果此键产生字形，则返回 true。
-     * 如果此键是打印键，则返回 true。
-     * */
+    如果此键产生字形，则返回 true。
+    如果此键是打印键，则返回 true。
+    */
     #[java_method]
     pub fn is_printing_key(&self) -> bool {}
 
     /**
-     * 返回表示指定操作的符号名称的字符串，例如“ACTION_DOWN”，如果未知，则返回等效的数字常量，例如“35”。
-     * 返回：指定操作的符号名称。
-     * `action` 操作。
-     * */
+    返回表示指定操作的符号名称的字符串，例如“ACTION_DOWN”，如果未知，则返回等效的数字常量，例如“35”。
+    返回：指定操作的符号名称。
+    `action` 操作。
+    */
     #[java_method]
     pub fn action_to_string(action: i32) -> String {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 返回表示指定键码的符号名称的字符串，例如“KEYCODE_A”、“KEYCODE_DPAD_UP”或等效数字常量（如“1001”（如果未知）。
-     * 此函数主要用于调试、日志记录和测试。它不特定于语言环境，也不旨在以面向用户的方式使用。
-     * 返回：指定键码的符号名称。
-     * `key_code` 键码。
-     * */
+    返回表示指定键码的符号名称的字符串，例如“KEYCODE_A”、“KEYCODE_DPAD_UP”或等效数字常量（如“1001”（如果未知）。
+    此函数主要用于调试、日志记录和测试。它不特定于语言环境，也不旨在以面向用户的方式使用。
+    返回：指定键码的符号名称。
+    `key_code` 键码。
+    */
     #[java_method]
     pub fn key_code_to_string(key_code: i32) -> String {}
 
     /**
-     * 通过其符号名称（例如“KEYCODE_A”）或等效数字常量（例如“29”）获取键码。对于符号名称，从 Build.VERSION_CODES.Q 开始，前缀“KEYCODE_”是可选的。
-     * 返回：键码，如果未找到，则返回 KEYCODE_UNKNOWN。
-     * `symbolic_name` 键码的符号名称。
-     * */
+    通过其符号名称（例如“KEYCODE_A”）或等效数字常量（例如“29”）获取键码。对于符号名称，从 Build.VERSION_CODES.Q 开始，前缀“KEYCODE_”是可选的。
+    返回：键码，如果未找到，则返回 KEYCODE_UNKNOWN。
+    `symbolic_name` 键码的符号名称。
+    */
     #[java_method]
     pub fn key_code_from_string(symbolic_name: String) -> i32 {}
 
     /**
-     * 返回一个字符串，该字符串表示指定的组合元键修饰符状态标志的符号名称，例如“0”、“META_SHIFT_ON”、“META_ALT_ON|META_SHIFT_ON”或等效数字常量，例如“0x10000000”（如果未知）。
-     * 返回：指定的组合元状态标志的符号名称。
-     * `meta_state` 元状态。
-     * */
+    返回一个字符串，该字符串表示指定的组合元键修饰符状态标志的符号名称，例如“0”、“META_SHIFT_ON”、“META_ALT_ON|META_SHIFT_ON”或等效数字常量，例如“0x10000000”（如果未知）。
+    返回：指定的组合元状态标志的符号名称。
+    `meta_state` 元状态。
+    */
     #[java_method]
     pub fn meta_state_to_string(meta_state: i32) -> String {}
 }
@@ -4314,10 +4313,10 @@ impl KeyEvent {
 #[java_interface(name = "android/view/View$OnLongClickListener")]
 pub trait View_OnLongClickListener {
     /**
-     * 当单击并按住某个视图时调用。
-     * 返回：如果回调消耗了长按，则返回 true，否则返回 false。
-     * `v` 被单击并按住的视图。
-     * */
+    当单击并按住某个视图时调用。
+    返回：如果回调消耗了长按，则返回 true，否则返回 false。
+    `v` 被单击并按住的视图。
+    */
     fn on_long_click(&self, v: View) -> bool;
 }
 
@@ -4340,20 +4339,20 @@ impl View_OnLongClickListener for View_OnLongClickListenerImpl {
 }
 
 /**
- * 当硬件按键事件被分派到此视图时，要调用的回调的接口定义。回调将在按键事件被提供给视图之前被调用。
- * 这仅适用于硬件键盘；软件输入法没有义务触发此侦听器。
- * */
+当硬件按键事件被分派到此视图时，要调用的回调的接口定义。回调将在按键事件被提供给视图之前被调用。
+这仅适用于硬件键盘；软件输入法没有义务触发此侦听器。
+*/
 #[allow(non_camel_case_types)]
 #[java_interface(name = "android/view/View$OnKeyListener")]
 pub trait View_OnKeyListener {
     /**
-     * 当硬件按键被分派到视图时调用。这允许侦听器有机会在目标视图之前做出响应。软件键盘中的按键通常不会触发此方法，尽管有些情况下可能会选择这样做。
-     * 不要假设软件输入法必须基于按键；即使如此，它也可能以不同于您预期的方式使用按键，因此无法可靠地捕获软输入按键。
-     * 返回：如果侦听器已使用事件，则返回 True，否则返回 false。
-     * `v` 按键被分派到的视图。
-     * `key_code` 按下的物理按键的代码
-     * `event` 包含有关事件的完整信息的 KeyEvent 对象。
-     * */
+    当硬件按键被分派到视图时调用。这允许侦听器有机会在目标视图之前做出响应。软件键盘中的按键通常不会触发此方法，尽管有些情况下可能会选择这样做。
+    不要假设软件输入法必须基于按键；即使如此，它也可能以不同于您预期的方式使用按键，因此无法可靠地捕获软输入按键。
+    返回：如果侦听器已使用事件，则返回 True，否则返回 false。
+    `v` 按键被分派到的视图。
+    `key_code` 按下的物理按键的代码
+    `event` 包含有关事件的完整信息的 KeyEvent 对象。
+    */
     fn on_key(&self, v: View, key_code: i32, event: KeyEvent) -> bool;
 }
 

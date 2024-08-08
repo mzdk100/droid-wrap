@@ -56,6 +56,11 @@ fn main() {
         droid_wrap::android::widget::test();
         println!("Test android.widget successfully.");
     }
+    #[cfg(feature = "java_io")]
+    {
+        droid_wrap::java::io::test();
+        println!("Test java.io successfully.");
+    }
     #[cfg(feature = "java_lang")]
     {
         droid_wrap::java::lang::test();

@@ -22,14 +22,14 @@ use crate::{
 };
 
 /**
- * 从文本合成语音以立即播放或创建声音文件。 TextToSpeech 实例只有在完成初始化后才可用于合成文本。实现 TextToSpeech.OnInitListener 以接收初始化完成的通知。使用完 TextToSpeech 实例后，调用 shutdown() 方法释放 TextToSpeech 引擎使用的原生资源。针对 Android 11 且使用文本转语音的应用应在其清单的查询元素中声明 TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE：
- * &lt;queries&gt;
- *  ...
- *  &lt;intent&gt;
- *      &lt;action android:name="android. intent. action. TTS_SERVICE" /&gt;
- *  &lt;/intent&gt;
- * &lt;/queries&gt;
- * */
+从文本合成语音以立即播放或创建声音文件。 TextToSpeech 实例只有在完成初始化后才可用于合成文本。实现 TextToSpeech.OnInitListener 以接收初始化完成的通知。使用完 TextToSpeech 实例后，调用 shutdown() 方法释放 TextToSpeech 引擎使用的原生资源。针对 Android 11 且使用文本转语音的应用应在其清单的查询元素中声明 TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE：
+&lt;queries&gt;
+ ...
+ &lt;intent&gt;
+     &lt;action android:name="android. intent. action. TTS_SERVICE" /&gt;
+ &lt;/intent&gt;
+&lt;/queries&gt;
+*/
 #[java_class(name = "android/speech/tts/TextToSpeech")]
 pub struct TextToSpeech;
 
@@ -94,54 +94,54 @@ impl TextToSpeech {
     pub const ERROR_SERVICE: i32 = -4;
 
     /**
-     * TextToSpeech 类的构造函数，使用默认的 TTS 引擎。如果尚未运行，这还将初始化关联的 TextToSpeech 引擎。
-     * `context` 此实例正在运行的上下文。
-     * `listener` 当 TextToSpeech 引擎初始化时将调用 TextToSpeech.OnInitListener。如果发生故障，可能会在 TextToSpeech 实例完全构造之前立即调用侦听器。
-     * */
+    TextToSpeech 类的构造函数，使用默认的 TTS 引擎。如果尚未运行，这还将初始化关联的 TextToSpeech 引擎。
+    `context` 此实例正在运行的上下文。
+    `listener` 当 TextToSpeech 引擎初始化时将调用 TextToSpeech.OnInitListener。如果发生故障，可能会在 TextToSpeech 实例完全构造之前立即调用侦听器。
+    */
     #[java_constructor]
     pub fn new<L: TextToSpeech_OnInitListener>(context: &Context, listener: &L) -> Self {}
 
     /**
-     * 中断当前话语（无论是播放还是渲染到文件）并丢弃队列中的其他话语。
-     * 返回：错误或成功。
-     * */
+    中断当前话语（无论是播放还是渲染到文件）并丢弃队列中的其他话语。
+    返回：错误或成功。
+    */
     #[java_method]
     pub fn stop(&self) -> i32 {}
 
     /**
-     * 检查 TTS 引擎是否正在讲话。请注意，一旦语音项目的音频数据被发送到音频混音器或写入文件，该语音项目即被视为完成。此时与音频硬件完成播放之间可能会有有限地滞后。如果 TTS 引擎正在讲话，则返回 true。
-     * */
+    检查 TTS 引擎是否正在讲话。请注意，一旦语音项目的音频数据被发送到音频混音器或写入文件，该语音项目即被视为完成。此时与音频硬件完成播放之间可能会有有限地滞后。如果 TTS 引擎正在讲话，则返回 true。
+    */
     #[java_method]
     pub fn is_speaking(&self) -> bool {}
 
     /**
-     * 释放 TextToSpeech 引擎使用的资源。例如，在 Activity 的 onDestroy() 方法中调用此方法是一种很好的做法，这样 TextToSpeech 引擎就可以完全停止。
-     * */
+    释放 TextToSpeech 引擎使用的资源。例如，在 Activity 的 onDestroy() 方法中调用此方法是一种很好的做法，这样 TextToSpeech 引擎就可以完全停止。
+    */
     #[java_method]
     pub fn shutdown(&self) {}
 
     /**
-     * 设置 TextToSpeech 引擎的语音音调。这对任何预录语音均无影响。
-     * 返回：ERROR 或 SUCCESS。
-     * `pitch` 语音音调。1.0 为正常音调，值越低，合成语音的音调越低，值越高，合成语音的音调越高。
-     * */
+    设置 TextToSpeech 引擎的语音音调。这对任何预录语音均无影响。
+    返回：ERROR 或 SUCCESS。
+    `pitch` 语音音调。1.0 为正常音调，值越低，合成语音的音调越低，值越高，合成语音的音调越高。
+    */
     #[java_method]
     pub fn set_pitch(&self, pitch: f32) -> i32 {}
 
     /**
-     * 设置语速。这对任何预先录制的语音没有影响。
-     * 返回：ERROR 或 SUCCESS。
-     * `speech_rate` 语速。1.0 是正常语速，较低的值会减慢语速（0.5 是正常语速的一半），较高的值会加快语速（2.0 是正常语速的两倍）。
-     * */
+    设置语速。这对任何预先录制的语音没有影响。
+    返回：ERROR 或 SUCCESS。
+    `speech_rate` 语速。1.0 是正常语速，较低的值会减慢语速（0.5 是正常语速的一半），较高的值会加快语速（2.0 是正常语速的两倍）。
+    */
     #[java_method]
     pub fn set_speech_rate(&self, speech_rate: f32) -> i32 {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 设置要使用的 TTS 引擎。
-     * 返回：ERROR 或 SUCCESS。
-     * `engine_package_name` 合成引擎的包名称（例如“com.svox.pico”）
-     * */
+    设置要使用的 TTS 引擎。
+    返回：ERROR 或 SUCCESS。
+    `engine_package_name` 合成引擎的包名称（例如“com.svox.pico”）
+    */
     #[java_method]
     #[deprecated(
         note = "这不会在 TTS 引擎初始化时通知调用者。TextToSpeech(Context, TextToSpeech.OnInitListener, String) 可以与适当的引擎名称一起使用。此外，不能保证指定的引擎将被加载。如果未安装或禁用，则将应用用户/系统范围的默认值。"
@@ -149,41 +149,41 @@ impl TextToSpeech {
     pub fn set_engine_by_package_name(&self, engine_package_name: String) -> i32 {}
 
     /**
-     * 传递给 Speaking 和 SynthesizeToFile 的输入字符串的长度限制。
-     * */
+    传递给 Speaking 和 SynthesizeToFile 的输入字符串的长度限制。
+    */
     #[java_method]
     pub fn get_max_speech_input_length() -> i32 {}
 
     /**
-     * 获取默认语音合成引擎的包装名称。
-     * 返回：用户选择的TTS引擎的软件包名称作为其默认值。
-     * */
+    获取默认语音合成引擎的包装名称。
+    返回：用户选择的TTS引擎的软件包名称作为其默认值。
+    */
     #[java_method]
     pub fn get_default_engine(&self) -> String {}
 
     /**
-     * 返回：此 TextToSpeech 实例当前使用的引擎。
-     * */
+    返回：此 TextToSpeech 实例当前使用的引擎。
+    */
     #[java_method]
     pub fn get_current_engine(&self) -> String {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 检查用户的设置是否应覆盖调用应用程序请求的设置。
-     * */
+    检查用户的设置是否应覆盖调用应用程序请求的设置。
+    */
     #[java_method]
     #[deprecated(note = "从 Ice creamwich 版本开始，用户设置永远不会强制覆盖应用程序的设置。")]
     pub fn are_defaults_enforced(&self) -> bool {}
 
     //noinspection SpellCheckingInspection
     /**
-     * 使用指定的排队策略和语音参数朗读文本，文本可能以 TtsSpans 为单位。此方法是异步的，即该方法只是将请求添加到 TTS 请求队列然后返回。当此方法返回时，合成可能尚未完成（甚至尚未开始！）。为了可靠地检测合成过程中的错误，我们建议设置一个发音进度监听器（参见 setOnUtteranceProgressListener）并使用 TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID 参数。
-     * 返回：排队发言操作的错误或成功。
-     * `text` 要朗读的文本字符串。长度不超过 getMaxSpeechInputLength() 字符。
-     * `queue_mode` 要使用的排队策略，QUEUE_ADD 或 QUEUE_FLUSH。
-     * `params` 请求的参数。可以为 null。支持的参数名称：TextToSpeech.Engine.KEY_PARAM_STREAM、TextToSpeech.Engine.KEY_PARAM_VOLUME、TextToSpeech.Engine。KEY_PARAM_PAN。可以传入引擎特定参数，但参数键必须以它们所针对的引擎的名称作为前缀。例如，如果正在使用名为“com.svox.pico”的引擎，则键“com.svox.pico_foo”和“com.svox.pico:bar”将传递给该引擎。
-     * `utterance_id` 此请求的唯一标识符。
-     * */
+    使用指定的排队策略和语音参数朗读文本，文本可能以 TtsSpans 为单位。此方法是异步的，即该方法只是将请求添加到 TTS 请求队列然后返回。当此方法返回时，合成可能尚未完成（甚至尚未开始！）。为了可靠地检测合成过程中的错误，我们建议设置一个发音进度监听器（参见 setOnUtteranceProgressListener）并使用 TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID 参数。
+    返回：排队发言操作的错误或成功。
+    `text` 要朗读的文本字符串。长度不超过 getMaxSpeechInputLength() 字符。
+    `queue_mode` 要使用的排队策略，QUEUE_ADD 或 QUEUE_FLUSH。
+    `params` 请求的参数。可以为 null。支持的参数名称：TextToSpeech.Engine.KEY_PARAM_STREAM、TextToSpeech.Engine.KEY_PARAM_VOLUME、TextToSpeech.Engine。KEY_PARAM_PAN。可以传入引擎特定参数，但参数键必须以它们所针对的引擎的名称作为前缀。例如，如果正在使用名为“com.svox.pico”的引擎，则键“com.svox.pico_foo”和“com.svox.pico:bar”将传递给该引擎。
+    `utterance_id` 此请求的唯一标识符。
+    */
     #[java_method]
     pub fn speak<CS: CharSequence>(
         &self,
@@ -196,15 +196,15 @@ impl TextToSpeech {
 }
 
 /**
- * 调用回调接口定义，指示 TextToSpeech 引擎初始化完成。
- * */
+调用回调接口定义，指示 TextToSpeech 引擎初始化完成。
+*/
 #[allow(non_camel_case_types)]
 #[java_interface(name = "android/speech/tts/TextToSpeech$OnInitListener")]
 pub trait TextToSpeech_OnInitListener {
     /**
-     * 调用以表示 TextToSpeech 引擎初始化完成。
-     * `status` 成功或错误。
-     * */
+    调用以表示 TextToSpeech 引擎初始化完成。
+    `status` 成功或错误。
+    */
     fn on_init(&self, status: i32);
 }
 

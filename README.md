@@ -1,5 +1,10 @@
 # 用于Rust的Android API的高级封装
 
+[GitCode](https://gitcode.net/mzdk100/droid-wrap.git)
+[GitHub](https://github.com/mzdk100/droid-wrap)
+[crates.io](https://crates.io/crates/droid-wrap)
+[docs.rs](https://docs.rs/droid-wrap/latest/droid_wrap/)
+
 ## 介绍
 
 这个箱子提供对Android API的高级封装，依赖于jni-rs库，这包括以下内容：
@@ -120,6 +125,10 @@ android.view.View的API等（包括点击监听器的实现）。
 
 ## java功能(java)
 
+### javaIO操作(java_io)
+
+实现了java.io.File。
+
 ### java语言内置(java_lang)
 
 实现了java.lang.String,java.lang.Integer等类型。
@@ -133,7 +142,11 @@ android.view.View的API等（包括点击监听器的实现）。
 7. java.lang.Runnable;
 8. java.lang.System;
 9. java.lang.reflect.Executable;
+10. java.lang.Comparable;
 
 ### java缓冲区(java_nio)
 
 实现了java.nio.ByteBuffer等类型。
+
+1. java.nio.ByteBuffer;
+2. java.nio.file.Path;

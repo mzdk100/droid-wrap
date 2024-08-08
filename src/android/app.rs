@@ -145,42 +145,42 @@ pub struct Activity;
 
 impl Activity {
     /**
-     * 当您的活动完成后并应被关闭时，请调用此方法。活动结果将通过 onActivityResult() 方法传回给启动者。
-     * */
+    当您的活动完成后并应被关闭时，请调用此方法。活动结果将通过 onActivityResult() 方法传回给启动者。
+    */
     #[java_method]
     pub fn finish(&self) {}
 
     /**
-     * 检查此活动是否正在完成，可能是因为您调用了 finish 或其他人请求它完成。这通常在 onPause 中用于确定活动是暂停还是完全完成。
-     * 返回：如果活动正在完成，则返回 true；否则返回 false。
-     * */
+    检查此活动是否正在完成，可能是因为您调用了 finish 或其他人请求它完成。这通常在 onPause 中用于确定活动是暂停还是完全完成。
+    返回：如果活动正在完成，则返回 true；否则返回 false。
+    */
     #[java_method]
     pub fn is_finishing(&self) -> bool {}
 
     /**
-     * 更改与此活动关联的标题。如果这是顶级活动，其窗口的标题将会更改。如果这是嵌入活动，则父级可以对其执行任何操作。
-     * `title` 标题。
-     * */
+    更改与此活动关联的标题。如果这是顶级活动，其窗口的标题将会更改。如果这是嵌入活动，则父级可以对其执行任何操作。
+    `title` 标题。
+    */
     #[java_method]
     pub fn set_title<CS: CharSequence>(&self, title: &CS) {}
 
     /**
-     * 获取与此活动关联的标题。
-     * */
+    获取与此活动关联的标题。
+    */
     #[java_method]
     pub fn get_title<CS: CharSequence>(&self) -> CS {}
 
     /**
-     * 将活动内容设置为显式视图。此视图直接放入活动的视图层次结构中。它本身可以是一个复杂的视图层次结构。调用此方法时，将忽略指定视图的布局参数。视图的宽度和高度默认设置为 ViewGroup.LayoutParams.MATCH_PARENT。要使用您自己的布局参数，请改为调用 setContentView(View, ViewGroup.LayoutParams)。
-     * `view` 要显示的所需内容。
-     * */
+    将活动内容设置为显式视图。此视图直接放入活动的视图层次结构中。它本身可以是一个复杂的视图层次结构。调用此方法时，将忽略指定视图的布局参数。视图的宽度和高度默认设置为 ViewGroup.LayoutParams.MATCH_PARENT。要使用您自己的布局参数，请改为调用 setContentView(View, ViewGroup.LayoutParams)。
+    `view` 要显示的所需内容。
+    */
     #[java_method]
     pub fn set_content_view(&self, view: &View) {}
 
     /**
-     * 在 UI 线程上运行指定的操作。如果当前线程是 UI 线程，则立即执行该操作。如果当前线程不是 UI 线程，则将操作发布到 UI 线程的事件队列。
-     * `action` 在 UI 线程上运行的操作
-     * */
+    在 UI 线程上运行指定的操作。如果当前线程是 UI 线程，则立即执行该操作。如果当前线程不是 UI 线程，则将操作发布到 UI 线程的事件队列。
+    `action` 在 UI 线程上运行的操作
+    */
     #[java_method]
     pub fn run_on_ui_thread<R: Runnable>(&self, action: &R) {}
 
@@ -189,8 +189,8 @@ impl Activity {
     pub fn get_window_manager<WM: WindowManager>(&self) -> WM {}
 
     /**
-     * 获取实例。
-     * */
+    获取实例。
+    */
     pub fn fetch() -> Self {
         let ctx = android_context();
         vm_attach!(mut env);

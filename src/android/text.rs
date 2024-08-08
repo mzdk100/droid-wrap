@@ -19,13 +19,13 @@ use droid_wrap_derive::{java_class, java_implement, java_interface, java_method}
 use std::sync::Arc;
 
 /**
- * 整数的位定义，定义可编辑对象中保存的文本的基本内容类型。支持的类可以与变体和标志组合以指示所需的行为。
- *
- * 示例
- * - 密码字段，密码对用户可见： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
- * - 多行邮箱地址，自动大写： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_POSTAL_ADDRESS | TYPE_TEXT_FLAG_MULTI_LINE
- * - 时间字段： inputType = TYPE_CLASS_DATETIME | TYPE_DATETIME_VARIATION_TIME
- * */
+整数的位定义，定义可编辑对象中保存的文本的基本内容类型。支持的类可以与变体和标志组合以指示所需的行为。
+
+示例
+- 密码字段，密码对用户可见： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+- 多行邮箱地址，自动大写： inputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_POSTAL_ADDRESS | TYPE_TEXT_FLAG_MULTI_LINE
+- 时间字段： inputType = TYPE_CLASS_DATETIME | TYPE_DATETIME_VARIATION_TIME
+*/
 #[java_interface(name = "android/text/InputType")]
 pub trait InputType {
     /// 确定给定文本总体类别的位掩码。当前支持的类别有：TYPE_CLASS_TEXT、TYPE_CLASS_NUMBER、TYPE_CLASS_PHONE、TYPE_CLASS_DATETIME。IME 作者：如果您不了解该类别，则假定 TYPE_CLASS_TEXT 不带任何变体或标志。
@@ -162,8 +162,8 @@ pub struct InputTypeImpl;
 impl InputType for InputTypeImpl {}
 
 /**
- * 这是文本的接口，其内容和标记可以更改（与字符串等不可变文本相反）。如果您创建可编辑的 DynamicLayout，则布局将随着文本的更改而重新排列。
- * */
+这是文本的接口，其内容和标记可以更改（与字符串等不可变文本相反）。如果您创建可编辑的 DynamicLayout，则布局将随着文本的更改而重新排列。
+*/
 #[java_interface(name = "android/text/Editable")]
 pub trait Editable: CharSequence {
     #[doc(hidden)]
@@ -172,31 +172,31 @@ pub trait Editable: CharSequence {
     type E: Editable;
 
     /**
-     * 用源切片 start…end 的副本替换此 Editable 中指定范围 (st…en) 的文本。目标切片可能为空，在这种情况下操作为插入；源切片可能为空，在这种情况下操作为删除。
-     * 在提交更改之前，使用 setFilters 设置的每个过滤器都有机会修改源文本。如果源是 Spanned，则来自源的跨度将保留到 Editable 中。Editable 中完全覆盖替换范围的现有跨度将被保留，但严格在替换范围内的任何跨度将被删除。
-     * 如果源包含带有 Spanned.SPAN_PARAGRAPH 标志的跨度，并且它不满足段落边界约束，则不会保留它。作为特殊情况，即使替换了光标所在的整个范围，光标位置也会保留。
-     * 返回：对此对象的引用。
-     * */
+    用源切片 start…end 的副本替换此 Editable 中指定范围 (st…en) 的文本。目标切片可能为空，在这种情况下操作为插入；源切片可能为空，在这种情况下操作为删除。
+    在提交更改之前，使用 setFilters 设置的每个过滤器都有机会修改源文本。如果源是 Spanned，则来自源的跨度将保留到 Editable 中。Editable 中完全覆盖替换范围的现有跨度将被保留，但严格在替换范围内的任何跨度将被删除。
+    如果源包含带有 Spanned.SPAN_PARAGRAPH 标志的跨度，并且它不满足段落边界约束，则不会保留它。作为特殊情况，即使替换了光标所在的整个范围，光标位置也会保留。
+    返回：对此对象的引用。
+    */
     fn replace(&self, st: i32, en: i32, source: Self::Cs, start: i32, end: i32) -> Self::E;
 
     /**
-     * 方便 replace(st, en, text, 0, text.length())
-     * */
+    方便 replace(st, en, text, 0, text.length())
+    */
     fn replace_convenience(&self, st: i32, en: i32, text: Self::Cs) -> Self::E;
 
     /**
-     * 方便 replace(where, where, text, start, end)
-     * */
+    方便 replace(where, where, text, start, end)
+    */
     fn insert(&self, r#where: i32, text: Self::Cs, start: i32, end: i32) -> Self::E;
 
     /**
-     * 方便 replace(where, where, text, 0, text.length());
-     * */
+    方便 replace(where, where, text, 0, text.length());
+    */
     fn insert_convenience(&self, r#where: i32, text: Self::Cs) -> Self::E;
 
     /**
-     * 方便 replace(st, en, "", 0, 0)
-     * */
+    方便 replace(st, en, "", 0, 0)
+    */
     fn delete(&self, st: i32, en: i32) -> Self::E;
 
     /// 方便 replace(length(), length(), text, 0, text.length())
@@ -275,8 +275,8 @@ impl Editable for EditableImpl {
 }
 
 /**
- * 当此类型的对象附加到 Editable 时，其方法将在文本改变时被调用。
- * */
+当此类型的对象附加到 Editable 时，其方法将在文本改变时被调用。
+*/
 #[java_interface(name = "android/text/TextWatcher")]
 pub trait TextWatcher {
     #[doc(hidden)]
@@ -292,6 +292,7 @@ pub trait TextWatcher {
     /// 尝试通过此回调更改 s 是错误的。
     fn on_text_changed(&self, s: Self::Cs, start: i32, before: i32, count: i32);
 
+    //noinspection SpellCheckingInspection
     /// 调用此方法是为了通知您，在 s 中的某个地方，文本已发生更改。从此回调对 s 进行进一步更改是合法的，但请注意不要陷入无限循环，因为您所做的任何更改都会导致此方法再次递归调用。
     /// （您不会被告知更改发生的位置，因为其他 afterTextChanged() 方法可能已经进行了其他更改并使偏移量无效。但如果您需要在此处知道，您可以在 onTextChanged 中使用 Spannable.setSpan 来标记您的位置，然后从此处查找 span 结束的位置。
     fn after_text_changed(&self, s: Self::E);

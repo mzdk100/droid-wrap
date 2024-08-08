@@ -12,8 +12,13 @@
  */
 
 use noak::{writer::ClassWriter, AccessFlags};
-use std::{collections::HashMap, env::var, fs::OpenOptions, io::Write, path::PathBuf};
-use std::env::set_var;
+use std::{
+    collections::HashMap,
+    env::{set_var, var},
+    fs::OpenOptions,
+    io::Write,
+    path::PathBuf,
+};
 
 pub fn gen_class(
     class: &str,
@@ -84,8 +89,8 @@ fn main() {
     let class = gen_class(CLASS, &["java/lang/reflect/InvocationHandler"], &methods).unwrap();
     java_class_file.write_all(&class).unwrap();
 
-    set_var("ANDROID_API_LEVEL", "34");
-    set_var("ANDROID_BUILD_TOOLS_VERSION", "34.0.0");
+    set_var("ANDROID_API_LEVEL", "35");
+    set_var("ANDROID_BUILD_TOOLS_VERSION", "35.0.0");
     let android_jar_path = android_build::android_jar(None).expect("Failed to find android.jar");
     let d8_jar_path = android_build::android_d8_jar(None).expect("Failed to find d8.jar");
 
@@ -100,4 +105,5 @@ fn main() {
         .run()
         .expect("failed to acquire exit status for java d8.jar invocation")
         .success();
+    println!("cargo:rerun-if-changed={}", java_class_path.display());
 }
