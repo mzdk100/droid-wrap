@@ -20,7 +20,7 @@ pub mod inputmethod;
 
 use crate::{
     android::{content::Context, os::Bundle},
-    java::lang::{CharSequence, Integer},
+    java::lang::{CharSequence, Integer, Runnable},
     JObjNew, JObjRef, JProxy, JType,
 };
 use droid_wrap_derive::{
@@ -364,6 +364,64 @@ impl View {
     */
     #[java_method]
     pub fn set_tooltip_text<CS: CharSequence>(&self, tooltip_text: Option<CS>) {}
+
+    /**
+    导致 Runnable 被添加到消息队列，在指定的时间过后运行。Runnable 将在用户界面线程上运行。
+    返回：如果 Runnable 成功放入消息队列，则返回 true。如果失败，则返回 false，通常是因为处理消息队列的 looper 正在退出。请注意，结果为 true 并不意味着 Runnable 将被处理 - 如果 looper 在消息传递时间发生之前退出，则消息将被丢弃。
+    `action` 将执行的 Runnable。
+    `delay_millis` Runnable 执行前的延迟（以毫秒为单位）。
+    */
+    #[java_method]
+    pub fn post_delayed<R: Runnable>(&self, action: &R, delay_millis: u64) -> bool {}
+
+    /**
+    设置一个回调，当触控笔 MotionEvent 在该视图的边界内发生时，应调用该回调。回调将从 UI 线程调用。
+    设置回调允许此视图充当手写委托器，以便可以通过触控笔在此委托器视图上的移动来启动委托编辑器视图的手写模式。回调实现应显示并聚焦委托编辑器视图。
+    如果为 isHandwritingDelegate() 返回 true 的视图在相同地触控笔 MotionEvent 序列正在进行时创建输入连接，则将为该视图启动手写模式。
+    一个常见的用例是自定义视图看起来像文本编辑器，但实际上不支持文本编辑本身，单击自定义视图会导致显示 EditText。为了在这种情况下支持手写启动，可以在自定义视图上调用此方法以将其配置为委托器。
+    EditText 应调用 setIsHandwritingDelegate 将其设置为委托。回调实现通常与显示 EditText 的单击侦听器实现相同。
+    如果传递了 null，则此视图将不再充当手写启动委托人。
+    `callback` 当触控笔 MotionEvent 在该视图的范围内发生时应调用的回调
+    */
+    #[java_method]
+    pub fn set_handwriting_delegator_callback<R: Runnable>(&self, callback: Option<&R>) {}
+
+    /**
+    返回由 setHandwritingDelegatorCallback 设置的回调，当触控笔 MotionEvent 在该视图的范围内发生时应调用该回调。该回调只能从 UI 线程调用。
+    */
+    #[java_method]
+    pub fn get_handwriting_delegator_callback<R: Runnable>(&self) -> Option<R> {}
+
+    /**
+    导致 Runnable 被添加到消息队列。Runnable 将在用户界面线程上运行。
+    返回：如果 Runnable 成功放入消息队列，则返回 true。如果失败，则返回 false，通常是因为处理消息队列的循环程序正在退出。
+    `action` 将执行的 Runnable。
+    */
+    #[java_method]
+    pub fn post<R: Runnable>(&self, action: &R) -> bool {}
+
+    /**
+    使 Runnable 在下一个动画时间步骤执行。Runnable 将在用户界面线程上运行。
+    `action` 将执行的 Runnable。
+    */
+    #[java_method]
+    pub fn post_on_animation<R: Runnable>(&self, action: &R) {}
+
+    /**
+    使 Runnable 在指定的时间量过去后在下一个动画时间步骤执行。 Runnable 将在用户界面线程上运行。
+    `action` 将执行的 Runnable。
+    `delay_millis` Runnable 执行前的延迟（以毫秒为单位）。
+    */
+    #[java_method]
+    pub fn post_on_animation_delayed<R: Runnable>(&self, action: &R, delay_millis: u64) {}
+
+    /**
+    从消息队列中移除指定的 Runnable。
+    返回：如果此视图可以要求 Handler 移除 Runnable，则返回 true，否则返回 false。当返回值为 true 时，Runnable 可能已从消息队列中实际移除（例如，如果 Runnable 尚未在队列中）。
+    `action` 要从消息处理队列中移除的 Runnable
+    */
+    #[java_method]
+    pub fn remove_callbacks<R: Runnable>(&self, action: &R) -> bool {}
 }
 
 /// 定义视图父类的职责。这是视图想要与其父类交互时看到的 API。
