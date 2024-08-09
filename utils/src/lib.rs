@@ -131,6 +131,20 @@ macro_rules! import {
             fn new(fields: Self::Fields) -> std::sync::Arc<Self>;
         }
 
+        impl<T: JObjRef> JObjRef for &T {
+            fn java_ref(&self) -> GlobalRef {
+                self.java_ref()
+            }
+        }
+
+        impl<T: JObjNew> JObjNew for &T {
+            type Fields = T::Fields;
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                panic!("Reference types cannot be constructed.")
+            }
+        }
+
         impl<T: JObjRef + JObjNew> JObjRef for Option<T>
         where
             <T as JObjNew>::Fields: Default,
