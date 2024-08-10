@@ -708,14 +708,18 @@ impl View_OnClickListener for View_OnClickListenerImpl {
 接口允许您向 Activity 添加和删除子视图。要获取此类的实例，请调用 Context.getSystemService()。
 */
 #[java_interface(name = "android/view/ViewManager")]
-pub trait ViewManager {
+pub trait ViewManager: JType {
     /**
     将传递的 LayoutParams 分配给传递的 View，并将该视图添加到窗口。对于某些编程错误，例如在未移除第一个视图的情况下向窗口添加第二个视图，将抛出 WindowManager.BadTokenException。
     如果窗口位于辅助显示器上并且找不到指定的显示器，则抛出 WindowManager.InvalidDisplayException（请参阅 android.app.Presentation）。
     `view` 要添加到此窗口的视图。
     `params` 要分配给视图的 LayoutParams。
     */
-    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams);
+    fn add_view(
+        &self,
+        view: &View,
+        params: &ViewGroup_LayoutParams,
+    ) -> Result<(), <Self as JType>::Error>;
 
     #[doc(hidden)]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams);
@@ -755,7 +759,12 @@ pub struct WindowManagerImpl;
 
 impl ViewManager for WindowManagerImpl {
     #[java_method]
-    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams) {}
+    fn add_view(
+        &self,
+        view: &View,
+        params: &ViewGroup_LayoutParams,
+    ) -> Result<(), <Self as JType>::Error> {
+    }
 
     #[java_method]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams) {}
@@ -809,7 +818,12 @@ impl ViewGroup {
 
 impl ViewManager for ViewGroup {
     #[java_method]
-    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams) {}
+    fn add_view(
+        &self,
+        view: &View,
+        params: &ViewGroup_LayoutParams,
+    ) -> Result<(), <Self as JType>::Error> {
+    }
 
     #[java_method]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams) {}
