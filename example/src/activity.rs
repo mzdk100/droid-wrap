@@ -24,10 +24,10 @@ use droid_wrap::{
         },
     },
     java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
+    JProxy,
 };
 use mobile_entry_point::mobile_entry_point;
 use std::sync::Arc;
-
 #[mobile_entry_point]
 fn main() {
     let act = Activity::fetch();
@@ -42,8 +42,11 @@ fn main() {
         "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
     ));
     let edit = EditText::new(&context);
+
     let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
     edit.set_on_editor_action_listener(editor_listener.as_ref());
+    // 请在合适的时机手动释放，因为rust无法感知java什么时候不再需要Listener。
+    // editor_listener.release();
 
     let act2 = act.clone();
     act.run_on_ui_thread(
@@ -63,9 +66,15 @@ fn main() {
 
             let wm: WindowManagerImpl = act2.get_window_manager();
             let params = WindowManager_LayoutParams::new();
-            wm.add_view(&text_view, &params);
+            let _ = wm.add_view(&text_view, &params);
             wm.remove_view(&text_view);
-            wm.add_view(&edit, &params);
+            let _ = wm.add_view(&edit, &params);
+            let runnable = RunnableImpl::from_fn(|| {
+                println!("post delayed");
+            });
+            edit.post_delayed(runnable.as_ref(), 100);
+            // 请在合适的时机手动释放，因为rust无法感知java什么时候不再需要Runnable。
+            // runnable.release();
         })
         .as_ref(),
     );

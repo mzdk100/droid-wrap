@@ -18,44 +18,34 @@ pub use jni::{
     AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
 use log::{debug, error, warn};
+use parking_lot::ReentrantMutex;
 use std::{
+    cell::RefCell,
     collections::HashMap,
     fmt::Debug,
     hash::{DefaultHasher, Hash, Hasher},
     str::FromStr,
-    sync::{
-        mpsc::{channel, Receiver, Sender},
-        LazyLock, OnceLock, RwLock,
-    },
+    sync::{Arc, LazyLock, OnceLock},
 };
 
 // Rust 代理对象的哈希值映射到 Rust 函数
 static HOOK_OBJECTS: LazyLock<
-    RwLock<
-        HashMap<
-            i32,
-            Box<
-                dyn Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef + Send + Sync,
+    ReentrantMutex<
+        RefCell<
+            HashMap<
+                i32,
+                Arc<
+                    dyn Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef
+                        + Send
+                        + Sync,
+                >,
             >,
         >,
     >,
-> = LazyLock::new(|| RwLock::new(HashMap::new()));
+> = LazyLock::new(|| ReentrantMutex::new(RefCell::new(HashMap::new())));
 // Rust 代理对象的哈希值映射到 Java 被代理的对象的哈希值
-static HOOK_OBJECTS_OTHER: LazyLock<RwLock<HashMap<u64, i32>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
-// 当某个代理对象在rust层被Drop时，延迟释放HOOK_OBJECTS表中的对象，这样不至于本地闭包函数无法被调用，同时还解决了RwLock可能死锁的问题
-static HOOK_DROP_CHANNEL: OnceLock<(Sender<u64>, Recv)> = OnceLock::new();
-
-struct Recv(Receiver<u64>);
-unsafe impl Sync for Recv {}
-unsafe impl Send for Recv {}
-impl std::ops::Deref for Recv {
-    type Target = Receiver<u64>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+static HOOK_OBJECTS_OTHER: LazyLock<ReentrantMutex<RefCell<HashMap<u64, i32>>>> =
+    LazyLock::new(|| ReentrantMutex::new(RefCell::new(HashMap::new())));
 
 /**
 定义必要的trait，以便于在本地为任何数据类型实现JAVA对象所需的功能。
@@ -67,7 +57,7 @@ macro_rules! import {
             rc::Rc,
             sync::{Arc, Mutex},
         };
-        use $crate::{null_value, vm_attach, GlobalRef, JObject};
+        use $crate::{null_value, unbind_proxy_handler, vm_attach, GlobalRef, JObject};
 
         /**
         JObjectRef trait提供从任何数据类型获取java对象的全局引用。
@@ -121,14 +111,21 @@ macro_rules! import {
         }
 
         /**
-        用于Java动态代理的创建。
+        用于Java动态代理的创建和删除。
         */
-        pub trait JProxy: JObjNew {
+        pub trait JProxy: JObjNew + JObjRef {
             /**
             创建一个代理对象。
             `fields` 传递给struct的自定义字段。
             */
             fn new(fields: Self::Fields) -> std::sync::Arc<Self>;
+
+            /**
+            释放代理对象，解除绑定的handler。
+            */
+            fn release(&self) {
+                unbind_proxy_handler(&self.java_ref());
+            }
         }
 
         impl<T: JObjRef> JObjRef for &T {
@@ -329,10 +326,10 @@ pub fn new_proxy(interfaces: &[&str]) -> GlobalRef {
         .l()
         .unwrap();
     let res = env.new_global_ref(&res).unwrap();
-    let mut lock = HOOK_OBJECTS_OTHER.write().unwrap();
+    let lock = HOOK_OBJECTS_OTHER.lock();
     let mut hasher = DefaultHasher::new();
     res.hash(&mut hasher);
-    lock.insert(hasher.finish(), hash_code);
+    lock.borrow_mut().insert(hasher.finish(), hash_code);
     drop(lock);
     res
 }
@@ -369,35 +366,14 @@ pub fn bind_proxy_handler(
         + 'static,
 ) {
     let hash_code = get_proxy_hash_code(proxy);
-    let mut lock = match HOOK_OBJECTS.try_write() {
-        Ok(lock) => lock,
-        Err(e) => {
-            error!("Can't bind proxy handler. ({})", e);
+    let lock = match HOOK_OBJECTS.try_lock() {
+        Some(lock) => lock,
+        None => {
+            error!("Can't bind proxy handler.");
             return;
         }
     };
-    lock.insert(hash_code, Box::new(handler));
-    let (_, rx) = HOOK_DROP_CHANNEL.get_or_init(|| {
-        let (tx, rx) = channel();
-        (tx, Recv(rx))
-    });
-    loop {
-        match rx.try_recv() {
-            Ok(proxy_hash_code) => {
-                let lock2 = HOOK_OBJECTS_OTHER.read().unwrap();
-                let Some(code) = lock2.get(&proxy_hash_code) else {
-                    continue;
-                };
-                let code = *code;
-                drop(lock2);
-                lock.remove_entry(&code);
-                debug!("Proxy `{}` is dropped.", proxy_hash_code);
-            }
-            Err(..) => {
-                break;
-            }
-        }
-    }
+    lock.borrow_mut().insert(hash_code, Arc::new(handler));
 }
 
 /// 获取java代理对象的哈希值。
@@ -419,11 +395,11 @@ pub fn get_proxy_hash_code(proxy: &GlobalRef) -> i32 {
     let mut hasher = DefaultHasher::new();
     proxy.hash(&mut hasher);
     let proxy_hash_code = hasher.finish();
-    let lock = HOOK_OBJECTS_OTHER.read().unwrap();
-    let Some(code) = lock.get(&proxy_hash_code) else {
-        return 0;
+    let lock = HOOK_OBJECTS_OTHER.lock();
+    if let Some(code) = lock.borrow().get(&proxy_hash_code) {
+        return *code;
     };
-    *code
+    0
 }
 
 //noinspection SpellCheckingInspection
@@ -446,9 +422,12 @@ pub fn unbind_proxy_handler(proxy: &GlobalRef) {
     let mut hasher = DefaultHasher::new();
     proxy.hash(&mut hasher);
     let proxy_hash_code = hasher.finish();
-    if let Some((tx, _)) = HOOK_DROP_CHANNEL.get() {
-        let _ = tx.send(proxy_hash_code);
-    }
+    let lock = HOOK_OBJECTS_OTHER.lock();
+    if let Some(code) = lock.borrow().get(&proxy_hash_code) {
+        let lock = HOOK_OBJECTS.lock();
+        lock.borrow_mut().remove_entry(code);
+        debug!("Proxy `{}` is dropped.", proxy_hash_code);
+    };
 }
 
 /**
@@ -475,6 +454,7 @@ impl<T: FromStr> ParseJObjectType<T> for JObject<'_> {
         s.to_str().unwrap().parse().unwrap()
     }
 }
+
 //noinspection SpellCheckingInspection
 fn load_rust_call_method_hook_class<'a>() -> &'a GlobalRef {
     #[cfg(target_os = "android")]
@@ -583,19 +563,18 @@ unsafe extern "C" fn rust_callback<'a>(
         }
     }
 
-    let lock = HOOK_OBJECTS.read().unwrap();
-    if let Some(f) = lock.get(&hash_code) {
-        let ret = f(&mut env, &method, &args);
-        drop(lock);
-
-        return env.new_local_ref(ret.as_obj()).unwrap();
+    let lock = HOOK_OBJECTS.lock();
+    let func = if let Some(f) = lock.borrow().get(&hash_code) {
+        f.to_owned()
     } else {
         warn!(
             "The method call has reached, but it appears that the proxy object has been dropped."
         );
-    }
+        return JObject::null();
+    };
     drop(lock);
-    JObject::null()
+    let ret = func(&mut env, &method, &args);
+    env.new_local_ref(ret.as_obj()).unwrap()
 }
 
 /// 把java对象数组转换成Vec

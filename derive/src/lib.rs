@@ -158,6 +158,12 @@ pub fn java_class(attrs: TokenStream, input: TokenStream) -> TokenStream {
                     &self.#added_super
                 }
             }
+
+            impl #generics std::ops::DerefMut for #name #generics {
+                fn deref_mut(&mut self) -> &mut Self::Target {
+                    &mut self.#added_super
+                }
+            }
         }
     } else {
         quote! {
@@ -329,6 +335,7 @@ pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
         quote! {
             #(#attrs)*
             #vis #sig {
+                #(#stmts)*
                 droid_wrap_utils::vm_attach!(mut env);
                 let ret = env.call_method(
                     #self_.java_ref(),
@@ -598,7 +605,7 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
         impl Drop for #name {
             fn drop(&mut self) {
-                droid_wrap_utils::unbind_proxy_handler(&self.java_ref());
+                self.release();
             }
         }
     };
