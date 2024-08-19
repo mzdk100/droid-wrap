@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+use cargo_emit::rerun_if_changed;
 use noak::{writer::ClassWriter, AccessFlags};
 use std::{
     collections::HashMap,
@@ -67,7 +68,7 @@ fn main() {
         return;
     }
 
-    println!("cargo:rerun-if-changed=build.rs");
+    rerun_if_changed!("build.rs");
     let out_dir = PathBuf::from(var("OUT_DIR").unwrap());
     const CLASS: &str = "rust/CallMethodHook";
     let java_class_path = out_dir.join("CallMethodHook.class");
@@ -105,5 +106,4 @@ fn main() {
         .run()
         .expect("failed to acquire exit status for java d8.jar invocation")
         .success();
-    println!("cargo:rerun-if-changed={}", java_class_path.display());
 }

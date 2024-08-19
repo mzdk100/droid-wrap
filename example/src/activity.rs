@@ -24,7 +24,6 @@ use droid_wrap::{
         },
     },
     java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
-    JProxy,
 };
 use mobile_entry_point::mobile_entry_point;
 use std::sync::Arc;
