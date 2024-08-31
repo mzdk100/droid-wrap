@@ -15,7 +15,7 @@ use droid_wrap_derive::{java_class, java_method};
 use droid_wrap_utils::{android_context, vm_attach};
 
 use crate::{
-    android::view::{View, WindowManager},
+    android::view::{View, Window, WindowManager},
     java::lang::{CharSequence, Runnable},
     JObjNew, JObjRef, JType,
 };
@@ -200,6 +200,34 @@ impl Activity {
             Self::null()
         }
     }
+
+    /**
+    查询活动的当前窗口。这可用于直接访问无法通过 Activity/Screen 获得的窗口 API 部分。
+    返回：Window 当前窗口，如果活动不可见，则返回 null。
+    */
+    #[java_method]
+    pub fn get_window(&self) -> Option<Window> {}
+
+    /**
+    调用此 Activity 的 Window 上的 Window.getCurrentFocus 来返回当前聚焦的视图。
+    返回：View 当前具有焦点的视图或 null。
+    */
+    #[java_method]
+    pub fn get_current_focus(&self) -> Option<View> {}
+
+    /**
+    如果此活动的主窗口当前具有窗口焦点，则返回 true。请注意，这与视图本身具有焦点不同。
+    返回：如果此活动的主窗口当前具有窗口焦点，则返回 true。
+    */
+    #[java_method]
+    pub fn has_window_focus(&self) -> bool {}
+
+    /**
+    检查自由格式窗口上的标题是否直接显示在内容上。
+    返回：如果标题显示在内容上，则返回 True；如果将内容向下推，则返回 false。
+    */
+    #[java_method]
+    pub fn is_overlay_with_decor_caption_enabled(&self) -> bool {}
 }
 
 /// 测试android.app
