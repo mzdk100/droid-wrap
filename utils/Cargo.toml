@@ -23,3 +23,5 @@ parking_lot = "0.12.3"
 [build-dependencies]
 android-build = "0.1.0"
 noak = "0.6.1"
+cargo-emit = "0.2.1"
+

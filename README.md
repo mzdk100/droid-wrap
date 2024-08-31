@@ -111,6 +111,7 @@ android.view.View的API等（包括点击监听器的实现）。
 13. android.view.View_OnLongClickListener;
 14. android.view.ViewParent;
 15. android.view.View_OnKeyListener;
+16. android.view.Window;
 
 ### 安卓小部件(android_widget)
 
