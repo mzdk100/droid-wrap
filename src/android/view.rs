@@ -4459,6 +4459,850 @@ impl View_OnKeyListener for View_OnKeyListenerImpl {
     }
 }
 
+/**
+顶级窗口外观和行为策略的抽象基类。该类的实例应用于添加到窗口管理器的顶级视图。
+它提供标准 UI 策略，例如背景、标题区域、默认按键处理等。框架将代表应用程序实例化该类的实现。
+*/
+#[java_class(name = "android/view/Window")]
+pub struct Window;
+
+impl Window {
+    /// 标记“选项面板”功能。默认情况下启用此功能。
+    pub const FEATURE_OPTIONS_PANEL: i32 = 0;
+
+    /// 标记为“无标题”功能，关闭屏幕顶部的标题。
+    pub const FEATURE_NO_TITLE: i32 = 1;
+
+    /// 进度指示器功能的标志。
+    #[deprecated(note = "从 API 21 开始不再支持。")]
+    pub const FEATURE_PROGRESS: i32 = 2;
+
+    /// 标记在标题栏左侧有一个图标
+    pub const FEATURE_LEFT_ICON: i32 = 3;
+
+    /// 标记在标题栏右侧有图标
+    pub const FEATURE_RIGHT_ICON: i32 = 4;
+
+    /// 标记不确定的进度。
+    #[deprecated(note = "从 API 21 开始不再支持。")]
+    pub const FEATURE_INDETERMINATE_PROGRESS: i32 = 5;
+
+    /// 上下文菜单的标志。默认情况下启用该标志。
+    pub const FEATURE_CONTEXT_MENU: i32 = 6;
+
+    /// 标记自定义标题。您不能将此功能与其他标题功能结合使用。
+    pub const FEATURE_CUSTOM_TITLE: i32 = 7;
+
+    /// 用于启用操作栏的标志。某些设备默认启用该功能。操作栏取代了标题栏，并为某些设备上的屏幕菜单按钮提供了备用位置。
+    pub const FEATURE_ACTION_BAR: i32 = 8;
+
+    /**
+    用于请求覆盖窗口内容的操作栏的标志。通常，操作栏将位于窗口内容上方的空间中，但如果此功能与 FEATURE_ACTION_BAR 一起请求，它将覆盖在窗口内容本身上。如果您希望应用能够更好地控制操作栏的显示方式，例如让应用内容在具有透明背景的操作栏下方滚动，或者在应用内容上方显示透明/半透明的操作栏，这将非常有用。
+    此模式与 View#SYSTEM_UI_FLAG_FULLSCREEN View.SYSTEM_UI_FLAG_FULLSCREEN 特别有用，它允许您结合其他屏幕装饰无缝隐藏操作栏。
+    从 android.os.Build.VERSION_CODES#JELLY_BEAN 开始，当 ActionBar 处于此模式时，它将调整提供给 View#fitSystemWindows(android.graphics.Rect) View.fitSystemWindows(Rect) 的插入图以包含操作栏覆盖的内容，因此您可以在该空间内进行布局。
+    */
+    pub const FEATURE_ACTION_BAR_OVERLAY: i32 = 9;
+
+    /// 用于指定操作栏不存在时操作模式行为的标志。如果启用了覆盖，则允许操作模式 UI 覆盖现有窗口内容。
+    pub const FEATURE_ACTION_MODE_OVERLAY: i32 = 10;
+
+    /// 标记用于请求无装饰窗口，该窗口可通过从左侧滑动来关闭。
+    #[deprecated(note = "滑动关闭功能不再起作用。")]
+    pub const FEATURE_SWIPE_TO_DISMISS: i32 = 11;
+
+    /**
+    请求窗口内容更改的标志应使用 TransitionManager 进行动画处理。
+    TransitionManager 使用 setTransitionManager(android.transition.TransitionManager) 设置。如果没有设置，则使用默认的 TransitionManager。
+    */
+    pub const FEATURE_CONTENT_TRANSITIONS: i32 = 12;
+
+    /// 通过发送或接收使用 android.app.ActivityOptions#makeSceneTransitionAnimation(android.app.Activity, android.util.Pair[]) 或 android.app.ActivityOptions#makeSceneTransitionAnimation(android.app.Activity, View, String) 创建的 ActivityOptions 包，使活动能够运行活动转换。
+    pub const FEATURE_ACTIVITY_TRANSITIONS: i32 = 13;
+
+    /// 最大值用作功能ID
+    pub const FEATURE_MAX: i32 = Self::FEATURE_ACTIVITY_TRANSITIONS;
+
+    /// 将进度条的可见性设置为 VISIBLE 的标志。
+    #[deprecated(note = "从API 21开始，不再支持feature_progress和相关方法。")]
+    pub const PROGRESS_VISIBILITY_ON: i32 = -1;
+
+    /// 将进度条的可见性设置为 GONE 的标志。
+    #[deprecated(note = "从API 21开始，不再支持feature_progress和相关方法。")]
+    pub const PROGRESS_VISIBILITY_OFF: i32 = -2;
+
+    /// 用于设置进度条不确定模式的标志。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_INDETERMINATE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_INDETERMINATE_ON: i32 = -3;
+
+    /// 用于关闭进度条不确定模式的标志。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_INDETERMINATE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_INDETERMINATE_OFF: i32 = -4;
+
+    /// (主要) 进度的起始值。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_START: i32 = 0;
+
+    /// (主要) 进度的结束值。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_END: i32 = 10000;
+
+    /// 次要进度的最低可能值。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_SECONDARY_START: i32 = 20000;
+
+    /// 次要进度的最高可能值。
+    #[deprecated(note = "从 API 21 开始不再支持 FEATURE_PROGRESS 和相关方法。")]
+    pub const PROGRESS_SECONDARY_END: i32 = 30000;
+
+    /// 使用自定义背景时状态栏背景视图的 transitionName。
+    pub const STATUS_BAR_BACKGROUND_TRANSITION_NAME: &'static str = "android:status:background";
+
+    /// 使用自定义背景时导航栏背景视图的 transitionName。
+    pub const NAVIGATION_BAR_BACKGROUND_TRANSITION_NAME: &'static str =
+        "android:navigation:background";
+
+    /// 标志以允许主题驱动窗口字幕控件的颜色。与setDecorCaptionShade(int)一起使用。这是默认值。
+    pub const DECOR_CAPTION_SHADE_AUTO: i32 = 0;
+
+    /// 用于在窗口标题上设置浅色控件的标志。与 setDecorCaptionShade(int) 一起使用。
+    pub const DECOR_CAPTION_SHADE_LIGHT: i32 = 1;
+
+    /// 用于在窗口标题上设置深色控件的标志。与 setDecorCaptionShade(int) 一起使用。
+    pub const DECOR_CAPTION_SHADE_DARK: i32 = 2;
+
+    #[doc(hidden)]
+    #[java_constructor]
+    pub fn new(context: &Context) -> Self {}
+
+    /**
+    返回此窗口策略正在运行的上下文，用于检索资源和其他信息。
+    返回：上下文提供给构造函数的上下文。
+    */
+    #[java_method]
+    pub fn get_context(&self) -> Context {}
+
+    /**
+    设置此窗口的容器。如果未设置，DecorWindow 将作为顶级窗口运行；否则，它将与容器协商以适当地显示自身。
+    `container` 所需的容器窗口。
+    */
+    #[java_method]
+    pub fn set_container(&self, container: Self) {}
+
+    /**
+    返回此窗口的容器。
+    返回：窗口包含的窗口，如果这是顶级窗口，则返回 null。
+    */
+    #[java_method]
+    pub fn get_container(&self) -> Self {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn has_children(&self) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn destroy(&self) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn is_destroyed(&self) -> bool {}
+
+    /**
+    返回允许此窗口显示其自己的窗口的窗口管理器。
+    返回：WindowManager ViewManager。
+    */
+    #[java_method]
+    pub fn get_window_manager<WM: WindowManager>(&self) -> WM {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn dispatch_on_window_dismissed(
+        &self,
+        finish_task: bool,
+        suppress_window_transition: bool,
+    ) {
+    }
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn dispatch_on_window_swipe_dismissed(&self) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn get_system_bar_appearance(&self) -> i32 {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn dispatch_on_system_bar_appearance_changed(&self, appearance: i32) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn on_draw_legacy_navigation_bar_background_changed(
+        &self,
+        draw_legacy_navigation_bar_background: bool,
+    ) -> bool {
+    }
+
+    /**
+    防止非系统覆盖窗口绘制在此窗口之上。
+    `hide` 是否应隐藏非系统覆盖窗口。
+    */
+    #[java_method]
+    pub fn set_hide_overlay_windows(&self, hide: bool) {}
+
+    /**
+    返回此窗口是否以浮动样式显示（基于样式/主题中的 android.R.attr.windowIsFloating 属性）。
+    返回：如果窗口配置为浮动显示在它后面的任何内容之上，则返回 true。
+    */
+    #[java_method]
+    pub fn is_floating(&self) -> bool {}
+
+    /**
+    设置窗口的宽度和高度布局参数。这两个参数的默认值均为 MATCH_PARENT；您可以将其更改为 WRAP_CONTENT 或绝对值，以使窗口不全屏显示。
+    `width` 所需的窗口布局宽度。
+    `height` 所需的窗口布局高度。
+    */
+    #[java_method]
+    pub fn set_layout(&self, width: i32, height: i32) {}
+
+    /**
+    根据重力常数设置窗口的重力。这控制窗口管理器在整个窗口中的定位方式；它仅在使用 WRAP_CONTENT 作为布局宽度或高度时有用。
+    `gravity` 所需的重力常数。
+    */
+    #[java_method]
+    pub fn set_gravity(&self, gravity: i32) {}
+
+    /**
+    根据 WindowManager.LayoutParams 类型设置窗口的类型。
+    `type` 新的窗口类型（参见 WindowManager.LayoutParams）。
+    */
+    #[java_method]
+    pub fn set_type(&self, r#type: i32) {}
+
+    /**
+    根据 PixelFormat 类型设置窗口的格式。这将覆盖窗口根据其窗口装饰选择的默认格式。
+    `format` 新的窗口格式（参见 PixelFormat）。使用 PixelFormat。UNKNOWN 允许窗口选择格式。
+    */
+    #[java_method]
+    pub fn set_format(&self, format: i32) {}
+
+    /**
+    根据 WindowManager.LayoutParams.windowAnimations 指定要用于窗口的自定义动画。此处提供除 0 之外的任何值都将覆盖窗口通常从其主题中检索的动画。
+    */
+    #[java_method]
+    pub fn set_window_animations(&self, res_id: i32) {}
+
+    /**
+    根据 WindowManager.LayoutParams.softInputMode 为窗口指定一个显式软输入模式。在此处提供除“未指定”之外的任何内容都将覆盖窗口通常从其主题中检索的输入模式。
+    */
+    #[java_method]
+    pub fn set_soft_input_mode(&self, mode: i32) {}
+
+    /**
+    按照 setFlags 的说明，使用便捷函数设置 flags 中指定的标志位。
+    `flags` 要设置的标志位。
+    */
+    #[java_method]
+    pub fn add_flags(&self, flags: i32) {}
+
+    /**
+    添加私有标志位。请参阅各个标志以了解所需的权限。
+    `flags` 要添加的标志位。
+    */
+    #[java_method]
+    pub fn add_private_flags(&self, flags: i32) {}
+
+    /**
+    添加系统标志位。请参阅各个标志以了解所需的权限。
+    注意：仅适用于可更新的系统组件（又称主线模块）
+    `flags` 要添加的标志位。
+    */
+    #[java_method]
+    pub fn add_system_flags(&self, flags: i32) {}
+
+    /**
+    根据 WindowManager.LayoutParams 标志设置窗口的标志。
+    请注意，在创建窗口装饰之前必须设置一些标志（通过第一次调用 setContentView(View, ViewGroup.LayoutParams) 或 getDecorView()：WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN 和 WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR。
+    这些将根据 android.R.attr.windowIsFloating 属性为您设置。
+    `flags` 新的窗口标志（请参阅 WindowManager.LayoutParams）。
+    `mask` 要修改的窗口标志位。
+    */
+    #[java_method]
+    pub fn set_flags(&self, flags: i32, mask: i32) {}
+
+    /**
+    设置窗口的请求颜色模式。请求的颜色模式可能会覆盖窗口的像素格式。
+    请求的颜色模式必须是 ActivityInfo.COLOR_MODE_DEFAULT、ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT 或 ActivityInfo.COLOR_MODE_HDR 之一。
+    请求的颜色模式不保证一定会被遵守。有关更多信息，请参阅 getColorMode()。
+    */
+    #[java_method]
+    pub fn set_color_mode(&self, color_mode: i32) {}
+
+    /**
+    如果 is_preferred 为 true，则此方法要求当此窗口在屏幕上可见时，连接的显示器进行最少的后期处理。否则，它要求显示器切换回标准图像处理。
+    默认情况下，显示器不进行最少的后期处理，如果需要，则不应使用此方法。
+    当低延迟比图像增强处理具有更高的优先级时（例如，对于游戏或视频会议），应将其与 is_preferred=true 一起使用。
+    当屏幕上不再显示请求最少后期处理的窗口时，显示器将自动返回到标准图像处理模式。如果之前已为此窗口调用 setPreferMinimalPostProcessing(true) 并且不再需要最少的后期处理，则可以使用 setPreferMinimalPostProcessing(false)。
+    如果显示器接收器通过 HDMI 连接，设备将开始发送启用了自动低延迟模式和游戏内容类型的信息帧。这会将连接的显示器切换到最小图像处理模式（如果可用），从而减少延迟，改善游戏或视频会议应用程序的用户体验。
+    有关更多信息，请参阅 HDMI 2.1 规范。如果显示接收器具有内部连接或使用 HDMI 以外的其他协议，效果可能类似但由实现定义。
+    可以通过系统设置菜单中的用户设置禁用切换到具有最少后期处理模式的功能。在这种情况下，此方法不执行任何操作。
+    `is_preferred` 指示此窗口是否优先使用最少后期处理（is_preferred=true）或不优先使用（is_preferred=false）。
+    */
+    #[java_method]
+    pub fn set_prefer_minimal_post_processing(&self, is_preferred: bool) {}
+
+    /**
+    返回窗口所请求的颜色模式，可以是 ActivityInfo.COLOR_MODE_DEFAULT、ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT 或 ActivityInfo.COLOR_MODE_HDR 之一。
+    如果请求的是 ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT，则窗口可能不会处于广色域模式，具体取决于设备和显示器对该模式的支持。使用 isWideColorGamut 确定窗口当前是否处于广色域模式。
+    */
+    #[java_method]
+    pub fn get_color_mode(&self) -> i32 {}
+
+    /**
+    如果此窗口的颜色模式为 ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT、显示器具有宽色域且此设备支持宽色域渲染，则返回 true。
+    */
+    #[java_method]
+    pub fn is_wide_color_gamut(&self) -> bool {}
+
+    /**
+    使用 WindowManager.LayoutParams.FLAG_DIM_BEHIND 时设置窗口后面的暗淡量。这将覆盖窗口根据其主题选择的默认暗淡量。
+    `amount` 新的暗淡量，从 0（无暗淡）到 1（完全暗淡）。
+    */
+    #[java_method]
+    pub fn set_dim_amount(&self, amount: f32) {}
+
+    /**
+    设置装饰视图是否应适合 WindowInsets 的根级内容视图。如果设置为 true，框架将检查现已弃用的 View.SYSTEM_UI_LAYOUT_FLAGS 以及 WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE 标志，并根据这些标志调整内容。
+    如果设置为 false，框架将不会将内容视图调整到插图中，而只会将 WindowInsets 传递到内容视图。
+    `decor_fits_system_windows` 装饰视图是否应适合插图的根级内容视图。
+    */
+    #[java_method]
+    pub fn set_decor_fits_system_windows(&self, decor_fits_system_windows: bool) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn decor_fits_system_windows(&self) -> bool {}
+
+    /**
+    指定自定义窗口属性。请注意：您在此处提供的布局参数通常应来自之前使用 getAttributes() 检索的值；您可能不想盲目地创建和应用自己的值，因为这会抹去框架设置的任何您不感兴趣的值。
+    `a` 新的窗口属性，它将完全覆盖任何当前值。
+    */
+    #[java_method]
+    pub fn set_attributes(&self, a: &WindowManager_LayoutParams) {}
+
+    /**
+    查询与此面板关联的当前窗口属性。
+    返回：WindowManager.LayoutParams 要么是现有的窗口属性对象，要么是新创建的对象（如果没有）。
+    */
+    #[java_method]
+    pub fn get_attributes(&self) -> WindowManager_LayoutParams {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_close_on_touch_outside(&self, close: bool) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_close_on_touch_outside_if_not_set(&self, close: bool) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn always_read_close_on_touch_attr(&self) {}
+
+    /**
+    设置调用窗口的持续性能要求。
+    `enable` 禁用或启用该模式。
+    */
+    #[java_method]
+    pub fn set_sustained_performance_mode(&self, enable: bool) {}
+
+    /**
+    启用扩展屏幕功能。必须在setContentView()之前调用。只要在setContentView()之前，就可以根据需要多次调用。
+    如果未调用，则不会提供扩展功能。一旦要求，您就无法关闭功能。您可以使用feature_custom_title使用其他标题功能。
+    返回：现在设置的功能。
+    `feature_id` 所需的功能，定义为Window的常数。
+    */
+    #[java_method]
+    pub fn request_feature(&self, feature_id: i32) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn make_active(&self) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn is_active(&self) -> bool {}
+
+    /**
+    查找由 android.app.Activity.onCreate 中处理的 android:id XML 属性标识的视图。这将隐式调用 getDecorView 并产生所有相关副作用。
+    注意：在大多数情况下（取决于编译器支持情况），结果视图会自动转换为目标类类型。如果目标类类型不受约束，则可能需要显式转换。
+    返回：如果找到，则返回具有给定 ID 的视图，否则返回 null
+    `id` 要搜索的 ID
+    */
+    #[java_method]
+    pub fn find_view_by_id(&self, id: i32) -> Option<View> {}
+
+    /**
+    查找由 android.app.Activity.onCreate 中处理的 android:id XML 属性标识的视图，如果 ID 无效或层次结构中没有匹配的视图，则抛出 IllegalArgumentException。
+    注意：在大多数情况下 - 取决于编译器支持 - 生成的视图会自动转换为目标类类型。如果目标类类型不受约束，则可能需要显式转换。
+    `id` 要搜索的 ID 返回：具有给定 ID 的视图。
+    */
+    #[java_method]
+    pub fn require_view_by_id(&self, id: i32) -> Result<View, <Self as JType>::Error> {}
+
+    /**
+    方便使用 setContentView(View, ViewGroup.LayoutParams) 将屏幕内容设置为显式视图。此视图直接放置在屏幕的视图层次结构中。它本身可以是一个复杂的视图层次结构。
+    `layout_res_id` 要显示的内容视图资源ID。
+    */
+    #[java_method(overload = setContentView)]
+    pub fn set_content_view_by_id(&self, layout_res_id: i32) {}
+
+    /**
+    方便使用 setContentView(View, ViewGroup.LayoutParams) 将屏幕内容设置为显式视图。此视图直接放入屏幕的视图层次结构中。它本身可以是一个复杂的视图层次结构。
+    `view` 要显示的所需内容。
+    */
+    #[java_method(overload = setContentView)]
+    pub fn set_content_view_convenience(&self, view: &View) {}
+
+    /**
+    将屏幕内容设置为显式视图。此视图直接放入屏幕的视图层次结构中。它本身可以是一个复杂的视图层次结构。
+    请注意，调用此函数会“锁定”窗口的各种特性，从此时起，这些特性将无法更改：使用 requestFeature(int) 请求的功能，以及 setFlags(int, int) 中描述的某些窗口标志。如果设置了 FEATURE_CONTENT_TRANSITIONS，则将使用窗口的 TransitionManager 将内容从当前内容视图动画化为视图。
+    `view` 需要显示的内容。
+    `params` 视图的布局参数。
+    */
+    #[java_method]
+    pub fn set_content_view(&self, view: &View, params: &ViewGroup_LayoutParams) {}
+
+    /**
+    setContentView(View, ViewGroup.LayoutParams) 的变体，用于向屏幕添加额外的内容视图。在屏幕中任何现有视图之后添加 - 现有视图不会被删除。
+    `view` 要显示的内容。
+    `params` 视图的布局参数。
+    */
+    #[java_method]
+    pub fn add_content_view(&self, view: &View, params: &ViewGroup_LayoutParams) {}
+
+    /// 删除用作屏幕内容的视图。
+    #[java_method]
+    pub fn clear_content_view(&self) {}
+
+    /**
+    返回此窗口中当前具有焦点的视图，如果没有，则返回 null。
+    请注意，这不会在任何包含窗口中查找。
+    返回：View 具有焦点的当前视图或 null。
+    */
+    #[java_method]
+    pub fn get_current_focus(&self) -> Option<View> {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_title<CS: CharSequence>(&self, title: Option<CS>) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_title_color(&self, text_color: i32) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn open_panel(&self, feature_id: i32, event: &KeyEvent) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn close_panel(&self, feature_id: i32) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn toggle_panel(&self, feature_id: i32, event: &KeyEvent) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn invalidate_panel_menu(&self, feature_id: i32) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn perform_panel_shortcut(
+        &self,
+        feature_id: i32,
+        key_code: i32,
+        event: &KeyEvent,
+        flags: i32,
+    ) -> bool {
+    }
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn perform_panel_identifier_action(&self, feature_id: i32, id: i32, flags: i32) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn close_all_panels(&self) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn perform_context_menu_identifier_action(&self, id: i32, flags: i32) -> bool {}
+
+    /**
+    设置窗口高度。对此属性的更改会立即生效，并将导致重新创建窗口表面。
+    这是一项昂贵的操作，因此不应对此属性进行动画处理。
+    `elevation` 窗口高度。
+    */
+    #[java_method]
+    pub fn set_elevation(&self, elevation: f32) {}
+
+    /**
+    获取窗口高度。
+    */
+    #[java_method]
+    pub fn get_elevation(&self) -> f32 {}
+
+    /**
+    设置是否应将窗口内容剪裁到窗口背景的轮廓。
+    `clip_to_outline` 是否应将窗口内容剪裁到窗口背景的轮廓。
+    */
+    #[java_method]
+    pub fn set_clip_to_outline(&self, clip_to_outline: bool) {}
+
+    /**
+    将此窗口的背景更改为可绘制资源。将背景设置为 null 将使窗口不透明。要使窗口透明，您可以使用空的 可绘制资源（例如颜色为 0 的 ColorDrawable 或系统可绘制资源 android:drawable/empty。）
+    `res_id` 将作为新背景安装的可绘制资源的资源标识符。
+    */
+    #[java_method]
+    pub fn set_background_drawable_resource(&self, res_id: i32) {}
+
+    /**
+    在窗口边界内模糊窗口后面的屏幕。模糊的密度由模糊半径设置。半径定义邻近区域的大小，从中对像素进行平均以形成每个像素的最终颜色。
+    该操作近似于高斯模糊。半径为 0 表示无模糊。半径越大，模糊越密集。
+    窗口背景可绘制对象绘制在模糊区域的顶部。模糊区域边界和圆角将模仿背景可绘制对象的边界和圆角。
+    要使模糊区域可见，窗口必须是半透明的（请参阅 android.R.attr.windowIsTranslucent）和浮动的（请参阅 android.R.attr.windowIsFloating）。
+    请注意与 WindowManager.LayoutParams.setBlurBehindRadius 的区别，它模糊了窗口后面的整个屏幕。背景模糊仅在窗口边界内模糊后面的屏幕。
+    由于 GPU 限制，某些设备可能不支持跨窗口模糊。它也可以在运行时禁用，例如在省电模式下、使用多媒体隧道时或请求最少的后期处理时。
+    在这种情况下，不会计算或绘制模糊，从而导致窗口背景透明。为了避免这种情况，应用程序可能需要将其主题更改为不使用模糊的主题。
+    要监听跨窗口模糊启用/禁用事件，请使用 WindowManager.addCrossWindowBlurEnabledListener。
+    `blur_radius` 用于窗口背景模糊的模糊半径（以像素为单位）
+    */
+    #[java_method]
+    pub fn set_background_blur_radius(&self, blur_radius: i32) {}
+
+    /**
+    根据资源标识符设置此窗口的可绘制功能的值。在调用此函数之前，您必须已调用 requestFeature(featureId)。
+    `feature_id` 要更改的所需可绘制功能，由 Window 定义为常量。
+    `res_id` 所需图像的资源标识符。
+    */
+    #[java_method]
+    pub fn set_feature_drawable_resource(&self, feature_id: i32, res_id: i32) {}
+
+    /**
+    为给定的可绘制功能设置自定义 alpha 值，控制背景透过该功能可见的程度。
+    `feature_id` 需要更改的可绘制功能。功能是Window定义的常量。
+    `alpha` – alpha 量，0 表示完全透明，255 表示完全不透明。
+    */
+    #[java_method]
+    pub fn set_feature_drawable_alpha(&self, feature_id: i32, alpha: i32) {}
+
+    /**
+    设置特征的整数值。值的范围取决于所设置的特征。对于 FEATURE_PROGRESS，它应该从 0 到 10000。当值为 10000 时，进度完成，指示器隐藏。
+    `feature_id` 需要更改的特征。特征是由 Window 定义的常量。
+    `value` 特征的值。此值的解释特定于特征。
+    */
+    #[java_method]
+    pub fn set_feature_int(&self, feature_id: i32, value: i32) {}
+
+    /**
+    请求关键事件到达此活动。如果您的活动没有焦点视图，但活动仍需要处理关键事件，请使用此选项。
+    */
+    #[java_method]
+    pub fn take_key_events(&self, get: bool) {}
+
+    /**
+    由自定义窗口（如对话框）使用，将按键事件传递到视图层次结构中。应用程序开发人员不需要实现或调用此功能。
+    */
+    #[java_method]
+    pub fn super_dispatch_key_event(&self, event: &KeyEvent) -> bool {}
+
+    /**
+    查询顶层窗口装饰视图（包含标准窗口框架/装饰以及其中的客户端内容），可将其作为窗口添加到窗口管理器。
+    请注意，首次调用此函数会“锁定”各种窗口特性，如 setContentView(View, ViewGroup.LayoutParams) 中所述。
+    返回：返回顶层窗口装饰视图。
+    */
+    #[java_method]
+    pub fn get_decor_view(&self) -> View {}
+
+    /**
+    返回状态栏背景视图或null。
+    */
+    #[java_method]
+    pub fn get_status_bar_background_view(&self) -> Option<View> {}
+
+    /// 导航栏背景视图或空。
+    #[java_method]
+    pub fn get_navigation_bar_background_view(&self) -> Option<View> {}
+
+    /**
+    查询当前装饰视图，但前提是它已经创建；否则返回 null。
+    返回：返回顶级窗口装饰或 null。
+    */
+    #[java_method]
+    pub fn peek_decor_view(&self) -> Option<View> {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn save_hierarchy_state(&self) -> Bundle {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn restore_hierarchy_state(&self, saved_instance_state: &Bundle) {}
+
+    /**
+    返回窗口上默认设置的功能位。
+    `context` 用于访问资源的上下文
+    */
+    #[java_method]
+    pub fn get_default_features(context: &Context) -> i32 {}
+
+    /**
+    查询特定功能的可用性。
+    如果该功能已启用，则返回 true，否则返回 false。
+    `feature` 要检查的功能 ID
+    */
+    #[java_method]
+    pub fn has_feature(&self, feature: i32) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_child_int(&self, feature_id: i32, value: i32) {}
+
+    /**
+    是此窗口的定义快捷键之一。
+    `key_code` 从KeyEvent到检查的密钥代码。
+    `event` 用于帮助检查的键。
+    */
+    #[java_method]
+    pub fn is_shortcut_key(&self, key_code: i32, event: &KeyEvent) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_volume_control_stream(&self, stream_type: i32) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn get_volume_control_stream(&self) -> i32 {}
+
+    /**
+    设置将影响此窗口 UI 的额外选项。
+    `ui_options` 指定此窗口额外选项的标志。
+    */
+    #[java_method(overload = setUiOptions)]
+    pub fn set_ui_options_convenience(&self, ui_options: i32) {}
+
+    /**
+    设置将影响此窗口 UI 的额外选项。只有经过 mask 过滤的位才会被修改。
+    `ui_options` 指定此窗口额外选项的标志。
+    `mask` 指定应修改哪些选项的标志。其他选项将保持不变。
+    */
+    #[java_method]
+    pub fn set_ui_options(&self, ui_options: i32, mask: i32) {}
+
+    /**
+    设置此窗口的主图标。
+    `res_id` 要设置的可绘制对象的资源 ID
+    */
+    #[java_method]
+    pub fn set_icon(&self, res_id: i32) {}
+
+    /**
+    设置此窗口的默认图标。这将被来自主题或其他显式设置的任何其他图标设置操作覆盖。
+    */
+    #[java_method]
+    pub fn set_default_icon(&self, res_id: i32) {}
+
+    /**
+    设置此窗口的徽标。徽标通常代替图标显示，但通常更宽，并且还传达窗口标题信息。
+    `res_id` 要设置的可绘制对象的资源 ID
+    */
+    #[java_method]
+    pub fn set_logo(&self, res_id: i32) {}
+
+    /**
+    设置此窗口的默认徽标。这将被来自主题或其他明确设置的任何其他徽标设置操作覆盖。
+    */
+    #[java_method]
+    pub fn set_default_logo(&self, res_id: i32) {}
+
+    /**
+    在本地设置焦点。窗口应该已经设置了 WindowManager.LayoutParams.FLAG_LOCAL_FOCUS_MODE 标志。
+    `has_focus` 此窗口是否具有焦点。
+    `in_touch_mode` 此窗口是否处于触摸模式。
+    */
+    #[java_method]
+    pub fn set_local_focus(&self, has_focus: bool, in_touch_mode: bool) {}
+
+    /**
+    控制 setEnterTransition(Transition) 中设置的过渡如何与调用 Activity 的退出过渡重叠。如果为 true，过渡将尽快开始。如果为 false，过渡将等到远程退出过渡完成后再开始。默认值为 true。
+    `allow` 如果为 true，则在可能时启动进入过渡；如果为 false，则等到退出过渡完成。
+    */
+    #[java_method]
+    pub fn set_allow_enter_transition_overlap(&self, allow: bool) {}
+
+    /**
+    返回 setEnterTransition(Transition) 中设置的过渡与调用 Activity 的退出过渡如何重叠。如果为 true，过渡将尽快开始。如果为 false，过渡将等到远程退出过渡完成后再开始。默认值为 true。
+    返回：如果进入过渡应尽快开始，则返回 true；如果应等到退出过渡完成，则返回 false。
+    */
+    #[java_method]
+    pub fn get_allow_enter_transition_overlap(&self) -> bool {}
+
+    /**
+    控制在完成之后重新进入时，setExitTransition(Transition) 中设置的过渡如何与被调用 Activity 的退出过渡重叠。
+    如果为 true，过渡将尽快开始。如果为 false，过渡将等到被调用 Activity 的退出过渡完成后再开始。默认值为 true。
+    `allow` 如果为 true，则在可能时启动过渡；如果为 false，则等到被调用 Activity 的退出过渡完成。
+    */
+    #[java_method]
+    pub fn set_allow_return_transition_overlap(&self, allow: bool) {}
+
+    /**
+    返回setExitTransition(Transition)中的过渡设置如何与在完成后重新输入时的退出活动的退出过渡。如果是true，过渡将尽快开始。当false时，过渡将等到呼叫活动的退出过渡完成之前。默认值是true。
+    返回：true当过渡应在可能的情况下启动或何时等待时，直到被调用活动的退出过渡完成为止。
+    */
+    #[java_method]
+    pub fn get_allow_return_transition_overlap(&self) -> bool {}
+
+    /**
+    返回使用 Activity Transition 调用时进入或离开 Activity 时窗口背景淡入淡出的持续时间（以毫秒为单位）。
+    执行进入 过渡时，背景开始透明并淡入。这需要 FEATURE_ACTIVITY_TRANSITIONS。默认值为 300 毫秒。
+    返回：进入 过渡期间窗口背景淡入不透明的持续时间。
+    */
+    #[java_method]
+    pub fn get_transition_background_fade_duration(&self) -> i64 {}
+
+    /**
+    设置在使用 Activity Transition 调用时进入或离开 Activity 时窗口背景淡入淡出的持续时间（以毫秒为单位）。
+    执行进入过渡时，背景开始透明并淡入。这需要 FEATURE_ACTIVITY_TRANSITIONS。默认值为 300 毫秒。
+    `fade_duration_millis` 进入过渡期间窗口背景淡入或淡出不透明的持续时间。
+    */
+    #[java_method]
+    pub fn set_transition_background_fade_duration(&self, fade_duration_millis: i64) {}
+
+    /**
+    如果共享元素在共享元素转换期间应使用 Overlay，则返回 true；如果共享元素应作为正常 View 层次结构的一部分进行动画处理，则返回 false。默认值为 true。
+    返回：如果共享元素在共享元素转换期间应使用 Overlay，则返回 true；如果共享元素应作为正常 View 层次结构的一部分进行动画处理，则返回 false。
+    */
+    #[java_method]
+    pub fn get_shared_elements_use_overlay(&self) -> bool {}
+
+    /**
+    设置共享元素在共享元素转换期间是否应使用 Overlay。默认值为 true。
+    `shared_elements_use_overlay` true 表示共享元素应使用 Overlay 进行转换，false 表示在正常视图层次结构内进行转换。
+    */
+    #[java_method]
+    pub fn set_shared_elements_use_overlay(&self, shared_elements_use_overlay: bool) {}
+
+    /// 状态栏的颜色。
+    #[java_method]
+    pub fn get_status_bar_color(&self) -> i32 {}
+
+    /**
+    将状态栏的颜色设置为彩色。要使此功能生效，窗口必须使用 WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS 绘制系统栏背景，并且不得设置 WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS。
+    如果颜色不是不透明的，请考虑设置 View.SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN。视图背景的 transitionName 将是“android:status:background”。
+    */
+    #[java_method]
+    pub fn set_status_bar_color(&self, color: i32) {}
+
+    /// 导航栏的颜色。
+    #[java_method]
+    pub fn get_navigation_bar_color(&self) -> i32 {}
+
+    /**
+    将导航栏的颜色设置为`color`。要使此功能生效，窗口必须使用 WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS 绘制系统栏背景，并且不得设置 WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION。
+    如果`color` 不透明，请考虑设置 View.SYSTEM_UI_FLAG_LAYOUT_STABLE 和 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION。视图背景的 transitionName 将是“android:navigation:background”。
+    */
+    #[java_method]
+    pub fn set_navigation_bar_color(&self, color: i32) {}
+
+    /**
+    在导航栏和应用内容之间显示指定颜色的分隔线。要使此功能生效，窗口必须使用 WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS 绘制系统栏背景，并且不得设置 WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION。
+    `divider_color` 细线的颜色。
+    */
+    #[java_method]
+    pub fn set_navigation_bar_divider_color(&self, divider_color: i32) {}
+
+    /**
+    查询导航栏分隔线的颜色。
+    返回：导航栏分隔线的颜色。
+    */
+    #[java_method]
+    pub fn get_navigation_bar_divider_color(&self) -> i32 {}
+
+    /**
+    设置系统是否应在请求完全透明背景时确保状态栏具有足够的对比度。如果设置为此值，系统将确定是否需要使用纱布来确保状态栏与此应用的内容具有足够的对比度，并相应地设置适当的有效栏背景颜色。
+    当状态栏颜色具有非零 alpha 值时，此属性的值无效。
+    */
+    #[java_method]
+    pub fn set_status_bar_contrast_enforced(&self, ensure_contrast: bool) {}
+
+    /**
+    返回系统是否在请求完全透明背景时确保状态栏具有足够的对比度。当状态栏颜色具有非零 alpha 值时，此属性的值无效。
+    如果系统确保对比度，则返回 true，否则返回 false。
+    */
+    #[java_method]
+    pub fn is_status_bar_contrast_enforced(&self) -> bool {}
+
+    /**
+    设置系统是否应在请求完全透明背景时确保导航栏具有足够的对比度。如果设置为此值，系统将确定是否需要使用纱布来确保导航栏与此应用的内容具有足够的对比度，并相应地设置适当的有效栏背景颜色。
+    当导航栏颜色具有非零 alpha 值时，此属性的值无效。
+    */
+    #[java_method]
+    pub fn set_navigation_bar_contrast_enforced(&self, enforce_contrast: bool) {}
+
+    /**
+    返回系统是否在请求完全透明背景时确保导航栏具有足够的对比度。当导航栏颜色具有非零 alpha 值时，此属性的值无效。
+    如果系统确保对比度，则返回 true，否则返回 false。
+    */
+    #[java_method]
+    pub fn is_navigation_bar_contrast_enforced(&self) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn set_theme(&self, res_id: i32) {}
+
+    /**
+    是否应将标题直接显示在内容上，而不是将内容向下推。这只会影响自由格式窗口，因为它们会显示标题。
+    */
+    #[java_method]
+    pub fn set_overlay_with_decor_caption_enabled(&self, enabled: bool) {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn is_overlay_with_decor_caption_enabled(&self) -> bool {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn notify_restricted_caption_area_callback(
+        &self,
+        left: i32,
+        top: i32,
+        right: i32,
+        bottom: i32,
+    ) {
+    }
+
+    /**
+    设置标题控件的颜色。默认情况下，系统将尝试从主题中确定颜色。
+    您可以使用 DECOR_CAPTION_SHADE_DARK、DECOR_CAPTION_SHADE_LIGHT 或 DECOR_CAPTION_SHADE_AUTO 覆盖此颜色。
+    */
+    #[java_method]
+    pub fn set_decor_caption_shade(&self, decor_caption_shade: i32) {}
+
+    /**
+    当活动从全屏模式变为多窗口模式或反之时调用。
+    */
+    #[java_method]
+    pub fn on_multi_window_mode_changed(&self) {}
+
+    /**
+    当活动转换为画中画模式或从画中画模式转换时调用。
+    */
+    #[java_method]
+    pub fn on_picture_in_picture_mode_changed(&self, is_in_picture_in_picture_mode: bool) {}
+}
+
 /// 测试android.view
 #[cfg(feature = "test_android_view")]
 pub fn test() {
