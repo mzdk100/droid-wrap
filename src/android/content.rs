@@ -4403,6 +4403,61 @@ impl Intent {
     */
     #[java_method]
     pub fn remove_extra(&self, name: String) {}
+
+    /**
+    （通常为可选）设置一个明确的应用程序包名称，以限制此 Intent 将解析到的组件。如果保留默认值 null，则将考虑所有应用程序中的所有组件。
+    如果非空，则 Intent 只能匹配给定应用程序包中的组件。
+    返回：返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `package_name` 用于处理 Intent 的应用程序包的名称，或 null 以允许任何应用程序包。
+    */
+    #[java_method]
+    pub fn set_package(&self, package_name: Option<String>) -> Self {}
+
+    /**
+    （通常可选）明确设置处理意图的组件。如果保留默认值 null，系统将根据意图中的其他字段（操作、数据、类型、类别）确定要使用的适当类。
+    如果定义了此类，则无论其他字段如何，都将始终使用指定的类。只有当您知道绝对需要使用特定类时，才应设置此值；否则，最好让系统找到适当的类，以便您尊重已安装的应用程序和用户偏好。
+    返回：返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `component` 处理意图的应用程序组件的名称，或 null 让系统为您找到一个。
+    */
+    #[java_method]
+    pub fn set_component(&self, component: Option<ComponentName>) -> Self {}
+
+    /**
+    使用显式类名调用 setComponent 非常方便。
+    返回：返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `package_context` 实现此类的应用程序包的上下文。
+    `class_name` 应用程序包内将用作此 Intent 组件的类的名称。
+    */
+    #[java_method(overload = setClassName)]
+    pub fn set_class_name_from_context(
+        &self,
+        package_context: &Context,
+        class_name: String,
+    ) -> Self {
+    }
+
+    /**
+    使用显式应用程序包名称和类名称调用 setComponent 非常方便。
+    返回：返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `package_name` 实现所需组件的包的名称。
+    `class_name` 应用程序包内将用作此 Intent 组件的类的名称。
+    */
+    #[java_method]
+    pub fn set_class_name(&self, package_name: String, class_name: String) -> Self {}
+
+    /**
+    查询此 Intent 所限的应用程序包名称。解析 Intent 时，如果非空，则将解析限制为仅给定应用程序包中的组件。
+    返回：Intent 的应用程序包名称。
+    */
+    #[java_method]
+    pub fn get_package(&self) -> Option<String> {}
+
+    /**
+    检索与意图相关的具体组件。当收到意图时，这是被发现最适合处理该意图的组件（即您自己），并且始终为非空；在所有其他情况下，除非明确设置，否则它将为空。
+    返回：处理意图的应用程序组件的名称。
+    */
+    #[java_method]
+    pub fn get_component(&self) -> Option<ComponentName> {}
 }
 
 /**
