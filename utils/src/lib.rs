@@ -14,7 +14,7 @@
 pub use jni::{
     errors::Error,
     objects::{GlobalRef, JClass, JObject, JObjectArray, JValueGen, ReleaseMode},
-    sys::{jboolean, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
+    sys::{jboolean, jbyte, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
     AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
 use log::{debug, error, warn};

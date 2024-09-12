@@ -11,12 +11,13 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_constructor, java_method};
+use droid_wrap_derive::{java_class, java_constructor, java_interface, java_method};
 
 use crate::{
+    android::os::Bundle,
     java::{
-        io::File,
-        lang::{ClassLoader, Object},
+        io::{File, Serializable},
+        lang::{CharSequence, ClassLoader, Comparable, Object},
     },
     JObjNew, JObjRef, JType,
 };
@@ -1123,6 +1124,30 @@ impl Context {
     */
     #[java_method]
     pub fn get_database_path(&self, name: String) -> File {}
+
+    /**
+    请求启动给定的应用服务。Intent 应包含要启动的特定服务实现的完整类名，或要定位的特定包名。
+    如果 Intent 指定的内容较少，则会记录有关此情况的警告。在这种情况下，可以使用多个匹配的服务中的任何一个。
+    如果此服务尚未运行，它将被实例化并启动（如果需要，为其创建一个进程）；如果它正在运行，则它将保持运行状态。
+    每次调用此方法都将导致对目标服务的 android.app.Service.onStartCommand 方法的相应调用，并带有此处给出的意图。
+    这提供了一种向服务提交作业的便捷方式，而无需绑定并调用其接口。使用 startService() 会覆盖 bindService 管理的默认服务生命周期：它要求服务保持运行，直到调用 stopService，无论是否有任何客户端连接到它。
+    请注意，对 startService() 的调用不会嵌套：无论您调用 startService() 多少次，对 stopService 的一次调用都会停止它。
+    系统会尝试尽可能地保持服务运行。只有在当前前台应用程序使用的资源太多而需要终止服务时，才应停止服务。如果服务进程中发生任何错误，它将自动重新启动。
+    如果您无权启动给定的服务，此函数将抛出 SecurityException。
+    注意：每次调用 startService() 都会导致系统完成大量工作来管理围绕意图处理的服务生命周期，这可能需要数毫秒的 CPU 时间。
+    由于此成本，startService() 不应用于频繁向服务传递意图，而应仅用于安排重要工作。对高频调用使用绑定服务。
+    从 SDK 版本 Build.VERSION_CODES.O 开始，以 SDK 版本 Build.VERSION_CODES.O 或更高版本为目标的应用不允许从后台启动后台服务。有关更多详细信息，请参阅后台执行限制。
+    注意：从 SDK 版本 Build.VERSION_CODES.S 开始，以 SDK 版本 Build.VERSION_CODES.S 为目标的应用S 或更高版本的 Android 不允许从后台启动前台服务。有关更多详细信息，请参阅行为变更：针对 Android 12 的应用。
+    返回:如果服务正在启动或已在运行，则返回已启动的实际服务的 ComponentName；否则，如果服务不存在，则返回 null。
+    抛出:
+    - SecurityException – 如果调用者无权访问服务或找不到服务。
+    - IllegalStateException – Android Build.VERSION_CODES.S 之前，如果应用程序处于无法启动服务的状态（例如，在允许服务的状态下不在前台），则抛出 IllegalStateException。
+    - BackgroundServiceStartNotAllowedException – Android Build.VERSION_CODES。 S 及更高版本中，如果应用程序处于无法启动服务的状态（比如在允许服务的状态下未处于前台），则会引发 android.app.BackgroundServiceStartNotAllowedException。此豁免扩展了 IllegalStateException，因此应用程序可以使用 catch(IllegalStateException) 来捕获这两者。
+    `service` 标识要启动的服务。Intent 必须完全明确（提供组件名称）。Intent extras 中可以包含其他值，以提供与此特定启动调用一起的参数。
+    */
+    #[java_method]
+    pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
+    }
 }
 
 /**
@@ -1145,6 +1170,11 @@ impl ContextWrapper {
     */
     pub fn send_broadcast(&self, intent: &Intent) {
         self._based.send_broadcast(intent)
+    }
+
+    #[doc(hidden)]
+    pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
+        self._based.start_service(service)
     }
 }
 
@@ -4226,6 +4256,263 @@ impl Intent {
     */
     #[java_method]
     pub fn get_data_string(&self) -> Option<String> {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 可序列化的数据值。
+    */
+    #[java_method]
+    pub fn put_extra<S: Serializable>(&self, name: String, value: Option<S>) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` CharSequence 数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_char_sequence<CS: CharSequence>(
+        &self,
+        name: String,
+        value: Option<CS>,
+    ) -> Self {
+    }
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 字符串数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_string(&self, name: String, value: Option<String>) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 双精度数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_double(&self, name: String, value: f64) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 浮点数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_float(&self, name: String, value: f32) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 长数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_long(&self, name: String, value: i64) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 整数数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_int(&self, name: String, value: i32) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 短数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_short(&self, name: String, value: i16) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` char 数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_char(&self, name: String, value: char) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` 字节数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_byte(&self, name: String, value: u8) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回：返回相同的意图对象，以将多个调用链接到一个语句中。
+    `name` 带有包前缀的额外数据的名称。
+    `value` 布尔数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_boolean(&self, name: String, value: bool) -> Self {}
+
+    /**
+    向 Intent 添加扩展数据。名称必须包含包前缀，例如，应用程序 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    返回:返回相同的 Intent 对象，用于将多个调用链接到单个语句中。
+    `name` 额外数据的名称，带有包前缀。
+    `value` Bundle 数据值。
+    */
+    #[java_method(overload = putExtra)]
+    pub fn put_extra_bundle(&self, name: String, value: Option<Bundle>) -> Self {}
+
+    /**
+    将“src”中的所有额外内容复制到此意图中。
+    `src` 包含要复制的额外内容。
+    */
+    #[java_method]
+    pub fn put_extras(&self, src: &Self) -> Self {}
+
+    /**
+    向 Intent 添加一组扩展数据。键必须包含包前缀，例如，应用 com.android.contacts 将使用“com.android.contacts.ShowAll”之类的名称。
+    `extras` 要添加到此 Intent 的 extras 包。
+    */
+    #[java_method(overload = putExtras)]
+    pub fn put_extras_bundle(&self, extras: &Bundle) -> Self {}
+
+    /**
+    使用给定 Intent 中的额外内容完全替换 Intent 中的额外内容。
+    `src` 此 Intent 中包含的确切额外内容将被复制到目标 Intent 中，替换之前存在的任何额外内容。
+    */
+    #[java_method]
+    pub fn replace_extras(&self, src: &Self) -> Self {}
+
+    /**
+    使用给定的额外内容包完全替换 Intent 中的额外内容。
+    `extras` Intent 中的新额外内容集，或为 null 以删除所有额外内容。
+    */
+    #[java_method(overload = replaceExtras)]
+    pub fn replace_extras_bundle(&self, extras: Option<Bundle>) -> Self {}
+
+    /**
+    从意图中删除扩展数据。
+    */
+    #[java_method]
+    pub fn remove_extra(&self, name: String) {}
+}
+
+/**
+可用的特定应用组件（android.app.Activity、android.app.Service、BroadcastReceiver 或 ContentProvider）的标识符。
+需要在此处封装两条信息来识别组件：组件所在的包（字符串）以及该包内的类名（字符串）。
+*/
+#[java_class(name = "android/content/ComponentName")]
+pub struct ComponentName;
+
+impl ComponentName {
+    /**
+    创建一个新的组件标识符，其中类名可以指定为绝对名称或相对于包含包的名称。相对包名以“.”字符开头。
+    对于包“com.example”和类名“.app.MyActivity”，此方法将返回包“com.example”和类名“com.example.app.MyActivity”的 ComponentName。
+    还允许使用完全限定的类名。
+    返回：新的 ComponentName
+    `pkg` 组件所在的包的名称
+    `cls` pkg 中实现组件的类的名称
+    */
+    #[java_method]
+    pub fn create_relative(pkg: String, cls: String) -> Self {}
+
+    /**
+    创建一个新的组件标识符，其中类名可以指定为绝对名称或相对于包含包的名称。相对包名以“.”字符开头。
+    对于包“com.example”和类名“.app.MyActivity”，此方法将返回一个包含包“com.example”和类名“com.example.app.MyActivity”的 ComponentName。
+    还允许使用完全限定的类名。
+    返回：新的 ComponentName
+    `pkg` 实现组件的包的上下文
+    `cls` 实现组件的 pkg 内类的名称
+    */
+    #[java_method(overload = createRelative)]
+    pub fn create_relative_context(pkg: &Context, cls: String) -> Self {}
+
+    /**
+    创建一个新的组件标识符。
+    `pkg` 组件所在包的名称。不能为空。
+    `cls` pkg 中实现组件的类的名称。不能为空。
+    */
+    #[java_constructor]
+    pub fn new(pkg: String, cls: String) -> Self {}
+
+    /**
+    根据上下文和类名创建新的组件标识符。
+    `pkg` 实现组件的包的上下文，将从中检索实际的包名称。
+    `cls` pkg 中实现组件的类的名称。
+    */
+    #[java_constructor]
+    pub fn new_context(pkg: &Context, cls: String) -> Self {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn clone(&self) -> Self {}
+
+    /// 返回该组件的包名称。
+    #[java_method]
+    pub fn get_package_name(&self) -> String {}
+
+    /// 返回此组件的类名。
+    #[java_method]
+    pub fn get_class_name(&self) -> String {}
+
+    /// 返回类名，如果它是包的后缀，则返回完全限定或缩写形式（以“。”为前导）。
+    #[java_method]
+    pub fn get_short_class_name(&self) -> String {}
+
+    /**
+    助手在可以为空的 ComponentName 引用中获取 flattenToShortString()。
+    */
+    #[java_method(overload = flattenToShortString)]
+    pub fn flatten_to_short_string_static(component_name: Option<Self>) -> String {}
+
+    //noinspection SpellCheckingInspection
+    /**
+    返回一个明确描述 ComponentName 中包含的包和类名称的字符串。稍后您可以通过 unflattenFromString(String) 从此字符串中恢复 ComponentName。
+    返回：返回一个包含包和类名称的新字符串。这表示为包名称，用“/”连接，然后是类名称。
+    */
+    #[java_method]
+    pub fn flatten_to_string(&self) -> String {}
+
+    //noinspection SpellCheckingInspection
+    /**
+    与 flattenToString() 相同，但如果类名是包的后缀，则缩写类名。结果仍可与 unflattenFromString(String) 一起使用。
+    返回：返回一个包含包和类名的新字符串。这表示为包名称，用“/”连接，然后是类名。
+    */
+    #[java_method]
+    pub fn flatten_to_short_string(&self) -> String {}
+
+    //noinspection SpellCheckingInspection
+    /**
+    从之前使用 flattenToString() 创建的字符串中恢复 ComponentName。它在第一个“/”处拆分字符串，将前面的部分作为包名称，将后面的部分作为类名称。
+    为了特别方便（例如，在命令行上解析组件名称时使用），如果“/”后面紧跟着“.”，则最终的类名将是包名称与“/”后面的字符串的连接。因此，“com.foo/.Blah”变为 package="com.foo" class="com.foo.Blah"。
+    返回：返回一个新的 ComponentName，其中包含在 str 中编码的包和类名称
+    `str` flattenToString() 返回的字符串。
+    */
+    #[java_method]
+    pub fn unflatten_from_string(r#str: String) -> Option<Self> {}
+
+    /**
+    返回此类的字符串表示形式，不带类名作为前缀。
+    */
+    #[java_method]
+    pub fn to_short_string(&self) -> String {}
+
+    #[doc(hidden)]
+    #[java_method]
+    pub fn describe_contents(&self) -> i32 {}
+}
+
+impl Comparable<ComponentName> for ComponentName {
+    #[java_method]
+    fn compare_to(&self, o: &ComponentName) -> Result<i32, <Self as JType>::Error> {}
 }
 
 #[cfg(feature = "android_app")]
@@ -4233,6 +4520,14 @@ impl From<&crate::android::app::Activity> for Context {
     fn from(value: &crate::android::app::Activity) -> Self {
         Self::_new(&value.java_ref(), ())
     }
+}
+
+/// 与组件名称关联的类的接口。
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/content/ComponentName$WithComponentName")]
+pub trait ComponentName_WithComponentName {
+    /// 返回关联的组件名称。
+    fn get_component_name(&self) -> ComponentName;
 }
 
 /// 测试android.content

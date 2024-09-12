@@ -15,7 +15,7 @@ use crate::{
     java::{lang::Comparable, nio::file::Path},
     JObjNew, JObjRef, JType,
 };
-use droid_wrap_derive::{java_class, java_constructor, java_field, java_method};
+use droid_wrap_derive::{java_class, java_constructor, java_field, java_interface, java_method};
 
 /**
 文件和目录路径名的抽象表示。用户界面和操作系统使用系统相关的路径名字符串来命名文件和目录。
@@ -521,6 +521,39 @@ impl Comparable<File> for File {
     #[java_method]
     fn compare_to(&self, o: &File) -> Result<i32, <Self as JType>::Error> {}
 }
+
+/**
+类的可序列化性由实现 java.io.Serializable 接口的类启用。
+警告：对不受信任的数据进行反序列化本质上是危险的，应避免。应仔细验证不受信任的数据。
+未实现此接口的类将不会序列化或反序列化其任何状态。可序列化类的所有子类型本身都是可序列化的。
+序列化接口没有方法或字段，仅用于标识可序列化的语义。为了允许序列化不可序列化类的子类型，子类型可以承担保存和恢复超类型的公共、受保护和（如果可访问）包字段状态的责任。
+只有当子类型扩展的类具有可访问的无参数构造函数来初始化类的状态时，子类型才可以承担此责任。如果不是这种情况，将类声明为可序列化是错误的。将在运行时检测到错误。
+在反序列化过程中，将使用该类的公共或受保护的无参数构造函数初始化不可序列化类的字段。无参数构造函数必须可供可序列化的子类访问。可序列化子类的字段将从流中恢复。
+遍历图时，可能会遇到不支持 Serializable 接口的对象。在这种情况下，将抛出 NotSerializableException 并标识不可序列化对象的类。
+在序列化和反序列化过程中需要特殊处理的类必须实现具有以下确切签名的特殊方法：
+```java
+private void writeObject(java.io.ObjectOutputStream out) throws IOException;
+private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException;
+private void readObjectNoData() throws ObjectStreamException;
+```
+writeObject 方法负责为其特定类写入对象的状态，以便相应的 readObject 方法可以恢复它。可以通过调用 defaultWriteObject 来调用用于保存 Object 字段的默认机制。
+该方法无需关注其超类或子类的状态。通过使用 writeObject 方法将各个字段写入 ObjectOutputStream 或使用 DataOutput 支持的原始数据类型的方法来保存状态。
+readObject 方法负责从流中读取并恢复类字段。它可以调用 defaultReadObject 来调用用于恢复对象的非静态和非瞬态字段的默认机制。
+defaultReadObject 方法使用流中的信息将保存在流中的对象的字段分配给当前对象中相应命名的字段。这处理类已发展为添加新字段的情况。该方法无需关注其超类或子类的状态。
+通过从 ObjectInputStream 中读取各个字段的数据并分配给对象的适当字段来恢复状态。DataInput 支持读取原始数据类型。如果序列化流未将给定类列为被反序列化对象的超类，则 readObjectNoData 方法负责初始化特定类的对象状态。
+如果接收方使用的反序列化实例类的版本与发送方不同，并且接收方的版本扩展了发送方的版本未扩展的类，则可能会发生这种情况。如果序列化流已被篡改，也可能会发生这种情况；因此，尽管源流“恶意”或不完整，readObjectNoData 仍可用于正确初始化反序列化对象。
+需要指定在将对象写入流时要使用的替代对象的可序列化类应使用确切签名实现此特殊方法：
+```java
+ANY-ACCESS-MODIFIER Object writeReplace() throws ObjectStreamException;
+```
+如果此 writeReplace 方法存在，并且可以通过被序列化对象的类中定义的方法访问，则序列化将调用此方法。因此，该方法可以具有私有、受保护和包私有访问权限。子类对此方法的访问遵循 Java 可访问性规则。当从流中读取其实例时需要指定替换的类应使用精确签名实现此特殊方法。
+```java
+ANY-ACCESS-MODIFIER Object readResolve() throws ObjectStreamException;
+```
+此 readResolve 方法遵循与 writeReplace 相同地调用规则和可访问性规则。序列化运行时将每个可序列化类关联到一个版本号，称为 serialVersionUID，它在反序列化期间用于验证序列化对象的发送者和接收者是否已加载。
+*/
+#[java_interface(name = "java/io/Serializable")]
+pub trait Serializable {}
 
 /// 测试java.io
 #[cfg(feature = "test_java_io")]

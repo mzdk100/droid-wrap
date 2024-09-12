@@ -67,6 +67,8 @@
 1. android.content.Context;
 2. android.content.ContextWrapper;
 3. android.content.Intent。;
+4. android.content.ComponentName;
+5. android.content.ComponentName_WithComponentName;
 
 ### 安卓系统(android_os)
 
@@ -128,7 +130,10 @@ android.view.View的API等（包括点击监听器的实现）。
 
 ### javaIO操作(java_io)
 
-实现了java.io.File。
+实现了java.io.File等。
+
+1. java.io.File;
+2. java.io.Serializable;
 
 ### java语言内置(java_lang)
 
