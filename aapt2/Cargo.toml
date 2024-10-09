@@ -1,0 +1,13 @@
+[package]
+name = "cargo-aapt2"
+authors.workspace = true
+description.workspace = true
+keywords.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+readme = "README.md"
+repository.workspace = true
+
+[dependencies]
+android-build.workspace = true

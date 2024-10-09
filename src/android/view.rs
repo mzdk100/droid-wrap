@@ -311,7 +311,7 @@ impl View {
     `keep_screen_on` 提供 true 以设置 KEEP_SCREEN_ON。
     */
     #[java_method]
-    pub fn set_keep_screen_on(keep_screen_on: bool) {}
+    pub fn set_keep_screen_on(&self, keep_screen_on: bool) {}
 
     /**
     获取此视图的父级。请注意，父级是 ViewParent，不一定是 View。

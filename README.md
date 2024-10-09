@@ -52,6 +52,11 @@
 
 如需了解更多信息，请查看example目录中的代码示例。
 
+### 关于构建工具
+
+cargo-apk目前已经被标记为弃用状态，但不得不承认他在rust生态中是最好用的apk打包工具，因此我们尝试重新实现类似的工具[cargo-aapt2](aapt2/README.md)。
+
+
 ## 分类
 
 这些功能函数的分类使用条件编译的方式被链接到程序中。使用时，请将这个箱子作为可选依赖项，并指定相关的feature，这是防止编译不必要的代码从而让程序体积的不断膨胀。
@@ -67,6 +72,8 @@
 1. android.content.Context;
 2. android.content.ContextWrapper;
 3. android.content.Intent。;
+4. android.content.ComponentName;
+5. android.content.ComponentName_WithComponentName;
 
 ### 安卓系统(android_os)
 
@@ -128,7 +135,10 @@ android.view.View的API等（包括点击监听器的实现）。
 
 ### javaIO操作(java_io)
 
-实现了java.io.File。
+实现了java.io.File等。
+
+1. java.io.File;
+2. java.io.Serializable;
 
 ### java语言内置(java_lang)
 

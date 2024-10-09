@@ -14,10 +14,12 @@ authors = ["mzdk100 <mzdk100@foxmail.com>"]
 description = "用于Rust的Android API的高级封装"
 keywords = ["android", "api", "sdk", "jni", "java"]
 license = "Apache-2.0"
-version = "0.3.0"
+version = "0.3.4"
 edition = "2021"
 readme = "README.md"
 repository = "https://gitcode.net/mzdk100/droid-wrap.git"
+[workspace.dependencies]
+android-build = "0.1.0"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -27,7 +29,7 @@ rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 [features]
 android = ["java_lang"]
 android_app = ["android", "android_view", "java_lang"]
-android_content = ["android", "android_media", "java_lang", "java_io"]
+android_content = ["android", "android_media", "android_os", "java_lang", "java_io"]
 android_hardware = ["android"]
 android_hardware_vibrator = ["android_hardware"]
 android_media = ["android"]
@@ -65,13 +67,13 @@ test_java_nio = ["java_nio"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
-version = "0.3.0"
+version = "0.3.4"
 path = "utils"
 
 [dependencies.droid-wrap-derive]
-version = "0.3.0"
+version = "0.3.4"
 path="derive"
 
 [workspace]
-members = ["derive", "example", "utils", "tests"]
+members = ["derive", "example", "utils", "tests", "aapt2"]
 resolver = "2"
