@@ -32,6 +32,8 @@
 1. 环境配置
    在使用之前需要确保配置Android SDK和Java环境。
     - ANDROID_HOME： 指向Android SDK的根目录路径。
+    - ANDROID_BUILD_TOOLS_VERSION： 例如"35.0.0"。
+    - ANDROID_API_LEVEL： 例如35。
     - JAVA_HOME： 指向jre或者jdk的根目录路径。
       注意：我们不使用javac来编译生成java字节码，所以无须使用完整的JDK环境，仅使用JRE（Java 运行时）即可。
 2. 安装apk打包工具
