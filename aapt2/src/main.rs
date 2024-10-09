@@ -53,7 +53,7 @@ fn main() {
     let aapt2 = android_aapt2_path(None).unwrap();
     exit(
         Command::new(&aapt2)
-            .args(args().skip(1))
+            .args(args().skip(2))
             .spawn()
             .unwrap()
             .wait()
