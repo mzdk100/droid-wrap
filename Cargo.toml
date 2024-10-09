@@ -18,6 +18,8 @@ version = "0.3.4"
 edition = "2021"
 readme = "README.md"
 repository = "https://gitcode.net/mzdk100/droid-wrap.git"
+[workspace.dependencies]
+android-build = "0.1.0"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -73,5 +75,5 @@ version = "0.3.4"
 path="derive"
 
 [workspace]
-members = ["derive", "example", "utils", "tests"]
+members = ["derive", "example", "utils", "tests", "aapt2"]
 resolver = "2"
