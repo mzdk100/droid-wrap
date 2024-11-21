@@ -38,25 +38,26 @@
       注意：我们不使用javac来编译生成java字节码，所以无须使用完整的JDK环境，仅使用JRE（Java 运行时）即可。
 2. 安装apk打包工具
    ```shell
-   cargo install cargo-apk
+   cargo install cargo-apk2
    ```
 3. 运行示例
    ```shell
    git clone https://gitcode.net/mzdk100/droid-wrap.git
    cd droid-wrap
-   cargo apk run -p droid-wrap-example --example activity-example
-   cargo apk run -p droid-wrap-example --example java-example
+   cargo apk2 run -p droid-wrap-example --example activity-example
+   cargo apk2 run -p droid-wrap-example --example java-example
    ```
 4. 运行测试
    ```shell
-   cargo apk run -p droid-wrap-test --all-features
+   cargo apk2 run -p droid-wrap-test --all-features
    ```
 
 如需了解更多信息，请查看example目录中的代码示例。
 
 ### 关于构建工具
 
-cargo-apk目前已经被标记为弃用状态，但不得不承认他在rust生态中是最好用的apk打包工具，因此我们尝试重新实现类似的工具[cargo-aapt2](aapt2/README.md)。
+[cargo-apk2](https://github.com/mzdk100/cargo-apk2)是一个更加轻量级的安卓apk打包工具，他从已经弃用的[cargo-apk](https://github.com/rust-mobile/cargo-apk)fork而来，cargo-apk2将持续维护，可放心使用。
+同时本项目中提供了一个[cargo-aapt2](aapt2/README.md)的cargo扩展程序，如果您对打包apk有更高的需求，可以使用此扩展。
 
 
 ## 分类
@@ -76,6 +77,12 @@ cargo-apk目前已经被标记为弃用状态，但不得不承认他在rust生�
 3. android.content.Intent。;
 4. android.content.ComponentName;
 5. android.content.ComponentName_WithComponentName;
+
+### 安卓硬件(android_hardware)
+
+1. android.hardware.Camera;
+2. android.hardware.vibrator.Effect;
+3. android.hardware.vibrator.EffectStrength;
 
 ### 安卓系统(android_os)
 
@@ -121,6 +128,9 @@ android.view.View的API等（包括点击监听器的实现）。
 14. android.view.ViewParent;
 15. android.view.View_OnKeyListener;
 16. android.view.Window;
+17. android.view.ContextThemeWrapper;
+18. android.view.SurfaceHolder;
+19. android.view.Surface;
 
 ### 安卓小部件(android_widget)
 

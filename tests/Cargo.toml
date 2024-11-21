@@ -14,8 +14,15 @@ min_sdk_version = 26
 target_sdk_version = 35
 max_sdk_version = 35
 
+[[package.metadata.android.uses_feature]]
+name = "android.hardware.camera"
+required = false
+
 [[package.metadata.android.queries.intent]]
 actions = ["android.intent.action.TTS_SERVICE"]
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.CAMERA"
 
 [[package.metadata.android.uses_permission]]
 name = "android.permission.VIBRATE"
@@ -24,6 +31,7 @@ name = "android.permission.VIBRATE"
 android = ["droid-wrap/android_app"]
 android_app = ["android", "droid-wrap/test_android_app"]
 android_content = ["android", "droid-wrap/test_android_content"]
+android_hardware = ["android", "droid-wrap/test_android_hardware"]
 android_os = ["android", "droid-wrap/test_android_os"]
 android_speech = ["android", "droid-wrap/test_android_speech"]
 android_speech_tts = ["android_speech", "droid-wrap/test_android_speech_tts"]

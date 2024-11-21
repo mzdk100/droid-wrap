@@ -14,7 +14,6 @@
 use droid_wrap::{
     android::{
         app::Activity,
-        content::Context,
         view::{
             ViewGroup_LayoutParams, ViewManager, WindowManagerImpl, WindowManager_LayoutParams,
         },
@@ -35,12 +34,11 @@ fn main() {
     act.set_title(&cs);
     dbg!(&act);
     let act = Arc::new(act);
-    let context: Context = act.as_ref().into();
-    let text_view = TextView::new(&context);
+    let text_view = TextView::new(act.as_ref());
     text_view.set_text(Some(
         "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
     ));
-    let edit = EditText::new(&context);
+    let edit = EditText::new(act.as_ref());
 
     let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
     edit.set_on_editor_action_listener(editor_listener.as_ref());
@@ -55,7 +53,7 @@ fn main() {
                 ViewGroup_LayoutParams::MATCH_PARENT,
                 1.0,
             );
-            let layout = LinearLayout::new(&context);
+            let layout = LinearLayout::new(act2.as_ref());
             layout.set_orientation(LinearLayout::VERTICAL);
             // layout.add_view(&text_view);
             layout.set_content_description(Some("容器".to_char_sequence::<CharSequenceImpl>()));

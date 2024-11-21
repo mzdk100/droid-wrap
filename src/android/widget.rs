@@ -26,6 +26,7 @@ use crate::{
     JObjNew, JObjRef, JProxy, JType,
 };
 
+//noinspection SpellCheckingInspection
 /**
 用于输入和修改文本的用户界面元素。定义编辑文本小部件时，必须指定 android.R.styleable.TextView_inputType 属性。例如，对于纯文本输入，将 inputType 设置为 "text"：
 &lt;EditText
@@ -356,15 +357,15 @@ pub fn test() {
         },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let context: Context = (&Activity::fetch()).into();
-    let edit = EditText::new(&context);
+    let act = Activity::fetch();
+    let edit = EditText::new(&act);
     assert!(edit.to_string().starts_with("android.widget.EditText"));
     edit.select_all();
     // let _ = edit.set_selection(0,2);
     let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
     edit.set_on_editor_action_listener(editor_listener.as_ref());
 
-    let text = TextView::new(&context);
+    let text = TextView::new(&act);
     assert!(text.to_string().starts_with("android.widget.TextView"));
     text.set_text(Some("你好".to_char_sequence::<CharSequenceImpl>()));
     assert_eq!(
@@ -378,9 +379,9 @@ pub fn test() {
     );
     text.set_input_type(InputTypeImpl::TYPE_CLASS_DATETIME);
     assert_eq!(InputTypeImpl::TYPE_CLASS_DATETIME, text.get_input_type());
-    let button = Button::new(&context);
+    let button = Button::new(&act);
     button.set_text(Some("测试按钮".to_char_sequence::<CharSequenceImpl>()));
-    let layout = LinearLayout::new(&context);
+    let layout = LinearLayout::new(&act);
     layout.set_orientation(LinearLayout::VERTICAL);
     assert_eq!(LinearLayout::VERTICAL, layout.get_orientation());
     let params = LinearLayout_LayoutParams::new_with_weight(

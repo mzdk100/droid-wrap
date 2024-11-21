@@ -8,6 +8,7 @@ version.workspace = true
 edition.workspace = true
 readme.workspace = true
 repository.workspace = true
+publish = false
 
 [package.metadata.android.sdk]
 min_sdk_version = 26

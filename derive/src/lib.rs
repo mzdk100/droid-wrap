@@ -24,10 +24,7 @@ use syn::{
     TypeParamBound, Visibility,
 };
 
-use crate::utils::{
-    get_object_return_value_token, get_result_token, get_return_value_token,
-    parse_function_signature, ClassMetadata, InterfaceMetadata, MethodMetadata,
-};
+use crate::utils::{get_object_return_value_token, get_result_token, get_return_value_token, parse_function_signature, ClassMetadata, FieldMetadata, InterfaceMetadata, MethodMetadata};
 
 //noinspection SpellCheckingInspection
 /// 定义java class，将此属性标记在struct上，可以自动实现操作java对象的必要功能。
@@ -305,7 +302,7 @@ pub fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream {
     let (self_, _, arg_types_sig, fmt, arg_values, ret_type) =
         parse_function_signature(&sig, &type_bounds);
     let (ret_value, ret_type_sig, is_result_type) =
-        get_return_value_token(&ret_type, &sig.generics, &type_bounds);
+        get_return_value_token(&ret_type, &sig.generics, &type_bounds, &None);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 
@@ -450,6 +447,10 @@ pub fn java_interface(attrs: TokenStream, input: TokenStream) -> TokenStream {
     item.items.push(TraitItem::Verbatim(quote! {
         #[doc = concat!("L", #cls, ";")]
         const OBJECT_SIG: &'static str = concat!("L", #cls, ";");
+    }));
+    item.items.push(TraitItem::Verbatim(quote! {
+        /// 数组维度
+        const DIM: u8 = 0;
     }));
     let stream = quote! {
         #item
@@ -638,7 +639,9 @@ pub fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
+pub fn java_field(attrs: TokenStream, input: TokenStream) -> TokenStream {
+    let attrs: FieldMetadata = parse2(Into::<TokenStream2>::into(attrs)).unwrap();
+    let default_value = attrs.default_value.clone();
     let item = parse_macro_input!(input as ItemFn);
     let attrs = item.attrs.clone();
     let stmts = item.block.stmts.clone();
@@ -670,7 +673,7 @@ pub fn java_field(_: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let (ret_value, ret_type_sig, is_result_type) =
-        get_return_value_token(&ret_type, &sig.generics, &vec![]);
+        get_return_value_token(&ret_type, &sig.generics, &vec![], &default_value);
 
     let ret_value = get_result_token(is_result_type, &ret_value);
 

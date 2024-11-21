@@ -11,6 +11,10 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+/// 包含用于访问有关应用程序包的信息的类，包括有关其活动、权限、服务、签名和提供程序的信息。
+#[cfg(feature = "android_content_pm")]
+pub mod pm;
+
 use droid_wrap_derive::{java_class, java_constructor, java_interface, java_method};
 
 use crate::{
@@ -1100,7 +1104,7 @@ impl Context {
     /**
     查询（如果需要）创建一个新目录，应用程序可以在其中放置其自己的自定义数据文件。您可以使用返回的 File 对象创建和访问此目录中的文件。
     请注意，通过 File 对象创建的文件只能由您自己的应用程序访问；您只能设置整个目录的模式，而不能设置单个文件的模式。
-    如果调用应用程序移动到采用的存储设备，则返回的路径可能会随时间而变化，因此只应保留相对路径。应用程序不需要额外的权限来读取或写入返回的路径，因为此路径位于其私有存储中。
+    如果调用应用程序移动到采用的存储设备，则返回的路径可能会随之变化，因此只应保留相对路径。应用程序不需要额外的权限来读取或写入返回的路径，因为此路径位于其私有存储中。
     返回：请求的目录的 File 对象。如果目录尚不存在，则将创建该目录。
     `name` 要查询的目录的名称。这是作为应用程序数据的一部分创建的目录。
     `mode` 操作模式。
@@ -1148,6 +1152,23 @@ impl Context {
     #[java_method]
     pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
     }
+
+    /**
+    确定您是否被授予了特定权限。
+    如果您拥有该权限，则返回：PackageManager.PERMISSION_GRANTED；如果没有，则返回：PackageManager.PERMISSION_DENIED。
+    `permission` 正在检查的权限的名称。
+    */
+    #[java_method]
+    pub fn check_self_permission(&self, permission: String) -> i32 {}
+
+    /**
+    确定您正在处理的 IPC 的调用进程是否已被授予特定权限。这与使用 android.os.Binder.getCallingPid 和 android.os.Binder.getCallingUid 返回的 pid 和 uid 调用 checkPermission(String, int, int) 基本相同。
+    一个重要的区别是，如果您当前没有处理 IPC，则此函数将始终失败。这样做是为了防止意外泄露权限；您可以使用 checkCallingOrSelfPermission 来避免这种保护。
+    返回：如果调用 pid/uid 被允许该权限，则返回 PackageManager.PERMISSION_GRANTED，否则返回 PackageManager.PERMISSION_DENIED。
+    `permission` 正在检查的权限的名称。
+    */
+    #[java_method]
+    pub fn check_calling_permission(&self, permission: String) -> i32 {}
 }
 
 /**
@@ -1175,6 +1196,16 @@ impl ContextWrapper {
     #[doc(hidden)]
     pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
         self._based.start_service(service)
+    }
+
+    #[doc(hidden)]
+    pub fn check_self_permission(&self, permission: String) -> i32 {
+        self._based.check_self_permission(permission)
+    }
+
+    #[doc(hidden)]
+    pub fn check_calling_permission(&self, permission: String) -> i32 {
+        self._based.check_calling_permission(permission)
     }
 }
 

@@ -19,7 +19,11 @@
 pub mod inputmethod;
 
 use crate::{
-    android::{content::Context, os::Bundle},
+    android::{
+        content::{Context, ContextWrapper},
+        graphics::{Canvas, Rect},
+        os::Bundle,
+    },
     java::lang::{CharSequence, Integer, Runnable},
     JObjNew, JObjRef, JProxy, JType,
 };
@@ -5303,6 +5307,174 @@ impl Window {
     pub fn on_picture_in_picture_mode_changed(&self, is_in_picture_in_picture_mode: bool) {}
 }
 
+/// 上下文包装器允许您修改或替换包装上下文的主题。
+#[java_class(name = "android/view/ContextThemeWrapper", extends = ContextWrapper)]
+pub struct ContextThemeWrapper;
+
+/**
+持有显示表面的人员的抽象接口。允许您控制表面大小和格式、编辑表面中的像素以及监视表面的变化。
+此接口通常可通过 SurfaceView 类获得。当从运行其 SurfaceView 的线程以外的线程使用此接口时，您需要仔细阅读 lockCanvas 和 Callback.surfaceCreated() 方法。
+*/
+#[java_interface(name = "android/view/SurfaceHolder")]
+pub trait SurfaceHolder {
+    #[doc(hidden)]
+    #[deprecated(note = "这将被忽略，该值在需要时自动设置。")]
+    const SURFACE_TYPE_NORMAL: i32 = 0;
+
+    #[doc(hidden)]
+    #[deprecated(note = "这将被忽略，该值在需要时自动设置。")]
+    const SURFACE_TYPE_HARDWARE: i32 = 1;
+
+    #[doc(hidden)]
+    #[deprecated(note = "这将被忽略，该值在需要时自动设置。")]
+    const SURFACE_TYPE_GPU: i32 = 2;
+
+    #[doc(hidden)]
+    #[deprecated(note = "这将被忽略，该值在需要时自动设置。")]
+    const SURFACE_TYPE_PUSH_BUFFERS: i32 = 3;
+
+    /**
+    为该持有者添加一个回调接口。一个持有者可以关联多个回调接口。
+    `callback` 新的 回调接口。
+    */
+    fn add_callback<C: SurfaceHolder_Callback>(&self, callback: &C);
+
+    /**
+    从此持有者中移除先前添加的回调接口。
+    `callback` 要移除的回调接口。
+    */
+    fn remove_callback<C: SurfaceHolder_Callback>(&self, callback: &C);
+
+    /**
+    使用此方法可查明表面是否正在通过回调方法创建。此方法旨在与 SurfaceHolder.Callback.surfaceChanged 一起使用。
+    如果表面正在创建，则返回 true。
+    */
+    fn is_creating(&self) -> bool;
+
+    /**
+    设置表面的类型。
+    */
+    #[deprecated(note = "此项将被忽略，需要时会自动设置此值。")]
+    fn set_type(&self, r#type: i32);
+
+    /**
+    使表面具有固定大小。它永远不会改变此大小。使用 SurfaceView 时，必须从运行 SurfaceView 窗口的同一线程调用此方法。
+    `width` 表面的宽度。
+    `height` – 表面的高度。
+    */
+    fn set_fixed_size(&self, width: i32, height: i32);
+
+    /**
+    允许表面根据其容器的布局调整大小（这是默认设置）。启用此功能后，您应该监视 SurfaceHolder.Callback.surfaceChanged 以了解表面大小的变化。
+    使用 SurfaceView 时，必须从运行 SurfaceView 窗口的同一线程调用此功能。
+    */
+    fn set_size_from_layout(&self);
+
+    /**
+    设置表面所需的 PixelFormat。默认值为 OPAQUE。
+    使用 SurfaceView 时，必须从运行 SurfaceView 窗口的同一线程调用此方法。 `format` 来自 PixelFormat 的常量。
+    */
+    fn set_format(&self, format: i32);
+
+    /**
+    启用或禁用选项以在显示此表面时保持屏幕打开。默认值为 false，允许其关闭。可从任何线程安全地调用此功能。
+    `screen_on` 设置为 true 以强制屏幕保持打开状态，设置为 false 以允许其关闭。
+    */
+    fn set_keep_screen_on(&self, screen_on: bool);
+
+    /**
+    开始编辑表面中的像素。返回的 Canvas 可用于绘制到表面的位图中。如果表面尚未创建或无法编辑，则返回 null。
+    您通常需要实现 Callback.surfaceCreated 以查明 Surface 何时可用。 Surface 的内容永远不会在 unlockCanvas() 和 lockCanvas() 之间保留，因此，必须写入 Surface 区域内的每个像素。
+    此规则的唯一例外是指定脏矩形时，在这种情况下，将保留非脏像素。如果在 Surface 未准备好时（在 Callback.surfaceCreated 之前或 Callback.surfaceDestroyed 之后）反复调用此函数，您的调用将被限制到较慢的速率，以避免消耗 CPU。
+    如果没有返回 null，此函数会在内部保持锁定，直到相应的 unlockCanvasAndPost 调用，从而防止 SurfaceView 在绘制表面时创建、销毁或修改表面。
+    这比直接访问 Surface 更方便，因为您不需要在 Callback.surfaceDestroyed 中与绘图线程进行特殊同步。
+    返回：Canvas 用于绘制到表面。
+    */
+    fn lock_canvas(&self) -> Option<Canvas>;
+
+    /**
+    与 lockCanvas() 类似，但允许指定脏矩形。必须写入该矩形内的每个像素；但是脏矩形之外的像素将在下次调用 lockCanvas() 时保留。
+    返回：Canvas 用于绘制到 Surface 中。
+    `dirty` 将被修改的表面区域。
+    */
+    fn lock_canvas_dirty(&self, dirty: &Rect);
+
+    /**
+    完成编辑表面中的像素。调用此方法后，表面的当前像素将显示在屏幕上，但其内容将丢失，特别是无法保证再次调用 lockCanvas() 时 Surface 的内容保持不变。
+    `canvas` 先前由 lockCanvas() 返回的 Canvas。
+    */
+    fn unlock_canvas_and_post(&self, canvas: &Canvas);
+
+    /**
+    查询表面的当前大小。注意：不要修改返回的 Rect。
+    这只能从 SurfaceView 窗口的线程或在 lockCanvas() 内部调用才安全。
+    返回：Rect 表面的尺寸。左侧和顶部始终为 0。
+    */
+    fn get_surface_frame(&self) -> Rect;
+
+    /**
+    直接访问表面对象。Surface 可能并非始终可用 - 例如，当使用 SurfaceView 时，持有者的 Surface 直到视图连接到窗口管理器并执行布局以确定 Surface 的尺寸和屏幕位置时才会创建。
+    因此，您通常需要实现 Callback.surfaceCreated 以查明 Surface 何时可用。
+    请注意，如果您直接从另一个线程访问 Surface，则必须正确实现 Callback.surfaceCreated 和 Callback.surfaceDestroyed 以确保线程仅在 Surface 有效时访问它，并且 Surface 不会在线程使用时被破坏。此方法旨在供经常需要直接访问 Surface 对象（通常将其传递给本机代码）的框架使用。
+    返回：Surface 表面。
+    */
+    fn get_surface(&self) -> Surface;
+}
+
+/**
+客户端可以实现此接口来接收有关表面更改的信息。与 SurfaceView 一起使用时，被保留的 Surface 仅在调用 surfaceCreated(SurfaceHolder) 和 surfaceDestroyed(SurfaceHolder) 之间可用。
+回调使用 SurfaceHolder.addCallback 方法设置。
+*/
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/view/SurfaceHolder$Callback")]
+pub trait SurfaceHolder_Callback {
+    /**
+    首次创建表面后会立即调用此方法。此方法的实现应启动所需的任何渲染代码。
+    请注意，只有一个线程可以绘制到 Surface 中，因此如果您的正常渲染将在另一个线程中进行，则不应在此处绘制到 Surface 中。
+    `holder` – 正在创建其表面的 SurfaceHolder。
+    */
+    fn surface_created<SH: SurfaceHolder>(&self, holder: &SH);
+
+    /**
+    在对表面进行任何结构更改（格式或大小）后，会立即调用此方法。此时，您应该更新表面中的图像。在 SurfaceCreated 之后，此方法始终至少调用一次。
+    `holder` 表面已更改的 SurfaceHolder。
+    `format` 表面的新 PixelFormat。
+    `width` 表面的新宽度。
+    `height` 表面的新高度。
+    */
+    fn surface_changed<SH: SurfaceHolder>(&self, holder: &SH, format: i32, width: i32, height: i32);
+
+    /**
+    在表面被销毁之前立即调用此函数。从此调用返回后，您不应再尝试访问此表面。
+    如果您有一个直接访问表面的渲染线程，则必须确保在从此函数返回之前该线程不再接触表面。
+    `holder` – 正在销毁其表面的 SurfaceHolder。
+    */
+    fn surface_destroyed<SH: SurfaceHolder>(&self, holder: &SH);
+}
+
+/**
+客户端可以实现此接口来接收有关表面更改的信息。与 SurfaceView 一起使用时，被保留的 Surface 仅在调用 surfaceCreated(SurfaceHolder) 和 surfaceDestroyed(SurfaceHolder) 之间可用。
+回调使用 SurfaceHolder.addCallback 方法设置。
+*/
+#[allow(non_camel_case_types)]
+#[java_interface(name = "android/view/SurfaceHolder$Callback2")]
+pub trait SurfaceHolder_Callback2: SurfaceHolder_Callback {
+    /**
+    当应用程序需要重绘其表面的内容时调用，在调整其大小后或出于其他原因。通过在重绘完成之前不从此处返回，您可以确保用户不会看到处于不良状态的表面（在以新大小正确绘制之前）。
+    这通常会先调用surfaceChanged。从O开始，可以实现surfaceRedrawNeededAsync以提供非阻塞实现。如果未实现surfaceRedrawNeededAsync，则将改为调用此方法。
+    `holder` 其表面已更改的SurfaceHolder。
+    */
+    fn surface_redraw_needed<SH: SurfaceHolder>(&self, holder: &SH);
+}
+
+//noinspection SpellCheckingInspection
+/**
+处理由屏幕合成器管理的原始缓冲区。 Surface 通常由图像缓冲区的使用者（例如 SurfaceTexture、android.media.MediaRecorder 或 android.renderscript.Allocation）创建或从其创建，并交给某种生产者（例如 OpenGL、MediaPlayer 或 CameraDevice）进行绘制。
+注意：Surface 就像与其关联的使用者的弱引用。它本身不会阻止其父级使用者被回收。
+*/
+#[java_class(name = "android/view/Surface")]
+pub struct Surface;
+
 /// 测试android.view
 #[cfg(feature = "test_android_view")]
 pub fn test() {
@@ -5310,8 +5482,8 @@ pub fn test() {
         android::app::Activity,
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let context: Context = (&Activity::fetch()).into();
-    let view = View::new(&context);
+    let act = Activity::fetch();
+    let view = View::new(&act);
     assert!(view.to_string().starts_with("android.view.View"));
     view.announce_for_accessibility(&"通知".to_char_sequence::<CharSequenceImpl>());
     view.request_focus();

@@ -13,7 +13,10 @@
 
 pub use jni::{
     errors::Error,
-    objects::{GlobalRef, JClass, JObject, JObjectArray, JValueGen, ReleaseMode},
+    objects::{
+        GlobalRef, JBooleanArray, JByteArray, JClass, JObject, JObjectArray, JString, JValueGen,
+        ReleaseMode,
+    },
     sys::{jboolean, jbyte, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
     AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
@@ -57,7 +60,10 @@ macro_rules! import {
             rc::Rc,
             sync::{Arc, Mutex},
         };
-        use $crate::{null_value, unbind_proxy_handler, vm_attach, GlobalRef, JObject};
+        use $crate::{
+            impl_array, null_value, to_java_byte_array, to_java_object_array, unbind_proxy_handler,
+            vm_attach, GlobalRef, JObject,
+        };
 
         /**
         JObjectRef trait提供从任何数据类型获取java对象的全局引用。
@@ -108,6 +114,9 @@ macro_rules! import {
 
             /// 对象的签名描述。
             const OBJECT_SIG: &'static str;
+
+            /// 数组维度，0表示不是数组
+            const DIM: u8 = 0;
         }
 
         /**
@@ -223,6 +232,77 @@ macro_rules! import {
             fn java_ref(&self) -> GlobalRef {
                 self.java_ref()
             }
+        }
+
+        impl_array!(u8, 1);
+        impl_array!(String, 1);
+    };
+}
+
+/// 实现rust数组类型与java数组的自动关联
+///
+/// # 示例
+/// ```
+/// use droid_wrap_utils::impl_array;
+/// // 实现一维数组的关联
+/// impl_array!(String, 1);
+/// ```
+#[macro_export]
+macro_rules! impl_array {
+    (String, $dim: expr) => {
+        impl JObjNew for &[String] {
+            type Fields = ();
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                &[]
+            }
+        }
+
+        impl JObjRef for &[String] {
+            fn java_ref(&self) -> GlobalRef {
+                vm_attach!(mut env);
+                let arr = self
+                    .iter()
+                    .map(|i| env.new_string(i).unwrap())
+                    .collect::<Vec<_>>();
+                let sig = if Self::DIM <= 1 {
+                    Self::CLASS.to_string()
+                } else {
+                    "[".repeat((Self::DIM - 1) as _) + Self::OBJECT_SIG
+                };
+                let arr = to_java_object_array(&mut env, &arr, &sig);
+                env.new_global_ref(&arr).unwrap()
+            }
+        }
+
+        impl JType for &[String] {
+            type Error = <String as JType>::Error;
+            const CLASS: &'static str = <String as JType>::CLASS;
+            const OBJECT_SIG: &'static str = <String as JType>::OBJECT_SIG;
+            const DIM: u8 = $dim;
+        }
+    };
+    (u8, $dim:expr) => {
+        impl JObjNew for &[u8] {
+            type Fields = ();
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+                &[]
+            }
+        }
+
+        impl JObjRef for &[u8] {
+            fn java_ref(&self) -> GlobalRef {
+                vm_attach!(mut env);
+                let arr = self.iter().map(|i| *i as _).collect::<Vec<_>>();
+                let arr = to_java_byte_array(&mut env, &arr);
+                env.new_global_ref(&arr).unwrap()
+            }
+        }
+
+        impl JType for &[u8] {
+            type Error = <String as JType>::Error;
+            const CLASS: &'static str = "B";
+            const OBJECT_SIG: &'static str = "B";
+            const DIM: u8 = $dim;
         }
     };
 }
@@ -605,6 +685,94 @@ pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Vec<JObject<'a>> 
     for i in 0..size {
         arr2.push(env.get_object_array_element(arr, i).unwrap());
     }
+    arr2
+}
+
+/// 将Rust数组转换为Java对象数组
+///
+/// 将一个Rust数组转换为Java数组，其中每个元素都是JObject类型。
+///
+/// # 参数
+///
+/// * `env` - 一个`JNIEnv`类型的引用，用于操作Java虚拟机。
+/// * `arr` - 一个Rust数组，其中每个元素都是实现了`AsRef<JObject<'a>>` trait的类型。
+/// * `element_class` - Java数组元素的类名。
+///
+/// # 返回值
+///
+/// 返回一个`JObjectArray`类型的Java数组。
+///
+/// # 示例
+///
+/// ```rust
+/// use droid_wrap_utils::{ JNIEnv, JObject, JObjectArray, jint, to_java_object_array, vm_attach };
+///
+/// vm_attach!(mut env);
+/// // 假设我们有一个Rust数组
+/// let rust_array = vec![env.new_string("hello").unwrap(), env.new_string("world").unwrap()];
+///
+/// // 将Rust数组转换为Java数组
+/// let java_array = to_java_object_array(&mut env, &rust_array, "java/lang/String");
+/// ```
+///
+pub fn to_java_object_array<'a, O: AsRef<JObject<'a>>>(
+    // env：JNIEnv<'a>类型，用于操作Java虚拟机
+    env: &mut JNIEnv<'a>,
+    // arr：Rust数组，类型为O，O需要实现AsRef<JObject<'a>> trait
+    arr: &[O],
+    // element_class：Java数组元素的类名
+    element_class: &str,
+) -> JObjectArray<'a> {
+    // 创建一个新的Java数组，长度为arr.len()，元素类型为element_class，初始值为JObject::null()
+    let arr2 = env
+        .new_object_array(arr.len() as _, element_class, JObject::null())
+        .unwrap();
+    // 遍历Rust数组，将每个元素设置为Java数组的对应位置
+    for (i, j) in arr.iter().enumerate() {
+        env.set_object_array_element(&arr2, i as _, j).unwrap();
+    }
+    // 返回Java数组
+    arr2
+}
+
+//noinspection SpellCheckingInspection
+/// 将Rust数组转换为Java byte数组
+///
+/// 将一个Rust数组转换为Java数组，其中每个元素都是jbyte类型。
+///
+/// # 参数
+///
+/// * `env` - 一个`JNIEnv`类型的引用，用于操作Java虚拟机。
+/// * `arr` - 一个Rust数组。
+///
+/// # 返回值
+///
+/// 返回一个`JBooleanArray`类型的Java数组。
+///
+/// # 示例
+///
+/// ```rust
+/// use droid_wrap_utils::{ JNIEnv, JBooleanArray, jint, to_java_byte_array, vm_attach };
+///
+/// vm_attach!(mut env);
+/// // 假设我们有一个Rust数组
+/// let rust_array = vec![65i8,66,67];
+///
+/// // 将Rust数组转换为Java数组
+/// let java_array = to_java_byte_array(&mut env, &rust_array);
+/// ```
+///
+pub fn to_java_byte_array<'a>(
+    // env：JNIEnv<'a>类型，用于操作Java虚拟机
+    env: &mut JNIEnv<'a>,
+    // arr：Rust[u8]数组
+    arr: &[jbyte],
+) -> JByteArray<'a> {
+    // 创建一个新的Java数组，长度为arr.len()，元素类型为element_class，初始值为JObject::null()
+    let arr2 = env.new_byte_array(arr.len() as _).unwrap();
+    // 遍历Rust数组，将每个元素设置为Java数组的对应位置
+    env.set_byte_array_region(&arr2, 0, arr).unwrap();
+    // 返回Java数组
     arr2
 }
 

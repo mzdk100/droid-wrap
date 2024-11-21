@@ -46,6 +46,22 @@ impl Parse for ClassMetadata {
     }
 }
 
+pub(crate) struct FieldMetadata {
+    pub(crate) default_value: Option<Expr>,
+}
+
+impl Parse for FieldMetadata {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let attrs = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+        let default_value = match attrs.iter().find(|i| i.path.is_ident("default_value")) {
+            None => None,
+            Some(v) => Some(v.value.clone()),
+        };
+
+        Ok(Self { default_value })
+    }
+}
+
 pub(crate) struct InterfaceMetadata {
     pub(crate) interface_name: Expr,
 }
@@ -150,10 +166,17 @@ fn get_type_descriptor_token(
         {
             let tt = it.1.clone();
             quote! {<#ty as #tt>}
+        } else if !ty_str.starts_with(|c: char| c.is_alphabetic() || c == '&') {
+            // 如果不是有效标识符开头的类型（也不是引用类型）则需要使用`<...>`
+            quote! {<&#ty>}
         } else {
             ty.clone()
         };
-        quote! {#ty::OBJECT_SIG}
+        if ty_str.starts_with("&") {
+            quote! {&("[".repeat(*#ty::DIM as _) + #ty::OBJECT_SIG)}
+        } else {
+            quote! {&("[".repeat(#ty::DIM as _) + #ty::OBJECT_SIG)}
+        }
     }
 }
 
@@ -168,7 +191,7 @@ pub(crate) fn parse_function_signature(
     TokenStream,
     TokenStream,
 ) {
-    let mut self_: Option<SelfValue> = None;
+    let mut self_ = None;
     let mut arg_types = Vec::new();
     let mut arg_types_sig = TokenStream::new();
     let mut arg_values = Punctuated::<Expr, Token![,]>::new();
@@ -259,9 +282,14 @@ pub(crate) fn get_return_value_token(
     ret_type: &TokenStream,
     generics: &Generics,
     type_bounds: &Vec<(TokenStream, TokenStream)>,
+    default_value: &Option<Expr>,
 ) -> (TokenStream, TokenStream, bool) {
     let (unwrapped_ty, ty) = unwrap_type(ret_type);
     let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics, &type_bounds);
+    let unwrap_value = match default_value {
+        None => quote! {unwrap()},
+        Some(v) => quote! {unwrap_or(#v)},
+    };
 
     if ret_type_sig.to_string().contains("OBJECT_SIG") {
         let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);
@@ -325,7 +353,7 @@ pub(crate) fn get_return_value_token(
         is_result_type = true;
         opt
     } else {
-        quote! {#opt.unwrap()}
+        quote! {#opt.#unwrap_value}
     };
     (opt, ret_type_sig, is_result_type)
 }

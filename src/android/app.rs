@@ -15,7 +15,7 @@ use droid_wrap_derive::{java_class, java_method};
 use droid_wrap_utils::{android_context, vm_attach};
 
 use crate::{
-    android::view::{View, Window, WindowManager},
+    android::view::{ContextThemeWrapper, View, Window, WindowManager},
     java::lang::{CharSequence, Runnable},
     JObjNew, JObjRef, JType,
 };
@@ -140,7 +140,7 @@ use crate::{
 /// 进程生命周期
 /// Android 系统会尝试尽可能长时间地保留应用程序进程，但最终当内存不足时，将需要删除旧进程。如活动生命周期中所述，删除哪个进程的决定与用户与其交互的状态密切相关。一般而言，根据进程中运行的活动，进程可以处于四种状态，此处按重要性顺序列出。系统将先杀死不太重要的进程（最后一个），然后再杀死更重要的进程（第一个）。前台活动（用户当前正在与之交互的屏幕顶部的活动）被认为是最重要的。只有在其使用的内存超过设备可用内存时，才会将其进程作为最后的手段被杀死。通常此时设备已达到内存分页状态，因此这是保持用户界面响应所必需的。
 /// 可见活动（用户可见但不在前台的活动，例如位于前台对话框后面的活动或多窗口模式下其他活动旁边的活动）被认为极其重要，除非需要保持前台活动运行，否则不会将其终止。后台活动（用户不可见且已停止的活动）不再重要，因此系统可以安全地终止其进程以回收内存用于其他前台或可见进程。如果需要终止其进程，当用户导航回活动时（使其再次在屏幕上可见），将使用其先前在 onSaveInstanceState 中提供的 savedInstanceState 调用其 onCreate 方法，以便它可以在与用户上次离开时​​相同的状态下重新启动。空进程是指不承载任何活动或其他应用程序组件（例如 Service 或 android.content.BroadcastReceiver 类）的进程。当内存不足时，系统会很快终止这些进程。因此，您在 Activity 之外执行的任何后台操作都必须在 Activity BroadcastReceiver 或 Service 的上下文中执行，以确保系统知道它需要保留您的进程。有时，Activity 可能需要执行独立于 Activity 生命周期本身的长期运行操作。例如，相机应用程序允许您将图片上传到网站。上传可能需要很长时间，应用程序应允许用户在执行时离开应用程序。为此，您的 Activity 应启动一个用于上传的服务。这样，系统就可以在上传期间正确确定您的进程的优先级（认为它比其他不可见的应用程序更重要），而不管原始 Activity 是暂停、停止还是完成。
-#[java_class(name = "android/app/Activity")]
+#[java_class(name = "android/app/Activity", extends = ContextThemeWrapper)]
 pub struct Activity;
 
 impl Activity {
@@ -228,6 +228,34 @@ impl Activity {
     */
     #[java_method]
     pub fn is_overlay_with_decor_caption_enabled(&self) -> bool {}
+
+    /**
+    请求授予此应用的权限。这些权限必须在清单中请求，不应授予您的应用，并且应具有危险保护级别，无论它们是由平台还是第三方应用声明的。
+    如果在清单中请求，则在安装时授予普通权限 android.content.pm.PermissionInfo.PROTECTION_NORMAL。如果在清单中请求，则在安装时授予签名权限 android.content.pm.PermissionInfo.PROTECTION_SIGNATURE，并且您的应用的签名与声明权限的应用的签名相匹配。
+    在调用此 API 之前，请调用 shouldShowRequestPermissionRationale(String) 以检查系统是否建议在请求权限之前显示理由 UI。如果您的应用没有请求的权限，则将向用户显示用于接受这些权限的 UI。
+    在用户接受或拒绝请求的权限后，您将在 onRequestPermissionsResult(int, String[], int[]) 上收到回调，报告是否授予权限。请注意，请求权限并不保证会授予权限，您的应用应该能够在没有此权限的情况下运行。
+    此方法可能会启动一个活动，允许用户选择授予哪些权限以及拒绝哪些权限。因此，您应该做好准备，您的活动可能会暂停和恢复。此外，授予某些权限可能需要重新启动您的应用程序。
+    在这种情况下，系统将在将结果传递给 onRequestPermissionsResult(int, String[], int[]) 之前重新创建活动堆栈。检查您是否拥有权限时，您应该使用 checkSelfPermission(String)。
+    如果您的活动将 noHistory 设置为 true，则您无法请求权限，因为在这种情况下，活动不会收到包括 onRequestPermissionsResult(int, String[], int[]) 在内的结果回调。 RuntimePermissions 示例应用演示了如何使用此方法在运行时请求权限。
+    抛出:IllegalArgumentException – 如果 requestCode 为负数。
+    `permissions` 请求的权限。必须为非null且不为空。
+    `request_code` 应用程序特定的请求代码，用于与报告给 onRequestPermissionsResult(int, String[], int[]) 的结果相匹配。应大于等于 0。
+    */
+    #[java_method]
+    pub fn request_permissions(
+        &self,
+        permissions: &[String],
+        request_code: i32,
+    ) -> Result<(), <Self as JType>::Error> {
+    }
+
+    /**
+    获取在请求权限之前是否应显示带有理由的 UI。
+    返回：是否应显示权限理由 UI。
+    `permission` 您的应用想要请求的权限。
+    */
+    #[java_method]
+    pub fn should_show_request_permission_rationale(&self, permission: String) -> bool {}
 }
 
 /// 测试android.app
