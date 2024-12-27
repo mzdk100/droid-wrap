@@ -2299,7 +2299,7 @@ impl Manifest_permission {
     这仅供那些核心功能依赖于精确闹钟的应用程序使用。如果您的应用程序需要精确闹钟来实现用户可能使用也可能不使用的次要功能，则应继续使用SCHEDULE_EXACT_ALARM。
     请记住，这是一个强大的权限，应用商店可能会执行策略来审核和审查此权限的使用情况。此类审核如果发现应用程序滥用此权限，可能会导致应用从应用商店中移除。
     应用程序需要针对API版本Build.VERSION_CODES.TIRAMISU或更高版本才能请求此权限。请注意，在设备上应只请求USE_EXACT_ALARM或SCHEDULE_EXACT_ALARM其中之一。如果您的应用程序在旧版SDK中已经使用SCHEDULE_EXACT_ALARM，但在SDK 33及更高版本上需要使用USE_EXACT_ALARM，则应将SCHEDULE_EXACT_ALARM声明为具有max-sdk属性，如下所示：
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    `<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />`
     持有此权限的应用程序始终保持在WORKING_SET或更低的待机分组中。
     */
     pub const USE_EXACT_ALARM: &'static str = "android.permission.USE_EXACT_ALARM";

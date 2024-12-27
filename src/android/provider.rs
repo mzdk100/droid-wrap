@@ -634,7 +634,7 @@ impl Settings {
         "android.settings.action.MANAGE_OVERLAY_PERMISSION";
 
     /**
-    活动动作：显示用于控制意图的数据URI中指定的应用程序是否可以在其他应用程序之上绘制的屏幕。与在Android android.os.Build.VERSION_CODES#R中无法用于为特定软件包显示图形用户界面(GUI)的ACTION_MANAGE_OVERLAY_PERMISSION不同，启动具有此意图的活动需要[权限名称]权限。在某些情况下，可能不存在匹配的活动，因此请确保对此进行防护。
+    活动动作：显示用于控制意图的数据URI中指定的应用程序是否可以在其他应用程序之上绘制的屏幕。与在Android android.os.Build.VERSION_CODES#R中无法用于为特定软件包显示图形用户界面(GUI)的ACTION_MANAGE_OVERLAY_PERMISSION不同，启动具有此意图的活动需要 `权限名称` 权限。在某些情况下，可能不存在匹配的活动，因此请确保对此进行防护。
     输入：Intent的数据URI必须指定要控制其在其他应用程序之上绘制能力的应用程序包名。例如"package:com.my.app"。
     输出：无。
     */

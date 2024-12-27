@@ -31,7 +31,7 @@ pub mod vibrator;
 Camera类用于设置图像捕获设置，开始/停止预览，拍摄照片，并检索用于编码的视频帧。
 此类是Camera服务的客户端，该服务管理实际的相机硬件。
 
-要访问设备相机，您必须在Android清单中声明android.Manifest.permission#CAMERA权限。还要确保包含<uses-feature>清单元素，以声明应用程序使用的相机功能。
+要访问设备相机，您必须在Android清单中声明android.Manifest.permission#CAMERA权限。还要确保包含 `<uses-feature>` 清单元素，以声明应用程序使用的相机功能。
 例如，如果您使用相机和自动对焦功能，您的清单应包含以下内容：
 ```xml
 <uses-permission android:name="android.permission.CAMERA" />
