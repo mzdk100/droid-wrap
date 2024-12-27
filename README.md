@@ -96,6 +96,10 @@
 8. android.os.Build_VERSION;
 9. android.os.SystemProperties_Handle;
 
+### 安卓内容提供者(android_provider)
+
+1. android.provider.Settings;
+
 ### 安卓语音(android_speech)
 
 android.speech.tts.TextToSpeech的API等。

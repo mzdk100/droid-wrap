@@ -48,6 +48,12 @@ pub mod media;
 #[cfg(feature = "android_os")]
 pub mod os;
 
+/**
+提供便利类，以访问Android提供的内容提供者。
+*/
+#[cfg(feature = "android_provider")]
+pub mod provider;
+
 //noinspection SpellCheckingInspection
 /// 自 API 级别 31 起，Renderscript 已被弃用。请参阅迁移指南以了解替代方案。
 #[cfg(feature = "android_renderscript")]

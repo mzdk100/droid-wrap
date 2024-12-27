@@ -14,7 +14,7 @@ authors = ["mzdk100 <mzdk100@foxmail.com>"]
 description = "用于Rust的Android API的高级封装"
 keywords = ["android", "api", "sdk", "jni", "java"]
 license = "Apache-2.0"
-version = "0.3.6"
+version = "0.3.7"
 edition = "2021"
 readme = "README.md"
 repository = "https://gitcode.net/mzdk100/droid-wrap.git"
@@ -36,6 +36,7 @@ android_hardware = ["android", "android_graphics", "android_renderscript"]
 android_hardware_vibrator = ["android_hardware"]
 android_media = ["android"]
 android_os = ["android", "android_hardware_vibrator", "java_lang"]
+android_provider = ["android", "android_content"]
 android_renderscript = ["android"]
 android_speech = ["android"]
 android_speech_tts = ["android_speech", "android_os", "java_lang"]
@@ -56,6 +57,7 @@ test_android_app = ["android_app", "android_widget"]
 test_android_content = ["android_content"]
 test_android_hardware = ["android_app", "android_content_pm"]
 test_android_os = ["android_app", "android_content", "android_os", "java_lang"]
+test_android_provider = ["android_app", "android_provider"]
 test_android_text = ["android_text"]
 test_android_view = ["android_content", "android_view"]
 test_android_view_inputmethod = ["android_view_inputmethod"]
@@ -71,11 +73,11 @@ test_java_nio = ["java_nio"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
-version = "0.3.6"
+version = "0.3.7"
 path = "utils"
 
 [dependencies.droid-wrap-derive]
-version = "0.3.6"
+version = "0.3.7"
 path="derive"
 
 [workspace]
