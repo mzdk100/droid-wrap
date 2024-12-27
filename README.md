@@ -1,6 +1,6 @@
 # 用于Rust的Android API的高级封装
 
-[GitCode](https://gitcode.net/mzdk100/droid-wrap.git)
+[GitCode](https://gitcode.com/mzdk100/droid-wrap.git)
 [GitHub](https://github.com/mzdk100/droid-wrap)
 [crates.io](https://crates.io/crates/droid-wrap)
 [docs.rs](https://docs.rs/droid-wrap/latest/droid_wrap/)
