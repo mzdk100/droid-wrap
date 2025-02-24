@@ -5428,12 +5428,14 @@ pub trait SurfaceHolder {
 #[allow(non_camel_case_types)]
 #[java_interface(name = "android/view/SurfaceHolder$Callback")]
 pub trait SurfaceHolder_Callback {
+    type SH: SurfaceHolder;
+
     /**
     首次创建表面后会立即调用此方法。此方法的实现应启动所需的任何渲染代码。
     请注意，只有一个线程可以绘制到 Surface 中，因此如果您的正常渲染将在另一个线程中进行，则不应在此处绘制到 Surface 中。
     `holder` – 正在创建其表面的 SurfaceHolder。
     */
-    fn surface_created<SH: SurfaceHolder>(&self, holder: &SH);
+    fn surface_created(&self, holder: Self::SH);
 
     /**
     在对表面进行任何结构更改（格式或大小）后，会立即调用此方法。此时，您应该更新表面中的图像。在 SurfaceCreated 之后，此方法始终至少调用一次。
@@ -5442,14 +5444,14 @@ pub trait SurfaceHolder_Callback {
     `width` 表面的新宽度。
     `height` 表面的新高度。
     */
-    fn surface_changed<SH: SurfaceHolder>(&self, holder: &SH, format: i32, width: i32, height: i32);
+    fn surface_changed(&self, holder: Self::SH, format: i32, width: i32, height: i32);
 
     /**
     在表面被销毁之前立即调用此函数。从此调用返回后，您不应再尝试访问此表面。
     如果您有一个直接访问表面的渲染线程，则必须确保在从此函数返回之前该线程不再接触表面。
     `holder` – 正在销毁其表面的 SurfaceHolder。
     */
-    fn surface_destroyed<SH: SurfaceHolder>(&self, holder: &SH);
+    fn surface_destroyed(&self, holder: Self::SH);
 }
 
 /**
@@ -5464,7 +5466,7 @@ pub trait SurfaceHolder_Callback2: SurfaceHolder_Callback {
     这通常会先调用surfaceChanged。从O开始，可以实现surfaceRedrawNeededAsync以提供非阻塞实现。如果未实现surfaceRedrawNeededAsync，则将改为调用此方法。
     `holder` 其表面已更改的SurfaceHolder。
     */
-    fn surface_redraw_needed<SH: SurfaceHolder>(&self, holder: &SH);
+    fn surface_redraw_needed(&self, holder: &Self::SH);
 }
 
 //noinspection SpellCheckingInspection
