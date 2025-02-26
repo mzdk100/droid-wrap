@@ -14,10 +14,11 @@ authors = ["mzdk100 <mzdk100@foxmail.com>"]
 description = "用于Rust的Android API的高级封装"
 keywords = ["android", "api", "sdk", "jni", "java"]
 license = "Apache-2.0"
-version = "0.3.8"
-edition = "2021"
+version = "0.3.9"
+edition = "2024"
 readme = "README.md"
 repository = "https://gitcode.com/mzdk100/droid-wrap.git"
+
 [workspace.dependencies]
 android-build = "0.1.0"
 
@@ -56,7 +57,7 @@ test = []
 test_android_app = ["android_app", "android_widget"]
 test_android_content = ["android_content"]
 test_android_hardware = ["android_app", "android_content_pm"]
-test_android_os = ["android_app", "android_content", "android_os", "java_lang"]
+test_android_os = ["android_app", "android_os", "java_lang"]
 test_android_provider = ["android_app", "android_provider"]
 test_android_text = ["android_text"]
 test_android_view = ["android_content", "android_view"]
@@ -64,7 +65,7 @@ test_android_view_inputmethod = ["android_view_inputmethod"]
 test_android_widget = ["android_content", "android_widget"]
 test_android_speech = ["android_speech"]
 test_android_speech_tts = ["android_content", "android_speech_tts"]
-test_dalvik_system = ["dalvik_system", "android_app", "android_content"]
+test_dalvik_system = ["dalvik_system", "android_app"]
 test_java_io = ["java_io"]
 test_java_lang = ["java_lang"]
 test_java_lang_reflect = ["java_lang_reflect"]
@@ -73,13 +74,13 @@ test_java_nio = ["java_nio"]
 [dependencies]
 
 [dependencies.droid-wrap-utils]
-version = "0.3.8"
+version = "0.3.9"
 path = "utils"
 
-[dependencies.droid-wrap-derive]
-version = "0.3.8"
-path="derive"
+[dependencies.droid-wrap-macros]
+version = "0.3.9"
+path= "macros"
 
 [workspace]
-members = ["derive", "example", "utils", "tests", "aapt2"]
+members = ["aapt2", "example", "macros", "tests", "utils"]
 resolver = "2"

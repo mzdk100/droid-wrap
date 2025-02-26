@@ -12,7 +12,7 @@
  */
 
 use cargo_emit::rerun_if_changed;
-use noak::{writer::ClassWriter, AccessFlags};
+use noak::{AccessFlags, writer::ClassWriter};
 use std::{collections::HashMap, env::var, fs::OpenOptions, io::Write, path::PathBuf};
 
 pub fn gen_class(

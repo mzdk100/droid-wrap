@@ -10,7 +10,8 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-use droid_wrap_derive::java_class;
+
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 /**
 包含封装整个 Android 应用程序模型的高级类。
@@ -82,8 +83,6 @@ pub mod view;
 */
 #[cfg(feature = "android_widget")]
 pub mod widget;
-
-use crate::{JObjNew, JObjRef, JType};
 
 /// 安卓应用权限定义
 #[allow(non_camel_case_types)]

@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap::android::app::Activity;
+use droid_wrap::{android::app::Activity, android_main};
 
-//noinspection SpellCheckingInspection
-#[mobile_entry_point::mobile_entry_point]
+#[android_main]
 fn main() {
     #[cfg(feature = "android_app")]
     {
@@ -40,7 +39,8 @@ fn main() {
     {
         droid_wrap::android::provider::test();
         println!("Test android.provider successfully.");
-    }    #[cfg(feature = "android_text")]
+    }
+    #[cfg(feature = "android_text")]
     {
         droid_wrap::android::text::test();
         println!("Test android.text successfully.");
@@ -90,6 +90,6 @@ fn main() {
         droid_wrap::dalvik::system::test();
         println!("Test dalvik.system successfully.");
     }
-    Activity::fetch().finish();
+    Activity::fetch().unwrap().finish();
     println!("Test all successfully.");
 }

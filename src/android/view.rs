@@ -19,15 +19,13 @@
 pub mod inputmethod;
 
 use crate::{
+    JObjNew, JObjRef, JProxy, JType, Result,
     android::{
         content::{Context, ContextWrapper},
         graphics::{Canvas, Rect},
         os::Bundle,
     },
     java::lang::{CharSequence, Integer, Runnable},
-    JObjNew, JObjRef, JProxy, JType,
-};
-use droid_wrap_derive::{
     java_class, java_constructor, java_field, java_implement, java_interface, java_method,
 };
 use std::sync::Arc;
@@ -690,7 +688,7 @@ pub trait View_OnClickListener {
 pub struct View_OnClickListenerImpl(Box<dyn Fn(View) + Send + Sync>);
 
 impl View_OnClickListenerImpl {
-    pub fn from_fn(func: impl Fn(/* v */ View) + Send + Sync + 'static) -> Arc<Self> {
+    pub fn from_fn(func: impl Fn(/* v */ View) + Send + Sync + 'static) -> Result<Arc<Self>> {
         Self::new(View_OnClickListenerImplDefault(Box::new(func)))
     }
 }
@@ -719,11 +717,7 @@ pub trait ViewManager: JType {
     `view` 要添加到此窗口的视图。
     `params` 要分配给视图的 LayoutParams。
     */
-    fn add_view(
-        &self,
-        view: &View,
-        params: &ViewGroup_LayoutParams,
-    ) -> Result<(), <Self as JType>::Error>;
+    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams) -> Result<()>;
 
     #[doc(hidden)]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams);
@@ -763,12 +757,7 @@ pub struct WindowManagerImpl;
 
 impl ViewManager for WindowManagerImpl {
     #[java_method]
-    fn add_view(
-        &self,
-        view: &View,
-        params: &ViewGroup_LayoutParams,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams) -> Result<()> {}
 
     #[java_method]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams) {}
@@ -822,12 +811,7 @@ impl ViewGroup {
 
 impl ViewManager for ViewGroup {
     #[java_method]
-    fn add_view(
-        &self,
-        view: &View,
-        params: &ViewGroup_LayoutParams,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    fn add_view(&self, view: &View, params: &ViewGroup_LayoutParams) -> Result<()> {}
 
     #[java_method]
     fn update_view_layout(&self, view: &View, params: &ViewGroup_LayoutParams) {}
@@ -4148,11 +4132,7 @@ impl KeyEvent {
     `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰符元状态的组合。可以为 0，以确保没有按下修饰键。
     */
     #[java_method]
-    pub fn meta_state_has_modifiers(
-        meta_state: i32,
-        modifiers: i32,
-    ) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn meta_state_has_modifiers(meta_state: i32, modifiers: i32) -> Result<bool> {}
 
     /**
     如果没有按下修饰键，则返回 true。就此函数而言，KEYCODE_CAPS_LOCK、KEYCODE_SCROLL_LOCK 和 KEYCODE_NUM_LOCK 不被视为修饰键。因此，此函数忽略 META_CAPS_LOCK_ON、META_SCROLL_LOCK_ON 和 META_NUM_LOCK_ON。
@@ -4170,7 +4150,7 @@ impl KeyEvent {
     `modifiers` 要检查的修饰键的元状态。可能是 getModifierMetaStateMask() 定义的修饰键元状态的组合。可能为 0，以确保未按下任何修饰键。
     */
     #[java_method]
-    pub fn has_modifiers(&self, modifiers: i32) -> Result<bool, <Self as JType>::Error> {}
+    pub fn has_modifiers(&self, modifiers: i32) -> Result<bool> {}
 
     /**
     返回 ALT 元键的按下状态。如果按下了 ALT 键，则返回 true，否则返回 false
@@ -4448,10 +4428,10 @@ impl Default for View_OnKeyListenerImplDefault {
 impl View_OnKeyListenerImpl {
     pub fn from_fn(
         func: impl Fn(/* v */ View, /* key_code */ i32, /* event */ KeyEvent) -> bool
-            + Send
-            + Sync
-            + 'static,
-    ) -> Arc<Self> {
+        + Send
+        + Sync
+        + 'static,
+    ) -> Result<Arc<Self>> {
         Self::new(View_OnKeyListenerImplDefault(Box::new(func)))
     }
 }
@@ -4852,7 +4832,7 @@ impl Window {
     `id` 要搜索的 ID 返回：具有给定 ID 的视图。
     */
     #[java_method]
-    pub fn require_view_by_id(&self, id: i32) -> Result<View, <Self as JType>::Error> {}
+    pub fn require_view_by_id(&self, id: i32) -> Result<View> {}
 
     /**
     方便使用 setContentView(View, ViewGroup.LayoutParams) 将屏幕内容设置为显式视图。此视图直接放置在屏幕的视图层次结构中。它本身可以是一个复杂的视图层次结构。
@@ -5428,6 +5408,7 @@ pub trait SurfaceHolder {
 #[allow(non_camel_case_types)]
 #[java_interface(name = "android/view/SurfaceHolder$Callback")]
 pub trait SurfaceHolder_Callback {
+    #[doc(hidden)]
     type SH: SurfaceHolder;
 
     /**
@@ -5484,30 +5465,31 @@ pub fn test() {
         android::app::Activity,
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let act = Activity::fetch();
+    let act = Activity::fetch().unwrap();
     let view = View::new(&act);
     assert!(view.to_string().starts_with("android.view.View"));
-    view.announce_for_accessibility(&"通知".to_char_sequence::<CharSequenceImpl>());
+    view.announce_for_accessibility(&"通知".to_char_sequence::<CharSequenceImpl>().unwrap());
     view.request_focus();
     view.clear_focus();
-    assert_eq!(None, view.find_focus());
+    assert!(view.find_focus().is_some());
     view.set_activated(true);
     assert_eq!(true, view.is_activated());
     view.set_x(20f32);
     assert_eq!(20f32, view.get_x());
     view.set_y(30f32);
     assert_eq!(30f32, view.get_y());
-    assert_eq!(None, view.find_view_by_id(0));
-    view.set_content_description(Some("测试".to_char_sequence::<CharSequenceImpl>()));
+    assert!(view.find_view_by_id(0).is_some());
+    view.set_content_description(Some("测试".to_char_sequence::<CharSequenceImpl>().unwrap()));
     assert_eq!(
-        Some("测试".to_char_sequence()),
+        "测试".to_char_sequence().ok(),
         view.get_content_description::<CharSequenceImpl>()
     );
     view.set_id(3);
     assert_eq!(3, view.get_id());
     let l = View_OnClickListenerImpl::from_fn(|_| {
         println!("View is clicked.");
-    });
+    })
+    .unwrap();
     view.set_on_click_listener(l.as_ref());
     view.set_visibility(View::GONE);
     assert_eq!(View::GONE, view.get_visibility());
@@ -5519,7 +5501,7 @@ pub fn test() {
     assert_eq!(true, view.is_long_clickable());
     view.set_allow_click_when_disabled(true);
     view.perform_click();
-    assert_eq!(None, view.get_parent::<ViewGroup>());
+    assert!(view.get_parent::<ViewGroup>().is_some());
 
     let params = ViewGroup_LayoutParams::new(
         ViewGroup_LayoutParams::MATCH_PARENT,

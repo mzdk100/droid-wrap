@@ -11,14 +11,13 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_method};
-use droid_wrap_utils::{android_context, vm_attach};
-
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     android::view::{ContextThemeWrapper, View, Window, WindowManager},
     java::lang::{CharSequence, Runnable},
-    JObjNew, JObjRef, JType,
+    java_class, java_method, vm_attach,
 };
+use droid_wrap_utils::android_context;
 
 //noinspection SpellCheckingInspection
 /// 活动是用户可以执行的单一、集中的操作。几乎所有活动都会与用户交互，因此 Activity 类会负责为您创建一个窗口，您可以使用 setContentView 将 UI 放置在该窗口中。
@@ -191,14 +190,10 @@ impl Activity {
     /**
     获取实例。
     */
-    pub fn fetch() -> Self {
+    pub fn fetch() -> Result<Self> {
         let ctx = android_context();
-        vm_attach!(mut env);
-        if let Ok(obj) = env.new_global_ref(&ctx) {
-            Self::_new(&obj, ())
-        } else {
-            Self::null()
-        }
+        let env = vm_attach()?;
+        Self::_new(env.new_global_ref(&ctx)?.as_ref(), Default::default())
     }
 
     /**
@@ -242,12 +237,7 @@ impl Activity {
     `request_code` 应用程序特定的请求代码，用于与报告给 onRequestPermissionsResult(int, String[], int[]) 的结果相匹配。应大于等于 0。
     */
     #[java_method]
-    pub fn request_permissions(
-        &self,
-        permissions: &[String],
-        request_code: i32,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn request_permissions(&self, permissions: &[String], request_code: i32) -> Result<()> {}
 
     /**
     获取在请求权限之前是否应显示带有理由的 UI。
@@ -265,17 +255,18 @@ pub fn test() {
         android::{view::WindowManagerImpl, widget::EditText},
         java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
     };
-    let act = std::sync::Arc::new(Activity::fetch());
+    let act = std::sync::Arc::new(Activity::fetch().unwrap());
     assert!(act.to_string().starts_with("android.app.NativeActivity"));
-    let cs = "我的应用".to_char_sequence::<CharSequenceImpl>();
+    let cs = "我的应用".to_char_sequence::<CharSequenceImpl>().unwrap();
     act.set_title(&cs);
     assert_eq!(cs, act.get_title());
     assert_eq!(false, act.is_finishing());
-    let edit = EditText::new(&act.as_ref().into());
+    let edit = EditText::new(&act);
     let act2 = act.clone();
     let runnable = RunnableImpl::from_fn(move || {
         act2.set_content_view(&edit);
-    });
+    })
+    .unwrap();
     act.run_on_ui_thread(runnable.as_ref());
     let wm: WindowManagerImpl = act.get_window_manager();
     assert!(wm.to_string().starts_with("android.view.WindowManagerImpl"));

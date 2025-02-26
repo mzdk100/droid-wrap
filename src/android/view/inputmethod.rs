@@ -12,11 +12,11 @@
  */
 
 use crate::{
+    JObjNew, JObjRef, JProxy, JType,
     android::{content::Context, os::Bundle, text::InputType},
     java::lang::CharSequence,
-    JObjNew, JObjRef, JProxy, JType,
+    java_class, java_field, java_implement, java_method,
 };
-use droid_wrap_derive::{java_class, java_field, java_implement, java_method};
 
 //noinspection SpellCheckingInspection
 /**
@@ -715,16 +715,15 @@ impl EditorInfo {
 /// 测试android.view.inputmethod
 #[cfg(feature = "test_android_view_inputmethod")]
 pub fn test() {
-    use crate::{
-        android::{app::Activity, content::Context},
-        java::lang::ObjectExt,
-    };
-    let context: Context = (&Activity::fetch()).into();
+    use crate::{android::app::Activity, java::lang::ObjectExt};
+    let context = Activity::fetch().unwrap();
     let imm: InputMethodManager = context
         .get_system_service(Context::INPUT_METHOD_SERVICE.to_string())
         .unwrap()
-        .cast();
-    assert!(imm
-        .to_string()
-        .starts_with("android.view.inputmethod.InputMethodManager"));
+        .cast()
+        .unwrap();
+    assert!(
+        imm.to_string()
+            .starts_with("android.view.inputmethod.InputMethodManager")
+    );
 }

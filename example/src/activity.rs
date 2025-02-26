@@ -12,35 +12,38 @@
  */
 
 use droid_wrap::{
+    Result,
     android::{
         app::Activity,
         view::{
-            ViewGroup_LayoutParams, ViewManager, WindowManagerImpl, WindowManager_LayoutParams,
+            ViewGroup_LayoutParams, ViewManager, WindowManager_LayoutParams, WindowManagerImpl,
         },
         widget::{
             EditText, LinearLayout, LinearLayout_LayoutParams, TextView,
             TextView_OnEditorActionListenerImpl,
         },
     },
-    java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl},
+    java::lang::{CharSequenceExt, CharSequenceImpl, RunnableImpl}, android_main
 };
-use mobile_entry_point::mobile_entry_point;
 use std::sync::Arc;
-#[mobile_entry_point]
-fn main() {
-    let act = Activity::fetch();
-    let cs = "hello".to_char_sequence::<CharSequenceImpl>();
+
+#[android_main]
+fn main() -> Result<()> {
+    let act = Activity::fetch()?;
+    let cs = "hello".to_char_sequence::<CharSequenceImpl>()?;
     dbg!(&cs);
     act.set_title(&cs);
     dbg!(&act);
     let act = Arc::new(act);
     let text_view = TextView::new(act.as_ref());
-    text_view.set_text(Some(
-        "你好，这是一个用Rust构建的安卓示例。".to_char_sequence::<CharSequenceImpl>(),
-    ));
+    text_view.set_text(
+        "你好，这是一个用Rust构建的安卓示例。"
+            .to_char_sequence::<CharSequenceImpl>()
+            .ok(),
+    );
     let edit = EditText::new(act.as_ref());
 
-    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
+    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true)?;
     edit.set_on_editor_action_listener(editor_listener.as_ref());
     // 请在合适的时机手动释放，因为rust无法感知java什么时候不再需要Listener。
     // editor_listener.release();
@@ -56,7 +59,7 @@ fn main() {
             let layout = LinearLayout::new(act2.as_ref());
             layout.set_orientation(LinearLayout::VERTICAL);
             // layout.add_view(&text_view);
-            layout.set_content_description(Some("容器".to_char_sequence::<CharSequenceImpl>()));
+            layout.set_content_description("容器".to_char_sequence::<CharSequenceImpl>().ok());
             layout.set_layout_params(&params);
 
             act2.set_content_view(&layout);
@@ -68,11 +71,14 @@ fn main() {
             let _ = wm.add_view(&edit, &params);
             let runnable = RunnableImpl::from_fn(|| {
                 println!("post delayed");
-            });
+            })
+            .unwrap();
             edit.post_delayed(runnable.as_ref(), 100);
             // 请在合适的时机手动释放，因为rust无法感知java什么时候不再需要Runnable。
             // runnable.release();
-        })
+        })?
         .as_ref(),
     );
+
+    Ok(())
 }

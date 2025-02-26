@@ -12,19 +12,22 @@
  */
 
 use droid_wrap::{
+    Result,
     android::app::Activity,
     java::lang::{Float, Integer, System},
+    android_main,
 };
-use mobile_entry_point::mobile_entry_point;
 
-#[mobile_entry_point]
-fn main() {
-    Activity::fetch().finish();
-    let num = Integer::value_of(6);
+#[android_main]
+fn main() -> Result<()> {
+    Activity::fetch()?.finish();
+    let num = Integer::value_of(6)?;
     let _ = dbg!(num);
-    let num = Float::value_of(6f32);
+    let num = Float::value_of(6f32)?;
     let _ = dbg!(num);
     dbg!(System::current_time_millis());
     System::gc();
-    System::exit(0).unwrap();
+    System::exit(0)?;
+
+    Ok(())
 }

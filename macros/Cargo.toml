@@ -1,5 +1,5 @@
 [package]
-name = "droid-wrap-derive"
+name = "droid-wrap-macros"
 description.workspace = true
 authors.workspace = true
 keywords.workspace = true

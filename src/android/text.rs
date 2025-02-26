@@ -12,10 +12,10 @@
  */
 
 use crate::{
+    JObjNew, JObjRef, JProxy, JType, Result,
     java::lang::{CharSequence, CharSequenceImpl},
-    JObjNew, JObjRef, JProxy, JType,
+    java_class, java_implement, java_interface, java_method,
 };
-use droid_wrap_derive::{java_class, java_implement, java_interface, java_method};
 use std::sync::Arc;
 
 /**
@@ -225,7 +225,7 @@ impl CharSequence for EditableImpl {
         self._based.length()
     }
 
-    fn char_at(&self, index: i32) -> Result<char, droid_wrap_utils::Error> {
+    fn char_at(&self, index: i32) -> Result<char> {
         self._based.char_at(index)
     }
 }
@@ -310,23 +310,23 @@ pub struct TextWatcherImpl {
 impl TextWatcherImpl {
     pub fn from_fn(
         before_text_changed: impl Fn(
-                /* s */ <Self as TextWatcher>::Cs,
-                /* start */ i32,
-                /* count */ i32,
-                /* after */ i32,
-            ) + Send
-            + Sync
-            + 'static,
+            /* s */ <Self as TextWatcher>::Cs,
+            /* start */ i32,
+            /* count */ i32,
+            /* after */ i32,
+        ) + Send
+        + Sync
+        + 'static,
         on_text_changed: impl Fn(
-                /* s */ <Self as TextWatcher>::Cs,
-                /* start */ i32,
-                /* before */ i32,
-                /* count */ i32,
-            ) + Send
-            + Sync
-            + 'static,
+            /* s */ <Self as TextWatcher>::Cs,
+            /* start */ i32,
+            /* before */ i32,
+            /* count */ i32,
+        ) + Send
+        + Sync
+        + 'static,
         after_text_changed: impl Fn(/* s */ <Self as TextWatcher>::E) + Send + Sync + 'static,
-    ) -> Arc<Self> {
+    ) -> Result<Arc<Self>> {
         Self::new(TextWatcherImplDefault {
             before_text_changed: Box::new(before_text_changed),
             on_text_changed: Box::new(on_text_changed),
@@ -376,6 +376,7 @@ pub fn test() {
         |_s, _start, _count, _after| (),
         |_s, _start, _before, _count| (),
         |_s| (),
-    );
+    )
+    .unwrap();
     dbg!(watcher);
 }

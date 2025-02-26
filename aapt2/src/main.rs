@@ -11,11 +11,11 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use android_build::{android_sdk, PathExt, ANDROID_BUILD_TOOLS_VERSION};
+use android_build::{ANDROID_BUILD_TOOLS_VERSION, PathExt, android_sdk};
 use std::{
     env::{args, var},
     path::PathBuf,
-    process::{exit, Command},
+    process::{Command, exit},
 };
 
 /// Returns the path to the `aapt2` executable for the given build tools version.

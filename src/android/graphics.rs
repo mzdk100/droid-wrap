@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{JObjNew, JObjRef, JType};
-use droid_wrap_derive::java_class;
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 /**
 Canvas 类包含“绘制”调用。要绘制某些内容，您需要 4 个基本组件：用于保存像素的 Bitmap、用于托管绘制调用（写入位图）的 Canvas、绘图基元（例如 Rect、Path、文本、Bitmap）和 Paint（用于描述绘图的颜色和样式）。

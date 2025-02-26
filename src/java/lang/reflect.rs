@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{java::lang::Object, JObjNew, JObjRef, JType};
-use droid_wrap_derive::{java_class, java_interface, java_method};
+use crate::{JObjNew, JObjRef, JType, java::lang::Object, java_class, java_interface, java_method};
 
 /**
 InvocationHandler 是代理实例的调用处理程序实现的接口。每个代理实例都有一个关联的调用处理程序。当在代理实例上调用方法时，方法调用将被编码并分派到其调用处理程序的invoke方法。

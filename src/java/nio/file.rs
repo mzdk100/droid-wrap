@@ -12,10 +12,10 @@
  */
 
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     java::{io::File, lang::Comparable},
-    JObjNew, JObjRef, JType,
+    java_interface,
 };
-use droid_wrap_derive::java_interface;
 
 //noinspection SpellCheckingInspection
 //noinspection GrazieInspection
@@ -85,7 +85,7 @@ where
     如果 `index` 为负数、`index` 大于或等于元素数，或者此路径有零个名称元素，则抛出：IllegalArgumentException
     `index` 元素的索引
     */
-    fn get_name<P: Path>(&self, index: i32) -> Result<P, <Self as JType>::Error>;
+    fn get_name<P: Path>(&self, index: i32) -> Result<P>;
 
     /**
     返回一个相对“Path”，它是此路径的名称元素的子序列。 “begin_index”和“end_index”参数指定名称元素的子序列。
@@ -96,11 +96,7 @@ where
     `begin_index` 第一个元素的索引（包括）
     `end_index` 最后一个元素的索引（不包括）
     */
-    fn subpath<P: Path>(
-        &self,
-        begin_index: i32,
-        end_index: i32,
-    ) -> Result<P, <Self as JType>::Error>;
+    fn subpath<P: Path>(&self, begin_index: i32, end_index: i32) -> Result<P>;
 
     /**
     测试此路径是否以给定路径开头。如果此路径的根组件以给定路径的根组件开头，并且此路径以与给定路径相同的名称元素开头，则此路径以给定路径开头。
@@ -118,7 +114,7 @@ where
     如果路径字符串无法转换为 Path，则抛出：InvalidPathException。
     `other` 给定的路径字符串
     */
-    fn starts_with_string(&self, other: String) -> Result<bool, <Self as JType>::Error>;
+    fn starts_with_string(&self, other: String) -> Result<bool>;
 
     /**
     测试此路径是否以给定路径结束。如果给定路径有 N 个元素，没有根组件，并且此路径有 N 个或更多元素，则如果每条路径的最后 N 个元素（从距离根最远的元素开始）相等，则此路径以给定路径结束。
@@ -137,7 +133,7 @@ where
     如果路径字符串无法转换为 Path，则抛出：InvalidPathException。
     `other` 给定的路径字符串
     */
-    fn ends_with_string(&self, other: String) -> Result<bool, <Self as JType>::Error>;
+    fn ends_with_string(&self, other: String) -> Result<bool>;
 
     /**
     返回一条路径，该路径是此路径，但消除了冗余名称元素。此方法的精确定义取决于实现，但通常它源自此路径，即不包含冗余名称元素的路径。
@@ -166,7 +162,7 @@ where
     如果路径字符串无法转换为 Path，则抛出：InvalidPathException。
     `other` 根据此路径进行解析的路径字符串
     */
-    fn resolve_string<P: Path>(&self, other: String) -> Result<P, <Self as JType>::Error>;
+    fn resolve_string<P: Path>(&self, other: String) -> Result<P>;
 
     /**
     根据此路径的 `getParent` 父路径解析给定路径。当需要用另一个文件名替换文件名时，这很有用。
@@ -183,7 +179,7 @@ where
     如果路径字符串无法转换为 Path，则抛出：InvalidPathException。
     `other` 根据此路径的父路径进行解析的路径字符串
     */
-    fn resolve_sibling_string<P: Path>(&self, other: String) -> Result<P, <Self as JType>::Error>;
+    fn resolve_sibling_string<P: Path>(&self, other: String) -> Result<P>;
 
     /**
     构造此路径与给定路径之间的相对路径。相对化是 `resolve(Path)` 解析的逆过程。
@@ -197,7 +193,7 @@ where
     如果 `other` 不是可以相对于此路径进行相对化的 `Path`，则抛出：IllegalArgumentException
     `other` 相对于此路径进行相对化的路径
     */
-    fn relativize<P: Path>(&self, other: P) -> Result<P, <Self as JType>::Error>;
+    fn relativize<P: Path>(&self, other: P) -> Result<P>;
 
     /**
     返回表示此路径绝对路径的 `Path` 对象。如果此路径已经是 `Path#isAbsolute` 绝对路径，则此方法仅返回此路径。
@@ -207,7 +203,7 @@ where
     - java.io.IOError 如果发生 I/O 错误；
     - SecurityException 在默认提供程序的情况下，安装了安全管理器，并且此路径不是绝对路径，则调用安全管理器的 `SecurityManager#checkPropertyAccess(String)` checkPropertyAccess 方法来检查对系统属性 `user.dir` 的访问权限
     */
-    fn to_absolute_path<P: Path>(&self) -> Result<P, <Self as JType>::Error>;
+    fn to_absolute_path<P: Path>(&self) -> Result<P>;
 
     /**
     返回表示此路径的 `File` 对象。如果此 `Path` 与默认提供程序相关联，则此方法相当于返回使用此路径的 `String` 表示形式构造的 `File` 对象。
@@ -215,5 +211,5 @@ where
     返回：表示此路径的 `File` 对象
     抛出：如果此 `Path` 与默认提供程序不相关联，则抛出 UnsupportedOperationException
     */
-    fn to_file(&self) -> Result<File, <Self as JType>::Error>;
+    fn to_file(&self) -> Result<File>;
 }

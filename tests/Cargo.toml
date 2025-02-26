@@ -52,7 +52,6 @@ java_nio = ["java", "droid-wrap/test_java_nio"]
 crate-type = ["dylib"]
 
 [dependencies]
-mobile-entry-point = "0.1.1"
 ndk-glue = "0.7.0"
 
 [dependencies.droid-wrap]

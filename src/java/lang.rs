@@ -17,13 +17,12 @@
 #[cfg(feature = "java_lang_reflect")]
 pub mod reflect;
 
-use droid_wrap_derive::{
-    java_class, java_constructor, java_implement, java_interface, java_method,
+use crate::{
+    JObjNew, JObjRef, JProxy, JType, java_class, java_constructor, java_implement, java_interface,
+    java_method,
 };
-use droid_wrap_utils::{vm_attach, Error, GlobalRef};
+use droid_wrap_utils::{GlobalRef, Result, null_value, vm_attach};
 use std::sync::Arc;
-
-use crate::{JObjNew, JObjRef, JProxy, JType};
 
 /**
 Object 类是类层次结构的根。每个类都有 Object 作为超类。所有对象（包括数组）都实现了此类的方法。
@@ -45,13 +44,13 @@ impl Object {
 /// Object的扩展操作
 pub trait ObjectExt {
     /// 把Object类型转换到任意java类型。
-    fn cast<T: JType>(&self) -> T
+    fn cast<T: JType>(&self) -> Result<T>
     where
         <T as JObjNew>::Fields: Default;
 }
 
 impl ObjectExt for Object {
-    fn cast<T: JType>(&self) -> T
+    fn cast<T: JType>(&self) -> Result<T>
     where
         <T as JObjNew>::Fields: Default,
     {
@@ -60,30 +59,36 @@ impl ObjectExt for Object {
 }
 
 impl JObjRef for String {
-    fn java_ref(&self) -> GlobalRef {
-        vm_attach!(mut env);
-        let s = env.new_string(self.as_str()).unwrap();
-        env.new_global_ref(&s).unwrap()
+    fn java_ref(&self) -> Result<GlobalRef> {
+        let mut env = vm_attach()?;
+        if self.is_empty() {
+            return null_value(&mut env);
+        }
+
+        let s = env.new_string(self.as_str())?;
+        Ok(env.new_global_ref(&s)?)
     }
 }
 
 impl JObjNew for String {
     type Fields = ();
 
-    fn _new(this: &GlobalRef, _: Self::Fields) -> Self {
-        if this.is_null() {
-            return Self::default();
-        }
-        vm_attach!(mut env);
-        if let Ok(s) = env.get_string(this.as_obj().into()) {
-            return Self::from(s.to_str().unwrap());
-        }
-        Self::null()
+    fn _new(this: &GlobalRef, _: Self::Fields) -> Result<Self> {
+        let mut env = vm_attach()?;
+        let s = env.get_string(this.as_obj().into())?;
+        Ok(s.to_str()?.to_string())
+    }
+
+    fn null() -> Result<Self>
+    where
+        Self: Sized,
+        Self::Fields: Default,
+    {
+        Ok(Default::default())
     }
 }
 
 impl JType for String {
-    type Error = Error;
     const CLASS: &'static str = "java/lang/String";
     //noinspection SpellCheckingInspection
     const OBJECT_SIG: &'static str = "Ljava/lang/String;";
@@ -112,7 +117,7 @@ impl Boolean {
     `b` 布尔值。
     */
     #[java_method]
-    pub fn value_of(b: bool) -> Result<Self, <Self as JType>::Error> {}
+    pub fn value_of(b: bool) -> Result<Self> {}
 }
 
 impl From<&bool> for Boolean {
@@ -126,19 +131,19 @@ pub trait CharSequenceExt {
     /**
     实现一个CharSequence类型。
     */
-    fn to_char_sequence<CS: CharSequence>(&self) -> CS
+    fn to_char_sequence<CS: CharSequence>(&self) -> Result<CS>
     where
         <CS as JObjNew>::Fields: Default;
 }
 
 impl<'a> CharSequenceExt for &'a str {
-    fn to_char_sequence<CS: CharSequence>(&self) -> CS
+    fn to_char_sequence<CS: CharSequence>(&self) -> Result<CS>
     where
         <CS as JObjNew>::Fields: Default,
     {
-        vm_attach!(mut env);
-        let s = env.new_string(*self).unwrap();
-        let s = env.new_global_ref(&s).unwrap();
+        let env = vm_attach()?;
+        let s = env.new_string(*self)?;
+        let s = env.new_global_ref(&s)?;
         CS::_new(&s, Default::default())
     }
 }
@@ -174,7 +179,7 @@ impl Integer {
     `i` 一个 int 值。
     */
     #[java_method]
-    pub fn value_of(i: i32) -> Result<Self, <Self as JType>::Error> {}
+    pub fn value_of(i: i32) -> Result<Self> {}
 }
 
 /**
@@ -200,7 +205,7 @@ impl Float {
     `f` 浮点值。
     */
     #[java_method]
-    pub fn value_of(f: f32) -> Result<Self, <Self as JType>::Error> {}
+    pub fn value_of(f: f32) -> Result<Self> {}
 }
 
 /**
@@ -220,7 +225,7 @@ pub trait CharSequence {
     抛出 IndexOutOfBoundsException 如果 index 参数为负数或不小于 length()
     `index` 要返回的 char 值的索引
     * */
-    fn char_at(&self, index: i32) -> Result<char, Error>;
+    fn char_at(&self, index: i32) -> Result<char>;
 }
 
 #[doc(hidden)]
@@ -232,7 +237,7 @@ impl CharSequence for CharSequenceImpl {
     fn length(&self) -> i32 {}
 
     #[java_method]
-    fn char_at(&self, index: i32) -> Result<char, Error> {}
+    fn char_at(&self, index: i32) -> Result<char> {}
 }
 
 /**
@@ -254,7 +259,7 @@ pub trait Runnable {
 pub struct RunnableImpl(Box<dyn Fn() + Sync + Send>);
 
 impl RunnableImpl {
-    pub fn from_fn(func: impl Fn() + Sync + Send + 'static) -> Arc<Self> {
+    pub fn from_fn(func: impl Fn() + Sync + Send + 'static) -> Result<Arc<Self>> {
         Self::new(RunnableImplDefault(Box::new(func)))
     }
 }
@@ -298,7 +303,7 @@ impl System {
     `status` 退出状态。
     */
     #[java_method]
-    pub fn exit(status: i32) -> Result<(), <Self as JType>::Error> {}
+    pub fn exit(status: i32) -> Result<()> {}
 }
 
 /**
@@ -365,8 +370,8 @@ pub trait Comparable<T>: JType {
     - ClassCastException – 如果指定对象的类型阻止其与此对象进行比较。
     强烈建议（但不严格要求）(x.compareTo(y)==0) == (x.equals(y))。一般来说，任何实现 Comparable 接口并违反此条件的类都应明确指出这一事实。建议的语言是“注意：此类具有与 equals 不一致的自然排序。”
     `o` 要比较的对象。
-     */
-    fn compare_to(&self, o: &T) -> Result<i32, <Self as JType>::Error>;
+    */
+    fn compare_to(&self, o: &T) -> Result<i32>;
 }
 
 /// 测试java.lang
@@ -376,15 +381,15 @@ pub fn test() {
     assert_eq!("100", integer.to_string());
     let float = Float::value_of(423.3).unwrap();
     assert_eq!("423.3", float.to_string());
-    let cs = "hello".to_char_sequence::<CharSequenceImpl>();
+    let cs = "hello".to_char_sequence::<CharSequenceImpl>().unwrap();
     assert_eq!("hello", cs.to_string());
     assert_eq!(5, cs.length());
     assert_eq!('h', cs.char_at(0).unwrap());
     assert!(System::current_time_millis() > 0);
     System::gc();
-    let cl = ClassLoader::null();
-    assert_eq!(cl, ClassLoader::null());
+    let cl = ClassLoader::null().unwrap();
+    assert_eq!(cl, ClassLoader::null().unwrap());
     let func = RunnableImpl::from_fn(move || println!("Runnable is running."));
-    dbg!(func);
+    let _ = dbg!(func);
     // System::exit(0).unwrap();
 }

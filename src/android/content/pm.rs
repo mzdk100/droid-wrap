@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{JObjNew, JObjRef, JType};
-use droid_wrap_derive::java_class;
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 /**
 用于检索与设备上当前安装的应用程序包相关的各种信息的类。您可以通过 Context.getPackageManager 找到此类。

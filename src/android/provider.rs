@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{android::content::Context, JObjNew, JObjRef, JType};
-use droid_wrap_derive::{java_class, java_method};
+use crate::{JObjNew, JObjRef, JType, android::content::Context, java_class, java_method};
 
 /**
 设置提供者包含全局系统级设备首选项。

@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use crate::{JObjNew, JObjRef, JType};
-use droid_wrap_derive::java_class;
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 /// AudioManager 提供对音量和铃声模式的控制。
 #[java_class(name = "android/media/AudioManager")]

@@ -15,8 +15,7 @@
 #[cfg(feature = "java_nio_file")]
 pub mod file;
 
-use crate::{JObjNew, JObjRef, JType};
-use droid_wrap_derive::java_class;
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 /**
 字节缓冲区。此类定义了六类针对字节缓冲区的操作：
@@ -61,6 +60,6 @@ pub struct ByteBuffer;
 /// 测试java.nio
 #[cfg(feature = "test_java_nio")]
 pub fn test() {
-    let buffer = ByteBuffer::null();
-    assert_eq!(buffer, ByteBuffer::null());
+    let buffer = ByteBuffer::null().unwrap();
+    assert_eq!(buffer, ByteBuffer::null().unwrap());
 }

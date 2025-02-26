@@ -15,15 +15,14 @@
 #[cfg(feature = "android_content_pm")]
 pub mod pm;
 
-use droid_wrap_derive::{java_class, java_constructor, java_interface, java_method};
-
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     android::os::Bundle,
     java::{
         io::{File, Serializable},
         lang::{CharSequence, ClassLoader, Comparable, Object},
     },
-    JObjNew, JObjRef, JType,
+    java_class, java_constructor, java_interface, java_method,
 };
 
 /**
@@ -207,6 +206,7 @@ impl Context {
     /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.WifiManager 来处理 Wi-Fi 访问的管理。
     pub const WIFI_SERVICE: &'static str = "wifi";
 
+    //noinspection GrazieInspection
     //noinspection SpellCheckingInspection
     /**
     与 getSystemService(String) 一起使用来查询 android.net.wifi.wificond.WifiNl80211Manager，用于处理 Wi-Fi nl802.11 守护进程（wificond）的管理。
@@ -214,6 +214,7 @@ impl Context {
     */
     pub const WIFI_NL80211_SERVICE: &'static str = "wifinl80211";
 
+    //noinspection GrazieInspection
     //noinspection SpellCheckingInspection
     /**
     与 getSystemService(String) 一起使用来查询 android.net.wifi.p2p.WifiP2pManager 来处理 Wi-Fi 对等连接的管理。
@@ -221,6 +222,7 @@ impl Context {
     */
     pub const WIFI_P2P_SERVICE: &'static str = "wifip2p";
 
+    //noinspection GrazieInspection
     //noinspection SpellCheckingInspection
     /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.aware.WifiAwareManager 来处理 Wi-Fi Aware 的管理。
     pub const WIFI_AWARE_SERVICE: &'static str = "wifiaware";
@@ -235,7 +237,7 @@ impl Context {
     pub const WIFI_RTT_SERVICE: &'static str = "rttmanager";
 
     //noinspection SpellCheckingInspection
-    /// 与 getSystemService(String) 一起使用来查询用于测量带有 wifi 的设备范围的 android.net.wifi.rtt.WifiRttManager。
+    /// 与 getSystemService(String) 一起使用来查询用于测量带有 Wi-Fi 的设备范围的 android.net.wifi.rtt.WifiRttManager。
     pub const WIFI_RTT_RANGING_SERVICE: &'static str = "wifirtt";
 
     //noinspection SpellCheckingInspection
@@ -805,6 +807,7 @@ impl Context {
     /// 与 getSystemService(String) 一起使用来查询 android.telephony.satellite.SatelliteManager 来访问卫星功能。
     pub const SATELLITE_SERVICE: &'static str = "satellite";
 
+    //noinspection GrazieInspection
     //noinspection SpellCheckingInspection
     /// 与 getSystemService(String) 一起使用来查询 android.net.wifi.sharedconnectivity.app.SharedConnectivityManager 来访问共享连接服务。
     pub const SHARED_CONNECTIVITY_SERVICE: &'static str = "shared_connectivity";
@@ -1150,8 +1153,7 @@ impl Context {
     `service` 标识要启动的服务。Intent 必须完全明确（提供组件名称）。Intent extras 中可以包含其他值，以提供与此特定启动调用一起的参数。
     */
     #[java_method]
-    pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
-    }
+    pub fn start_service(&self, service: &Intent) -> Result<ComponentName> {}
 
     /**
     确定您是否被授予了特定权限。
@@ -1194,7 +1196,7 @@ impl ContextWrapper {
     }
 
     #[doc(hidden)]
-    pub fn start_service(&self, service: &Intent) -> Result<ComponentName, <Self as JType>::Error> {
+    pub fn start_service(&self, service: &Intent) -> Result<ComponentName> {
         self._based.start_service(service)
     }
 
@@ -4598,14 +4600,7 @@ impl ComponentName {
 
 impl Comparable<ComponentName> for ComponentName {
     #[java_method]
-    fn compare_to(&self, o: &ComponentName) -> Result<i32, <Self as JType>::Error> {}
-}
-
-#[cfg(feature = "android_app")]
-impl From<&crate::android::app::Activity> for Context {
-    fn from(value: &crate::android::app::Activity) -> Self {
-        Self::_new(&value.java_ref(), ())
-    }
+    fn compare_to(&self, o: &ComponentName) -> Result<i32> {}
 }
 
 /// 与组件名称关联的类的接口。
@@ -4619,25 +4614,31 @@ pub trait ComponentName_WithComponentName {
 /// 测试android.content
 #[cfg(feature = "test_android_content")]
 pub fn test() {
-    let act = crate::android::app::Activity::fetch();
+    let act = crate::android::app::Activity::fetch().unwrap();
     assert!(act.to_string().starts_with("android.app.NativeActivity"));
-    let context: Context = (&act).into();
-    assert!(context
-        .to_string()
-        .starts_with("android.app.NativeActivity"));
-    assert_ne!(context.get_class_loader(), ClassLoader::null());
+    let context: &Context = &act;
+    assert!(
+        context
+            .to_string()
+            .starts_with("android.app.NativeActivity")
+    );
+    assert_ne!(context.get_class_loader(), ClassLoader::null().unwrap());
     assert_eq!("rust.droid_wrap_test", context.get_package_name());
     assert_eq!(
         context.get_base_package_name(),
         context.get_op_package_name()
     );
     assert_eq!(None, context.get_attribution_tag());
-    assert!(context
-        .get_package_resource_path()
-        .contains("rust.droid_wrap_test"));
-    assert!(context
-        .get_package_code_path()
-        .contains("rust.droid_wrap_test"));
+    assert!(
+        context
+            .get_package_resource_path()
+            .contains("rust.droid_wrap_test")
+    );
+    assert!(
+        context
+            .get_package_code_path()
+            .contains("rust.droid_wrap_test")
+    );
 
     let intent = Intent::new();
     assert!(intent.to_string().starts_with("Intent"));

@@ -14,14 +14,14 @@
 #![allow(deprecated)]
 
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     android::{
         graphics::{Point, Rect, SurfaceTexture},
         renderscript::{Allocation, RenderScript},
         view::{Surface, SurfaceHolder},
     },
-    JObjNew, JObjRef, JType,
+    java_class, java_constructor, java_field, java_interface, java_method,
 };
-use droid_wrap_derive::{java_class, java_constructor, java_field, java_interface, java_method};
 
 /// 振动器
 #[cfg(feature = "android_hardware_vibrator")]
@@ -126,11 +126,7 @@ impl Camera {
     抛出:RuntimeException – 如果提供了无效 ID，或者检索信息时出错（通常是由于硬件或其他低级故障）。
     */
     #[java_method]
-    pub fn get_camera_info(
-        camera_id: i32,
-        camera_info: &Camera_CameraInfo,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn get_camera_info(camera_id: i32, camera_info: &Camera_CameraInfo) -> Result<()> {}
 
     /**
     创建一个新的 Camera 对象以访问特定的硬件摄像头。如果其他应用程序打开了同一个摄像头，这将引发 RuntimeException。
@@ -143,7 +139,7 @@ impl Camera {
     `camera_id` 要访问的硬件摄像头，介于 0 和 getNumberOfCameras()-1 之间。
     */
     #[java_method]
-    pub fn open(camera_id: i32) -> Result<Self, <Self as JType>::Error> {}
+    pub fn open(camera_id: i32) -> Result<Self> {}
 
     /**
     创建一个新的 Camera 对象来访问设备上的第一个后置摄像头。如果设备没有后置摄像头，则返回 null。否则，其作用类似于 open(int) 调用。
@@ -166,7 +162,7 @@ impl Camera {
     `hal_version` 要打开的此摄像头设备的 HAL API 版本。
     */
     #[java_method]
-    pub fn open_legacy(camera_id: i32, hal_version: i32) -> Result<Self, <Self as JType>::Error> {}
+    pub fn open_legacy(camera_id: i32, hal_version: i32) -> Result<Self> {}
 
     #[doc(hidden)]
     #[java_method]
@@ -189,7 +185,7 @@ impl Camera {
     抛出：RuntimeException – 如果无法解锁摄像头。
     */
     #[java_method]
-    pub fn unlock(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn unlock(&self) -> Result<()> {}
 
     /**
     重新锁定摄像头以防止其他进程访问它。除非调用 unlock()，否则摄像头对象默认处于锁定状态。通常使用 reconnect()。
@@ -197,7 +193,7 @@ impl Camera {
     抛出：RuntimeException – 如果无法重新锁定摄像头（例如，如果另一个进程仍在使用摄像头）。
     */
     #[java_method]
-    pub fn lock(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn lock(&self) -> Result<()> {}
 
     /**
     在另一个进程使用摄像头服务后重新连接到该服务。调用 unlock() 后，另一个进程可以使用摄像头；当该进程完成后，您必须重新连接到摄像头，这将重新获取锁定并允许您继续使用摄像头。
@@ -207,7 +203,7 @@ impl Camera {
     - RuntimeException - 如果已在此 Camera 实例上调用 release()。
     */
     #[java_method]
-    pub fn reconnect(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn reconnect(&self) -> Result<()> {}
 
     /**
     设置用于实时预览的 Surface。预览需要表面或表面纹理，而预览是拍照所必需的。
@@ -220,17 +216,13 @@ impl Camera {
     `holder` – 包含放置预览的表面，或 null 以删除预览表面
     */
     #[java_method]
-    pub fn set_preview_display<SH: SurfaceHolder>(
-        &self,
-        holder: Option<SH>,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn set_preview_display<SH: SurfaceHolder>(&self, holder: Option<SH>) -> Result<()> {}
 
     /**
     抛出:IOException
     */
     #[java_method]
-    pub fn set_preview_surface(&self, surface: &Surface) -> Result<(), <Self as JType>::Error> {}
+    pub fn set_preview_surface(&self, surface: &Surface) -> Result<()> {}
 
     /**
     设置用于实时预览的 SurfaceTexture。预览需要表面或表面纹理，而预览需要拍照。可以重新设置相同的表面纹理而不会造成任何损害。
@@ -243,11 +235,7 @@ impl Camera {
     `surface_texture` 预览图像要发送到的 SurfaceTexture 或 null 以删除当前预览表面纹理
     */
     #[java_method]
-    pub fn set_preview_texture(
-        &self,
-        surface_texture: Option<&SurfaceTexture>,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn set_preview_texture(&self, surface_texture: Option<&SurfaceTexture>) -> Result<()> {}
 
     //noinspection SpellCheckingInspection
     /**
@@ -256,14 +244,14 @@ impl Camera {
     抛出:RuntimeException – 如果启动预览失败；这通常是由于硬件或其他低级错误，或者因为已在此 Camera 实例上调用 release()。setPreviewSize 和 setPictureSize 中提到的 QCIF (176x144) 异常也可能导致抛出此异常。
     */
     #[java_method]
-    pub fn start_preview(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn start_preview(&self) -> Result<()> {}
 
     /**
     停止捕获和将预览帧绘制到表面，并重置相机以便将来调用 startPreview()。
     抛出：RuntimeException – 如果停止预览失败；这通常是由于硬件或其他低级错误，或者因为已在此 Camera 实例上调用 release()。
     */
     #[java_method]
-    pub fn stop_preview(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn stop_preview(&self) -> Result<()> {}
 
     /**
     返回当前预览状态。
@@ -280,11 +268,7 @@ impl Camera {
     `cb` 一个回调对象，用于接收每个预览帧的副本，或 null 以停止接收回调。
     */
     #[java_method]
-    pub fn set_preview_callback<C: Camera_PreviewCallback>(
-        &self,
-        cb: Option<C>,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn set_preview_callback<C: Camera_PreviewCallback>(&self, cb: Option<C>) -> Result<()> {}
 
     /**
     除了在屏幕上显示下一个预览帧外，还安装一个回调函数，用于调用该回调函数来获取下一个预览帧。调用一次后，回调函数将被清除。
@@ -297,7 +281,7 @@ impl Camera {
     pub fn set_one_shot_preview_callback<C: Camera_PreviewCallback>(
         &self,
         cb: Option<C>,
-    ) -> Result<(), <Self as JType>::Error> {
+    ) -> Result<()> {
     }
 
     /**
@@ -313,7 +297,7 @@ impl Camera {
     pub fn set_preview_callback_with_buffer<C: Camera_PreviewCallback>(
         &self,
         cb: Option<C>,
-    ) -> Result<(), <Self as JType>::Error> {
+    ) -> Result<()> {
     }
 
     /**
@@ -350,12 +334,7 @@ impl Camera {
     `usage` 为分配设置的其他使用标志。使用标志 Allocation.USAGE_IO_INPUT 将始终设置在创建的分配上，但可以在此处提供其他标志。
     */
     #[java_method]
-    pub fn create_preview_allocation(
-        &self,
-        rs: &RenderScript,
-        usage: i32,
-    ) -> Result<Allocation, <Self as JType>::Error> {
-    }
+    pub fn create_preview_allocation(&self, rs: &RenderScript, usage: i32) -> Result<Allocation> {}
 
     /**
     将 Allocation 设置为预览回调数据的目标。使用此方法可以高效地处理带有 RenderScript 的相机预览数据。
@@ -371,7 +350,7 @@ impl Camera {
     pub fn set_preview_callback_allocation(
         &self,
         preview_allocation: Option<&Allocation>,
-    ) -> Result<(), <Self as JType>::Error> {
+    ) -> Result<()> {
     }
 
     /**
@@ -385,11 +364,7 @@ impl Camera {
     `cb` 要运行的回调
     */
     #[java_method]
-    pub fn auto_focus<C: Camera_AutoFocusCallback>(
-        &self,
-        cb: &C,
-    ) -> Result<(), <Self as JType>::Error> {
-    }
+    pub fn auto_focus<C: Camera_AutoFocusCallback>(&self, cb: &C) -> Result<()> {}
 
     /**
     取消正在进行的任何自动对焦功能。无论自动对焦当前是否正在进行，此函数都会将焦点位置返回到默认值。
@@ -397,7 +372,7 @@ impl Camera {
     抛出：RuntimeException – 如果取消自动对焦失败；这通常是由于硬件或其他低级错误，或者因为已在此 Camera 实例上调用 release()。
     */
     #[java_method]
-    pub fn cancel_auto_focus(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn cancel_auto_focus(&self) -> Result<()> {}
 
     /**
     设置相机自动对焦移动回调。
@@ -416,7 +391,7 @@ impl Camera {
         shutter: Option<&C>,
         raw: Option<&D>,
         jpeg: Option<&D>,
-    ) -> Result<(), <Self as JType>::Error> {
+    ) -> Result<()> {
     }
 
     /**
@@ -440,7 +415,7 @@ impl Camera {
         raw: Option<&D>,
         post_view: Option<&D>,
         jpeg: Option<&D>,
-    ) -> Result<(), <Self as JType>::Error> {
+    ) -> Result<()> {
     }
 
     /**
@@ -454,7 +429,7 @@ impl Camera {
     `value` 缩放值。有效范围为 0 到 android.hardware.Camera.Parameters.getMaxZoom。
     */
     #[java_method]
-    pub fn start_smooth_zoom(&self, value: i32) -> Result<(), <Self as JType>::Error> {}
+    pub fn start_smooth_zoom(&self, value: i32) -> Result<()> {}
 
     /**
     停止平滑缩放。应用程序应等待 Camera.OnZoomChangeListener 来获知缩放何时真正停止。
@@ -462,7 +437,7 @@ impl Camera {
     抛出:RuntimeException – 如果该方法失败。
     */
     #[java_method]
-    pub fn stop_smooth_zoom(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn stop_smooth_zoom(&self) -> Result<()> {}
 
     /**
     设置预览显示的顺时针旋转度数。这会影响预览帧和快照后显示的图片。此方法对于人像模式应用很有用。
@@ -506,7 +481,7 @@ impl Camera {
     `degrees` 图片顺时针旋转的角度。有效值为 0、90、180 和 270。
     */
     #[java_method]
-    pub fn set_display_orientation(&self, degrees: i32) -> Result<(), <Self as JType>::Error> {}
+    pub fn set_display_orientation(&self, degrees: i32) -> Result<()> {}
 
     /**
     启用或禁用拍照时的默认快门声音。默认情况下，调用 takePicture 时，相机会播放系统定义的相机快门声音。
@@ -518,7 +493,7 @@ impl Camera {
     `enabled` 调用 takePicture 时相机是否应播放系统快门声音。
     */
     #[java_method]
-    pub fn enable_shutter_sound(&self, enabled: bool) -> Result<bool, <Self as JType>::Error> {}
+    pub fn enable_shutter_sound(&self, enabled: bool) -> Result<bool> {}
 
     /**
     无条件禁用快门声音。这只保证适用于旧式相机（即使用 cameraInitUnspecified 初始化的相机）。
@@ -554,7 +529,7 @@ impl Camera {
     - RuntimeException – 如果方法失败或人脸检测已在运行。
     */
     #[java_method]
-    pub fn start_face_detection(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn start_face_detection(&self) -> Result<()> {}
 
     /**
     停止人脸检测。
@@ -582,14 +557,14 @@ impl Camera {
     `params` 此相机服务要使用的参数
     */
     #[java_method]
-    pub fn set_parameters(&self, params: Camera_Parameters) -> Result<(), <Self as JType>::Error> {}
+    pub fn set_parameters(&self, params: Camera_Parameters) -> Result<()> {}
 
     /**
     返回此相机服务的当前设置。如果对返回的参数进行了修改，则必须将其传递给 setParameters(Camera.Parameters) 才能生效。
     抛出:RuntimeException – 如果读取参数失败；这通常是由于硬件或其他低级错误，或者因为已在此相机实例上调用 release()。
     */
     #[java_method]
-    pub fn get_parameters(&self) -> Result<Camera_Parameters, <Self as JType>::Error> {}
+    pub fn get_parameters(&self) -> Result<Camera_Parameters> {}
 
     /**
     返回一个空的 Camera.Parameters 以用于测试目的。
@@ -605,10 +580,7 @@ impl Camera {
     `parameters` 一个非空参数
     */
     #[java_method]
-    pub fn get_parameters_copy(
-        parameters: &Camera_Parameters,
-    ) -> Result<Camera_Parameters, <Self as JType>::Error> {
-    }
+    pub fn get_parameters_copy(parameters: &Camera_Parameters) -> Result<Camera_Parameters> {}
 
     /**
     设置相机音频限制模式。
@@ -1113,7 +1085,7 @@ impl Camera_Parameters {
     `key` 参数的键名
     */
     #[java_method]
-    pub fn get(&self, key: String) -> Result<String, <Self as JType>::Error> {}
+    pub fn get(&self, key: String) -> Result<String> {}
 
     /**
     返回整数参数的值。
@@ -1121,7 +1093,7 @@ impl Camera_Parameters {
     `key` 参数的键名称
     */
     #[java_method]
-    pub fn get_int(&self, key: String) -> Result<i32, <Self as JType>::Error> {}
+    pub fn get_int(&self, key: String) -> Result<i32> {}
 
     //noinspection SpellCheckingInspection
     /**
@@ -1135,7 +1107,7 @@ impl Camera_Parameters {
     `height` 图片的高度，以像素为单位
     */
     #[java_method]
-    pub fn set_preview_size(&self, width: i32, height: i32) -> Result<(), <Self as JType>::Error> {}
+    pub fn set_preview_size(&self, width: i32, height: i32) -> Result<()> {}
 
     /**
     返回预览图片的尺寸设置。
@@ -1292,7 +1264,8 @@ impl Camera_CameraInfo {
 /// 测试android.hardware
 #[cfg(feature = "test_android_hardware")]
 pub fn test() {
-    let act = crate::android::app::Activity::fetch();
+    use crate::android::app::Activity;
+    let act = Activity::fetch().unwrap();
     let camera_permission = crate::android::Manifest_permission::CAMERA.to_string();
     let permissions = vec![camera_permission.clone()];
     act.request_permissions(&permissions, 100).unwrap();

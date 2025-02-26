@@ -10,16 +10,14 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
-use droid_wrap_derive::{
+
+use crate::{
+    JObjNew, JObjRef, JProxy, JType, Result,
+    android::{content::Context, os::Bundle},
+    java::lang::CharSequence,
     java_class, java_constructor, java_implement, java_interface, java_method,
 };
 use std::sync::Arc;
-
-use crate::{
-    android::{content::Context, os::Bundle},
-    java::lang::CharSequence,
-    JObjNew, JObjRef, JProxy, JType,
-};
 
 /**
 从文本合成语音以立即播放或创建声音文件。 TextToSpeech 实例只有在完成初始化后才可用于合成文本。实现 TextToSpeech.OnInitListener 以接收初始化完成的通知。使用完 TextToSpeech 实例后，调用 shutdown() 方法释放 TextToSpeech 引擎使用的原生资源。针对 Android 11 且使用文本转语音的应用应在其清单的查询元素中声明 TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE：
@@ -227,7 +225,7 @@ impl Default for TextToSpeech_OnInitListenerImplDefault {
 }
 
 impl TextToSpeech_OnInitListenerImpl {
-    pub fn from_fn(func: impl Fn(/* status */ i32) + Send + Sync + 'static) -> Arc<Self> {
+    pub fn from_fn(func: impl Fn(/* status */ i32) + Send + Sync + 'static) -> Result<Arc<Self>> {
         Self::new(TextToSpeech_OnInitListenerImplDefault(Box::new(func)))
     }
 }
@@ -240,14 +238,16 @@ pub fn test() {
         android::app::Activity,
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let context: Context = (&Activity::fetch()).into();
+    let context = Activity::fetch().unwrap();
     let init_listener = TextToSpeech_OnInitListenerImpl::from_fn(|status| {
         println!("Tts is initialized status: {}.", status)
-    });
+    })
+    .unwrap();
     let tts = TextToSpeech::new(&context, init_listener.as_ref());
-    assert!(tts
-        .to_string()
-        .starts_with("android.speech.tts.TextToSpeech"));
+    assert!(
+        tts.to_string()
+            .starts_with("android.speech.tts.TextToSpeech")
+    );
     tts.stop();
     assert_eq!(false, tts.is_speaking());
     assert_eq!(TextToSpeech::SUCCESS, tts.set_pitch(0.8f32));
@@ -257,7 +257,7 @@ pub fn test() {
     assert!(!tts.get_current_engine().is_empty());
     // dbg!(tts.are_defaults_enforced());
     tts.speak(
-        &"你好".to_char_sequence::<CharSequenceImpl>(),
+        &"你好".to_char_sequence::<CharSequenceImpl>().unwrap(),
         TextToSpeech::QUEUE_ADD,
         None,
         "test".to_string(),

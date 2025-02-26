@@ -12,11 +12,11 @@
  */
 
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     android::hardware::vibrator::{Effect, EffectImpl, EffectStrength, EffectStrengthImpl},
     java::lang::Runnable,
-    JObjNew, JObjRef, JType,
+    java_class, java_constructor, java_method,
 };
-use droid_wrap_derive::{java_class, java_constructor, java_method};
 use std::{collections::HashSet, convert::Into, iter::Iterator, str::FromStr, string::ToString};
 
 type ConstFn<R = String> = fn() -> R;
@@ -470,7 +470,7 @@ impl Build {
     返回：序列号（如果指定）。
     */
     #[java_method]
-    pub fn get_serial() -> Result<String, <Self as JType>::Error> {}
+    pub fn get_serial() -> Result<String> {}
 
     fn get_string_list(property: &str, separator: &str) -> Vec<String> {
         let value = SystemProperties::get(property.to_string());
@@ -1156,11 +1156,12 @@ pub fn test() {
     };
     let bundle = Bundle::new();
     assert!(bundle.to_string().starts_with("Bundle"));
-    let context: Context = (&Activity::fetch()).into();
+    let context = Activity::fetch().unwrap();
     let vm: VibratorManager = context
         .get_system_service(Context::VIBRATOR_MANAGER_SERVICE.to_string())
         .unwrap()
-        .cast();
+        .cast()
+        .unwrap();
     let effect = VibrationEffect::create_one_shot(500, VibrationEffect::DEFAULT_AMPLITUDE);
     vm.get_default_vibrator().vibrate_effect(&effect);
     let _ = dbg!(

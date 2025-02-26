@@ -12,10 +12,10 @@
  */
 
 use crate::{
+    JObjNew, JObjRef, JType, Result,
     java::{lang::Comparable, nio::file::Path},
-    JObjNew, JObjRef, JType,
+    java_class, java_constructor, java_field, java_interface, java_method,
 };
-use droid_wrap_derive::{java_class, java_constructor, java_field, java_interface, java_method};
 
 /**
 文件和目录路径名的抽象表示。用户界面和操作系统使用系统相关的路径名字符串来命名文件和目录。
@@ -56,7 +56,7 @@ impl File {
     `pathname` 路径名字符串
     */
     #[java_constructor]
-    pub fn new(pathname: String) -> Result<Self, <Self as JType>::Error> {}
+    pub fn new(pathname: String) -> Result<Self> {}
 
     /**
     根据父路径名字符串和子路径名字符串创建一个新的 File 实例。
@@ -68,11 +68,7 @@ impl File {
     `child` 子路径名字符串
     */
     #[java_constructor]
-    pub fn new_with_parent(
-        parent: Option<String>,
-        child: String,
-    ) -> Result<Self, <Self as JType>::Error> {
-    }
+    pub fn new_with_parent(parent: Option<String>, child: String) -> Result<Self> {}
 
     /**
     根据父抽象路径名和子路径名字符串创建新的 File 实例。如果父路径为 null，则创建新的 File 实例，就像通过对给定的子路径名字符串调用单参数 File 构造函数一样。
@@ -83,11 +79,7 @@ impl File {
     `child` 子路径名字符串
     */
     #[java_constructor]
-    pub fn new_with_parent_file(
-        parent: Option<Self>,
-        child: String,
-    ) -> Result<Self, <Self as JType>::Error> {
-    }
+    pub fn new_with_parent_file(parent: Option<Self>, child: String) -> Result<Self> {}
 
     /**
     系统相关的默认名称分隔符。此字段初始化为包含系统属性文件值的第一个字符。分隔符。
@@ -170,7 +162,7 @@ impl File {
     - SecurityException – 如果无法访问所需的系统属性值，或者存在安全管理器并且其 SecurityManager. checkRead 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn get_canonical_path(&self) -> Result<String, <Self as JType>::Error> {}
+    pub fn get_canonical_path(&self) -> Result<String> {}
 
     /**
     返回此抽象路径名的规范形式。等效于新文件（this.getCanonicalPath）。
@@ -180,7 +172,7 @@ impl File {
     - SecurityException - 如果无法访问所需的系统属性值，或者存在安全管理器及其SecurityManager。检查方法拒绝阅读对文件的访问
     */
     #[java_method]
-    pub fn get_canonical_file(&self) -> Result<Self, <Self as JType>::Error> {}
+    pub fn get_canonical_file(&self) -> Result<Self> {}
 
     /**
     测试应用程序是否可以读取此抽象路径名表示的文件。
@@ -188,7 +180,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn can_read(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn can_read(&self) -> Result<bool> {}
 
     /**
     测试应用程序是否可以修改此抽象路径名表示的文件。
@@ -196,7 +188,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkWrite(String) 方法拒绝对文件的写访问
     */
     #[java_method]
-    pub fn can_write(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn can_write(&self) -> Result<bool> {}
 
     /**
     测试此抽象路径名表示的文件或目录是否存在。
@@ -204,7 +196,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件或目录进行读取访问
     */
     #[java_method]
-    pub fn exists(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn exists(&self) -> Result<bool> {}
 
     /**
     测试此抽象路径名表示的文件是否为目录。如果需要区分 I/O 异常和文件不是目录的情况，或者需要同时获取同一文件的多个属性，则可以使用 Files.readAttributes 方法。
@@ -212,7 +204,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn is_directory(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn is_directory(&self) -> Result<bool> {}
 
     /**
     测试此抽象路径名表示的文件是否为普通文件。如果文件不是目录，并且还满足其他系统相关标准，则该文件为普通文件。
@@ -221,7 +213,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager.checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn is_file(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn is_file(&self) -> Result<bool> {}
 
     /**
     测试此抽象路径名所命名的文件是否为隐藏文件。隐藏的确切定义取决于系统。
@@ -231,7 +223,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn is_hidden(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn is_hidden(&self) -> Result<bool> {}
 
     /**
     返回此抽象路径名表示的文件的最后修改时间。如果需要区分 I/O 异常和返回 0L 的情况，或者需要同时获取同一文件的多个属性，或者需要上次访问时间或创建时间，则可以使用 Files.readAttributes 方法。
@@ -239,7 +231,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn last_modified(&self) -> Result<u64, <Self as JType>::Error> {}
+    pub fn last_modified(&self) -> Result<u64> {}
 
     /**
     返回此抽象路径名表示的文件的长度。如果此路径名表示目录，则返回值未指定。
@@ -248,7 +240,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkRead(String) 方法拒绝对文件的读取访问
     */
     #[java_method]
-    pub fn length(&self) -> Result<u64, <Self as JType>::Error> {}
+    pub fn length(&self) -> Result<u64> {}
 
     /**
     当且仅当具有此名称的文件尚不存在时，原子地创建一个以此抽象路径名命名的新空文件。
@@ -260,7 +252,7 @@ impl File {
     - SecurityException – 如果安全管理器存在并且其 SecurityManager. checkWrite(String) 方法拒绝对文件的写访问
     */
     #[java_method]
-    pub fn create_new_file(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn create_new_file(&self) -> Result<bool> {}
 
     /**
     删除此抽象路径名表示的文件或目录。如果此路径名表示目录，则目录必须为空才能删除。
@@ -269,7 +261,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager.checkDelete 方法拒绝删除文件
     */
     #[java_method]
-    pub fn delete(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn delete(&self) -> Result<bool> {}
 
     /**
     请求在虚拟机终止时删除由此抽象路径名表示的文件或目录。文件（或目录）的删除顺序与注册顺序相反。
@@ -284,7 +276,7 @@ impl File {
     抛出:SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkDelete 方法拒绝删除该文件的权限
     */
     #[java_method]
-    pub fn delete_on_exit(&self) -> Result<(), <Self as JType>::Error> {}
+    pub fn delete_on_exit(&self) -> Result<()> {}
 
     /**
     创建以此抽象路径名命名的目录。
@@ -292,7 +284,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkWrite(String) 方法不允许创建命名的目录
     */
     #[java_method]
-    pub fn mkdir(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn mkdir(&self) -> Result<bool> {}
 
     //noinspection SpellCheckingInspection
     /**
@@ -302,7 +294,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager.checkRead(String) 方法不允许验证指定目录和所有必要的父目录的存在；或者如果 SecurityManager.checkWrite(String) 方法不允许创建指定目录和所有必要的父目录
     */
     #[java_method]
-    pub fn mkdirs(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn mkdirs(&self) -> Result<bool> {}
 
     /**
     重命名此抽象路径名表示的文件。可能会出现许多失败情况。一些更可能发生的失败情况包括：
@@ -317,7 +309,7 @@ impl File {
     `dest` 命名文件的新抽象路径名
     */
     #[java_method]
-    pub fn rename_to(&self, dest: Self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn rename_to(&self, dest: Self) -> Result<bool> {}
 
     /**
     设置由此抽象路径名命名的文件或目录的最后修改时间。所有平台都支持将文件修改时间精确到秒，但有些平台提供更高的精度。
@@ -329,7 +321,7 @@ impl File {
     - SecurityException - 如果存在安全管理器并且其 SecurityManager. checkWrite(String) 方法拒绝对指定文件的写访问
     */
     #[java_method]
-    pub fn set_last_modified(&self, time: u64) -> Result<bool, <Self as JType>::Error> {}
+    pub fn set_last_modified(&self, time: u64) -> Result<bool> {}
 
     /**
     标记由此抽象路径名命名的文件或目录，以便只允许读取操作。
@@ -338,7 +330,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkWrite(String) 方法拒绝对指定文件的写入访问
     */
     #[java_method]
-    pub fn set_read_only(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn set_read_only(&self) -> Result<bool> {}
 
     /**
     设置此抽象路径名的所有者或所有人的写权限。
@@ -349,12 +341,7 @@ impl File {
     `owner_only` 如果为 true，则写权限仅适用于所有者的写权限；否则，它适用于所有人。如果底层文件系统无法区分所有者的写权限与其他人的写权限，则无论此值如何，该权限都将适用于所有人。
     */
     #[java_method]
-    pub fn set_writable(
-        &self,
-        writable: bool,
-        owner_only: bool,
-    ) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_writable(&self, writable: bool, owner_only: bool) -> Result<bool> {}
 
     /**
     一种便捷方法，用于设置此抽象路径名的所有者的写入权限。调用 file.setWritable(arg) 形式的此方法的行为与调用 file.setWritable(arg, true) 完全相同
@@ -363,8 +350,7 @@ impl File {
     `writable` 如果为 true，则设置访问权限以允许写入操作；如果为 false，则不允许写入操作
     */
     #[java_method(overload = setWritable)]
-    pub fn set_writable_convenience(&self, writable: bool) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_writable_convenience(&self, writable: bool) -> Result<bool> {}
 
     /**
     设置此抽象路径名的所有者或所有人的读取权限。 java.nio.file.Files 类定义操作文件属性（包括文件权限）的方法。
@@ -375,12 +361,7 @@ impl File {
     `owner_only` 如果为 true，则读取权限仅适用于所有者的读取权限；否则，适用于所有人。如果底层文件系统无法区分所有者的读取权限与其他人的读取权限，则无论此值如何，该权限都将适用于所有人。
     */
     #[java_method]
-    pub fn set_readable(
-        &self,
-        readable: bool,
-        owner_only: bool,
-    ) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_readable(&self, readable: bool, owner_only: bool) -> Result<bool> {}
 
     /**
     一种便捷方法，用于设置此抽象路径名的所有者的读取权限。调用 file.setReadable(arg) 形式的此方法的行为与调用 file.setReadable(arg, true) 完全相同
@@ -389,8 +370,7 @@ impl File {
     `readable` 如果为 true，则设置访问权限以允许读取操作；如果为 false，则不允许读取操作
     */
     #[java_method(overload = setReadable)]
-    pub fn set_readable_convenience(&self, readable: bool) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_readable_convenience(&self, readable: bool) -> Result<bool> {}
 
     /**
     设置此抽象路径名的所有者或所有人的执行权限。 java.nio.file.Files 类定义对文件属性（包括文件权限）进行操作的方法。
@@ -401,12 +381,7 @@ impl File {
     `owner_only` 如果为 true，则执行权限仅适用于所有者的执行权限；否则，它适用于所有人。如果底层文件系统无法区分所有者的执行权限与其他人的执行权限，则无论此值如何，该权限都将适用于所有人。
     */
     #[java_method]
-    pub fn set_executable(
-        &self,
-        executable: bool,
-        owner_only: bool,
-    ) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_executable(&self, executable: bool, owner_only: bool) -> Result<bool> {}
 
     /**
     一种便捷方法，用于设置此抽象路径名的所有者的执行权限。调用 file.setExecutable(arg) 形式的此方法的行为与调用 file.setExecutable(arg, true) 完全相同
@@ -415,11 +390,7 @@ impl File {
     `executable` 如果为 true，则设置访问权限以允许执行操作；如果为 false，则不允许执行操作
     */
     #[java_method(overload = setExecutable)]
-    pub fn set_executable_convenience(
-        &self,
-        executable: bool,
-    ) -> Result<bool, <Self as JType>::Error> {
-    }
+    pub fn set_executable_convenience(&self, executable: bool) -> Result<bool> {}
 
     /**
     测试应用程序是否可以执行此抽象路径名表示的文件。
@@ -427,7 +398,7 @@ impl File {
     抛出：SecurityException – 如果存在安全管理器，并且其 SecurityManager. checkExec(String) 方法拒绝对文件的执行访问
     */
     #[java_method]
-    pub fn can_execute(&self) -> Result<bool, <Self as JType>::Error> {}
+    pub fn can_execute(&self) -> Result<bool> {}
 
     /**
     返回此抽象路径名命名的分区的大小。
@@ -435,7 +406,7 @@ impl File {
     抛出：SecurityException – 如果已安装安全管理器并且它拒绝 RuntimePermission("getFileSystemAttributes") 或其 SecurityManager。checkRead(String) 方法拒绝对此抽象路径名命名的文件进行读取访问
     */
     #[java_method]
-    pub fn get_total_space(&self) -> Result<u64, <Self as JType>::Error> {}
+    pub fn get_total_space(&self) -> Result<u64> {}
 
     /**
     返回此抽象路径名所命名的分区中未分配的字节数。返回的未分配字节数是一个提示，但不能保证可以使用其中大部分或任何字节。
@@ -445,7 +416,7 @@ impl File {
     抛出：SecurityException – 如果已安装安全管理器并且它拒绝 RuntimePermission("getFileSystemAttributes") 或其 SecurityManager。checkRead(String) 方法拒绝对此抽象路径名所命名的文件进行读取访问
     */
     #[java_method]
-    pub fn get_free_space(&self) -> Result<u64, <Self as JType>::Error> {}
+    pub fn get_free_space(&self) -> Result<u64> {}
 
     /**
     返回此虚拟机在由该抽象路径名命名的分区上可用的字节数。如果可能，此方法会检查写入权限和其他操作系统限制，因此通常会比 getFreeSpace 更准确地估计实际可以写入多少新数据。
@@ -455,7 +426,7 @@ impl File {
     抛出：SecurityException – 如果已安装安全管理器，并且它拒绝 RuntimePermission("getFileSystemAttributes") 或其 SecurityManager。checkRead(String) 方法拒绝对此抽象路径名命名的文件进行读取访问
     */
     #[java_method]
-    pub fn get_usable_space(&self) -> Result<u64, <Self as JType>::Error> {}
+    pub fn get_usable_space(&self) -> Result<u64> {}
 
     /**
     在指定目录中创建一个新的空文件，使用给定的前缀和后缀字符串生成其名称。如果此方法成功返回，则保证：在调用此方法之前，返回的抽象路径名表示的文件不存在，并且在虚拟机的当前调用中，此方法及其任何变体都不会再次返回相同的抽象路径名。
@@ -479,7 +450,7 @@ impl File {
         prefix: String,
         suffix: Option<String>,
         directory: Option<Self>,
-    ) -> Result<Self, <Self as JType>::Error> {
+    ) -> Result<Self> {
     }
 
     /**
@@ -494,11 +465,7 @@ impl File {
     `suffix` 用于生成文件名称的后缀字符串；可以为 null，在这种情况下将使用后缀“.tmp”
      */
     #[java_method(overload = createTempFile)]
-    pub fn create_temp_file_default(
-        prefix: String,
-        suffix: Option<String>,
-    ) -> Result<Self, <Self as JType>::Error> {
-    }
+    pub fn create_temp_file_default(prefix: String, suffix: Option<String>) -> Result<Self> {}
 
     /**
     返回一个从此抽象路径构造的 java.nio.file.Path 对象。生成的 Path 与默认文件系统相关联。第一次调用此方法就像调用它相当于评估表达式：
@@ -508,7 +475,7 @@ impl File {
     抛出：InvalidPathException – 如果无法从抽象路径构造 Path 对象（请参阅 FileSystem. getPath）
     */
     #[java_method]
-    pub fn to_path<P: Path>(&self) -> Result<P, <Self as JType>::Error> {}
+    pub fn to_path<P: Path>(&self) -> Result<P> {}
 }
 
 impl Comparable<File> for File {
@@ -519,7 +486,7 @@ impl Comparable<File> for File {
     `pathname` 要与此抽象路径名进行比较的抽象路径名
     */
     #[java_method]
-    fn compare_to(&self, o: &File) -> Result<i32, <Self as JType>::Error> {}
+    fn compare_to(&self, o: &File) -> Result<i32> {}
 }
 
 /**
@@ -585,9 +552,10 @@ pub fn test() {
     assert!(file.delete_on_exit().is_ok());
     assert!(file.mkdir().is_ok());
     assert!(file.mkdirs().is_ok());
-    assert!(file
-        .rename_to(File::new("/data/local/tmp".to_string()).unwrap())
-        .is_ok());
+    assert!(
+        file.rename_to(File::new("/data/local/tmp".to_string()).unwrap())
+            .is_ok()
+    );
     assert!(file.set_last_modified(0).is_ok());
     assert!(file.set_read_only().is_ok());
     assert!(file.set_writable(false, false).is_ok());
@@ -600,6 +568,10 @@ pub fn test() {
     assert!(file.get_total_space().is_ok());
     assert!(file.get_free_space().is_ok());
     assert!(file.get_usable_space().is_ok());
+    println!(
+        "{:?}",
+        File::create_temp_file("droid".to_string(), None, None)
+    );
     assert!(File::create_temp_file("droid".to_string(), None, None).is_ok());
     assert!(File::create_temp_file_default("droid".to_string(), None).is_ok());
     assert!(file.compare_to(&file).is_ok());

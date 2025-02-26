@@ -11,11 +11,10 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{java_class, java_constructor};
-
 use crate::{
-    java::{lang::ClassLoader, nio::ByteBuffer},
     JObjNew, JObjRef, JType,
+    java::{lang::ClassLoader, nio::ByteBuffer},
+    java_class, java_constructor,
 };
 
 /**
@@ -64,15 +63,17 @@ impl InMemoryDexClassLoader {
 /// 测试dalvik.system
 #[cfg(feature = "test_dalvik_system")]
 pub fn test() {
-    use crate::android::{app::Activity, content::Context};
-    let context: Context = (&Activity::fetch()).into();
+    use crate::android::app::Activity;
+    let context = Activity::fetch().unwrap();
     let loader = DexClassLoader::new(
         "c.dex".to_string(),
         "".to_string(),
         "".to_string(),
         &context.get_class_loader(),
     );
-    assert!(loader
-        .to_string()
-        .starts_with("dalvik.system.DexClassLoader"));
+    assert!(
+        loader
+            .to_string()
+            .starts_with("dalvik.system.DexClassLoader")
+    );
 }

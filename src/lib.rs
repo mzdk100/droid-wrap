@@ -59,4 +59,5 @@ pub mod java {
     pub mod nio;
 }
 
+pub use droid_wrap_macros::*;
 droid_wrap_utils::import!();

@@ -10,18 +10,19 @@
  * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
+
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::{
+    Expr, FnArg, Generics, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token,
+    Type, TypeReference,
     parse::{Parse, ParseStream},
     parse2,
     punctuated::Punctuated,
     token::SelfValue,
-    Expr, FnArg, Generics, MetaNameValue, PathArguments, PathSegment, ReturnType, Signature, Token,
-    Type, TypeReference,
 };
 
-pub(crate) struct ClassMetadata {
+pub(super) struct ClassMetadata {
     pub(crate) class_name: Expr,
     pub(crate) base_class: Option<Expr>,
 }
@@ -46,7 +47,7 @@ impl Parse for ClassMetadata {
     }
 }
 
-pub(crate) struct FieldMetadata {
+pub(super) struct FieldMetadata {
     pub(crate) default_value: Option<Expr>,
 }
 
@@ -62,7 +63,7 @@ impl Parse for FieldMetadata {
     }
 }
 
-pub(crate) struct InterfaceMetadata {
+pub(super) struct InterfaceMetadata {
     pub(crate) interface_name: Expr,
 }
 
@@ -81,7 +82,7 @@ impl Parse for InterfaceMetadata {
     }
 }
 
-pub(crate) struct MethodMetadata {
+pub(super) struct MethodMetadata {
     pub(crate) type_bounds: Vec<(TokenStream, TokenStream)>,
     pub(crate) overload: Option<Expr>,
 }
@@ -113,10 +114,10 @@ impl Parse for MethodMetadata {
     }
 }
 
-fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
+fn unwrap_type(ty: &TokenStream) -> TokenStream {
     let res = parse2::<PathSegment>(ty.clone());
 
-    let unwrapped = match res {
+    match res {
         Ok(item) => match item.arguments {
             PathArguments::AngleBracketed(arg) => arg.args.first().unwrap().to_token_stream(),
             _ => item.to_token_stream(),
@@ -125,8 +126,7 @@ fn unwrap_type(ty: &TokenStream) -> (TokenStream, TokenStream) {
             Ok(Type::Reference(TypeReference { elem, .. })) => elem.to_token_stream(),
             _ => ty.clone(),
         },
-    };
-    (unwrapped, ty.to_token_stream())
+    }
 }
 
 fn get_type_descriptor_token(
@@ -180,7 +180,7 @@ fn get_type_descriptor_token(
     }
 }
 
-pub(crate) fn parse_function_signature(
+pub(super) fn parse_function_signature(
     sig: &Signature,
     type_bounds: &Vec<(TokenStream, TokenStream)>,
 ) -> (
@@ -201,7 +201,8 @@ pub(crate) fn parse_function_signature(
                 self_ = Some(r.self_token.clone());
             }
             FnArg::Typed(t) => {
-                let (unwrapped_ty, origin_ty) = unwrap_type(&t.ty.to_token_stream());
+                let origin_ty = t.ty.to_token_stream();
+                let unwrapped_ty = unwrap_type(&origin_ty);
                 let ty_str = unwrapped_ty.to_string();
                 let v = t.pat.clone();
                 let v = if ty_str == "i8" || ty_str == "u8" {
@@ -221,7 +222,7 @@ pub(crate) fn parse_function_signature(
                 } else if ty_str == "bool" {
                     quote! {(#v as droid_wrap_utils::jboolean).into()}
                 } else {
-                    quote! {#v.java_ref().as_obj().into()}
+                    quote! {#v.java_ref()?.as_obj().into()}
                 };
 
                 let arg_sig = get_type_descriptor_token(&unwrapped_ty, &sig.generics, &type_bounds);
@@ -249,127 +250,75 @@ pub(crate) fn parse_function_signature(
     )
 }
 
-pub(crate) fn get_object_return_value_token(ret_type: &TokenStream) -> (TokenStream, bool) {
-    let (unwrapped_ty, ty) = unwrap_type(&ret_type);
-
-    let mut is_result_type = false;
-    let value = if ty.to_string().starts_with("Option") {
-        quote! {
-            if let Ok(obj) = env.new_global_ref(obj) {
-                Option::<#unwrapped_ty>::_new(&obj, Default::default())
-            } else {
-                None
-            }
-        }
-    } else if ty.to_string().starts_with("Result") {
-        is_result_type = true;
-        quote! {
-            match env.new_global_ref(obj) {
-                Ok(o) => Ok(#unwrapped_ty::_new(&o, Default::default())),
-                Err(e) => Err(e)
-            }
-        }
-    } else {
-        quote! {
-            let obj = env.new_global_ref(obj).unwrap();
-            #unwrapped_ty::_new(&obj, Default::default())
-        }
-    };
-    (value, is_result_type)
-}
-
-pub(crate) fn get_return_value_token(
+pub(super) fn get_return_value_token(
     ret_type: &TokenStream,
     generics: &Generics,
     type_bounds: &Vec<(TokenStream, TokenStream)>,
-    default_value: &Option<Expr>,
-) -> (TokenStream, TokenStream, bool) {
-    let (unwrapped_ty, ty) = unwrap_type(ret_type);
+) -> (TokenStream, TokenStream) {
+    let unwrapped_ty = unwrap_type(ret_type);
     let ret_type_sig = get_type_descriptor_token(&unwrapped_ty, generics, &type_bounds);
-    let unwrap_value = match default_value {
-        None => quote! {unwrap()},
-        Some(v) => quote! {unwrap_or(#v)},
-    };
-
     if ret_type_sig.to_string().contains("OBJECT_SIG") {
-        let (ret_value, is_result_type) = get_object_return_value_token(&ret_type);
         return (
             quote! {
-                let obj = ret.l().unwrap();
-                #ret_value
+                #unwrapped_ty::_new(env.new_global_ref(ret.l()?)?.as_ref(), Default::default())?
             },
             ret_type_sig,
-            is_result_type,
         );
     }
 
-    let ty_str = unwrapped_ty.to_string();
-    let opt = if ty_str == "bool" {
+    let unwrapped_ty_str = unwrapped_ty.to_string();
+    let opt = if unwrapped_ty_str == "bool" {
         // bool需要单独处理。
-        quote! {ret.z()}
-    } else if ty_str == "char" {
+        quote! {ret.z()?}
+    } else if unwrapped_ty_str == "char" {
         // char需要单独处理。
         quote! {
-            match ret.c() {
-                Ok(c) => Ok(c as u8 as char),
-                Err(e) => Err(e)
-            }
+            ret.c()? as u8 as char
         }
     } else {
         // 非bool和char
-        if ty_str.starts_with("u") {
+        if unwrapped_ty_str.starts_with("u") {
             // 无符号数字
-            let ty = if ty_str.ends_with("16") {
+            let ty = if unwrapped_ty_str.ends_with("16") {
                 quote! { i16 }
-            } else if ty_str.ends_with("32") {
+            } else if unwrapped_ty_str.ends_with("32") {
                 quote! { i32 }
-            } else if ty_str.ends_with("64") {
+            } else if unwrapped_ty_str.ends_with("64") {
                 quote! { i64 }
             } else {
-                panic!("Unsupported return value type {ty_str}.");
+                panic!("Unsupported return value type {unwrapped_ty_str}.");
             };
+
             quote! {
-                match TryInto::<#ty>::try_into(ret) {
-                    Ok(v) => Ok(v as #unwrapped_ty),
-                    Err(e) => Err(e)
-                }
+                TryInto::<#ty>::try_into(ret)? as #unwrapped_ty
             }
         } else {
             // 带符号数字
-            quote! {TryInto::<#unwrapped_ty>::try_into(ret)}
+            quote! {TryInto::<#unwrapped_ty>::try_into(ret)?}
         }
     };
 
-    let mut is_result_type = false;
-    let opt = if ty.to_string().starts_with("Option") {
-        quote! {
-            if let Ok(obj) = #opt {
-                Some(obj)
-            } else {
-                None
-            }
-        }
-    } else if ty.to_string().starts_with("Result") {
-        is_result_type = true;
-        opt
-    } else {
-        quote! {#opt.#unwrap_value}
-    };
-    (opt, ret_type_sig, is_result_type)
+    (opt, ret_type_sig)
 }
 
-pub(crate) fn get_result_token(is_result_type: bool, ret_value: &TokenStream) -> TokenStream {
-    if is_result_type {
-        quote! {
-            match ret {
-                Ok(ret) => {#ret_value}
-                Err(e) => Err(e)
-            }
+pub(super) fn get_type_form(ty: &TokenStream, default_value: &Option<Expr>) -> TokenStream {
+    if ty.to_string().starts_with("Option") {
+        if default_value.is_some() {
+            quote! {.map_or(#default_value, |i| Some(i))}
+        } else {
+            quote! {.ok()}
+        }
+    } else if ty.to_string().starts_with("Result") {
+        if default_value.is_some() {
+            quote! {.map_or(#default_value, Ok)}
+        } else {
+            quote!()
         }
     } else {
-        quote! {
-            let ret = ret.unwrap();
-            #ret_value
+        if default_value.is_some() {
+            quote! {.unwrap_or(#default_value)}
+        } else {
+            quote! {.unwrap()}
         }
     }
 }

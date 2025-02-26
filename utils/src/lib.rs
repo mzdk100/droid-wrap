@@ -11,14 +11,18 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
+mod error;
+
+pub use error::*;
+
 pub use jni::{
-    errors::Error,
+    AttachGuard, JNIEnv, JavaVM, NativeMethod,
+    errors::Error as JniError,
     objects::{
         GlobalRef, JBooleanArray, JByteArray, JClass, JObject, JObjectArray, JString, JValueGen,
         ReleaseMode,
     },
     sys::{jboolean, jbyte, jchar, jdouble, jfloat, jint, jlong, jshort, jsize},
-    AttachGuard, JNIEnv, JavaVM, NativeMethod,
 };
 use log::{debug, error, warn};
 use parking_lot::ReentrantMutex;
@@ -38,7 +42,7 @@ static HOOK_OBJECTS: LazyLock<
             HashMap<
                 i32,
                 Arc<
-                    dyn Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef
+                    dyn Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> Result<GlobalRef>
                         + Send
                         + Sync,
                 >,
@@ -51,7 +55,8 @@ static HOOK_OBJECTS_OTHER: LazyLock<ReentrantMutex<RefCell<HashMap<u64, i32>>>> 
     LazyLock::new(|| ReentrantMutex::new(RefCell::new(HashMap::new())));
 
 /**
-定义必要的trait，以便于在本地为任何数据类型实现JAVA对象所需的功能。
+导出所有的pub条目。
+这还将定义必要的trait，以便于在本地为任何数据类型实现JAVA对象所需的功能。
 */
 #[macro_export]
 macro_rules! import {
@@ -60,9 +65,10 @@ macro_rules! import {
             rc::Rc,
             sync::{Arc, Mutex},
         };
+        pub use $crate::Result;
         use $crate::{
-            impl_array, null_value, to_java_byte_array, to_java_object_array, unbind_proxy_handler,
-            vm_attach, GlobalRef, JObject,
+            GlobalRef, JObject, impl_array, null_value, to_java_byte_array, to_java_object_array,
+            unbind_proxy_handler, vm_attach,
         };
 
         /**
@@ -73,7 +79,7 @@ macro_rules! import {
             /**
             获取java对象引用。
             */
-            fn java_ref(&self) -> GlobalRef;
+            fn java_ref(&self) -> Result<GlobalRef>;
         }
 
         /**
@@ -87,18 +93,20 @@ macro_rules! import {
             从java对象创建本地对象。
             `this` java对象引用。
             */
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self;
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self>
+            where
+                Self: Sized;
 
             /**
             创建空对象。
             */
-            fn null() -> Self
+            fn null() -> Result<Self>
             where
                 Self: Sized,
                 Self::Fields: Default,
             {
-                vm_attach!(mut env);
-                Self::_new(&null_value(&mut env), Default::default())
+                let mut env = vm_attach()?;
+                Self::_new(null_value(&mut env)?.as_ref(), Default::default())
             }
         }
 
@@ -106,9 +114,6 @@ macro_rules! import {
         用于描述java类的信息。
         */
         pub trait JType: JObjRef + JObjNew {
-            /// 错误类型。
-            type Error;
-
             /// java类的名称。
             const CLASS: &'static str;
 
@@ -127,18 +132,20 @@ macro_rules! import {
             创建一个代理对象。
             `fields` 传递给struct的自定义字段。
             */
-            fn new(fields: Self::Fields) -> std::sync::Arc<Self>;
+            fn new(fields: Self::Fields) -> Result<Arc<Self>>;
 
             /**
             释放代理对象，解除绑定的handler。
             */
-            fn release(&self) {
-                unbind_proxy_handler(&self.java_ref());
+            fn release(&self) -> () {
+                if let Ok(ref r) = self.java_ref() {
+                    unbind_proxy_handler(r)
+                }
             }
         }
 
         impl<T: JObjRef> JObjRef for &T {
-            fn java_ref(&self) -> GlobalRef {
+            fn java_ref(&self) -> Result<GlobalRef> {
                 self.java_ref()
             }
         }
@@ -146,7 +153,7 @@ macro_rules! import {
         impl<T: JObjNew> JObjNew for &T {
             type Fields = T::Fields;
 
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
                 panic!("Reference types cannot be constructed.")
             }
         }
@@ -155,9 +162,9 @@ macro_rules! import {
         where
             <T as JObjNew>::Fields: Default,
         {
-            fn java_ref(&self) -> GlobalRef {
+            fn java_ref(&self) -> Result<GlobalRef> {
                 match self {
-                    None => T::null().java_ref(),
+                    None => T::null()?.java_ref(),
                     Some(v) => v.java_ref(),
                 }
             }
@@ -166,22 +173,21 @@ macro_rules! import {
         impl<T: JObjRef + JObjNew> JObjNew for Option<T> {
             type Fields = T::Fields;
 
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                match this.is_null() {
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(match this.is_null() {
                     true => None,
-                    false => Some(T::_new(this, fields)),
-                }
+                    false => T::_new(this, fields).ok(),
+                })
             }
         }
 
         impl<T: JType> JType for Arc<T> {
             const CLASS: &'static str = T::CLASS;
-            type Error = T::Error;
             const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjRef> JObjRef for Arc<T> {
-            fn java_ref(&self) -> GlobalRef {
+            fn java_ref(&self) -> Result<GlobalRef> {
                 self.as_ref().java_ref()
             }
         }
@@ -189,19 +195,18 @@ macro_rules! import {
         impl<T: JObjNew> JObjNew for Arc<T> {
             type Fields = T::Fields;
 
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                T::_new(this, fields).into()
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(T::_new(this, fields)?.into())
             }
         }
 
         impl<T: JType> JType for Rc<T> {
             const CLASS: &'static str = T::CLASS;
-            type Error = T::Error;
             const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjRef> JObjRef for Rc<T> {
-            fn java_ref(&self) -> GlobalRef {
+            fn java_ref(&self) -> Result<GlobalRef> {
                 self.as_ref().java_ref()
             }
         }
@@ -209,27 +214,26 @@ macro_rules! import {
         impl<T: JObjNew> JObjNew for Rc<T> {
             type Fields = T::Fields;
 
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                T::_new(this, fields).into()
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(T::_new(this, fields)?.into())
             }
         }
 
         impl<T: JType> JType for Mutex<T> {
             const CLASS: &'static str = T::CLASS;
-            type Error = T::Error;
             const OBJECT_SIG: &'static str = T::OBJECT_SIG;
         }
 
         impl<T: JObjNew> JObjNew for Mutex<T> {
             type Fields = T::Fields;
 
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                T::_new(this, fields).into()
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(T::_new(this, fields)?.into())
             }
         }
 
         impl<T: JObjRef> JObjRef for Mutex<T> {
-            fn java_ref(&self) -> GlobalRef {
+            fn java_ref(&self) -> Result<GlobalRef> {
                 self.java_ref()
             }
         }
@@ -252,54 +256,55 @@ macro_rules! impl_array {
     (String, $dim: expr) => {
         impl JObjNew for &[String] {
             type Fields = ();
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                &[]
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(&[])
             }
         }
 
         impl JObjRef for &[String] {
-            fn java_ref(&self) -> GlobalRef {
-                vm_attach!(mut env);
+            fn java_ref(&self) -> Result<GlobalRef> {
+                let mut env = vm_attach()?;
                 let arr = self
                     .iter()
-                    .map(|i| env.new_string(i).unwrap())
+                    .filter_map(|i| env.new_string(i).ok())
                     .collect::<Vec<_>>();
                 let sig = if Self::DIM <= 1 {
                     Self::CLASS.to_string()
                 } else {
                     "[".repeat((Self::DIM - 1) as _) + Self::OBJECT_SIG
                 };
-                let arr = to_java_object_array(&mut env, &arr, &sig);
-                env.new_global_ref(&arr).unwrap()
+                let arr = to_java_object_array(&mut env, &arr, &sig)?;
+                Ok(env.new_global_ref(&arr)?)
             }
         }
 
         impl JType for &[String] {
-            type Error = <String as JType>::Error;
             const CLASS: &'static str = <String as JType>::CLASS;
             const OBJECT_SIG: &'static str = <String as JType>::OBJECT_SIG;
             const DIM: u8 = $dim;
         }
     };
+
     (u8, $dim:expr) => {
         impl JObjNew for &[u8] {
             type Fields = ();
-            fn _new(this: &GlobalRef, fields: Self::Fields) -> Self {
-                &[]
+
+            fn _new(this: &GlobalRef, fields: Self::Fields) -> Result<Self> {
+                Ok(&[])
             }
         }
 
         impl JObjRef for &[u8] {
-            fn java_ref(&self) -> GlobalRef {
-                vm_attach!(mut env);
+            fn java_ref(&self) -> Result<GlobalRef> {
+                let mut env = vm_attach()?;
                 let arr = self.iter().map(|i| *i as _).collect::<Vec<_>>();
-                let arr = to_java_byte_array(&mut env, &arr);
-                env.new_global_ref(&arr).unwrap()
+                let arr = to_java_byte_array(&mut env, &arr)?;
+                Ok(env.new_global_ref(&arr)?)
             }
         }
 
         impl JType for &[u8] {
-            type Error = <String as JType>::Error;
             const CLASS: &'static str = "B";
             const OBJECT_SIG: &'static str = "B";
             const DIM: u8 = $dim;
@@ -310,32 +315,31 @@ macro_rules! impl_array {
 /**
 获取android系统的java虚拟机。
 */
-pub fn android_vm<'a>() -> JavaVM {
-    let ctx = ndk_context::android_context();
-    unsafe { JavaVM::from_raw(ctx.vm().cast()) }.unwrap()
+pub fn android_vm<'a>() -> Result<&'static JavaVM> {
+    static JAVA_VM: LazyLock<Result<JavaVM>> = LazyLock::new(|| {
+        let ctx = ndk_context::android_context();
+        let vm = unsafe { JavaVM::from_raw(ctx.vm().cast()) }?;
+        Ok(vm)
+    });
+    JAVA_VM.as_ref().map_err(|e| e.to_owned())
 }
 
 /// 获取vm，将vm附加到当前线程，随后操作java虚拟机。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
-/// use droid_wrap_utils::vm_attach;
-/// vm_attach!(_ env);
-/// // or: vm_attach!(mut env);
+/// use droid_wrap_utils::{vm_attach, Result};
+/// fn main() -> Result<()> {
+/// let mut env = vm_attach()?;
 /// let class = env.find_class("java/lang/String");
-/// dbg!(class);
+/// dbg!(class)
+/// }
 /// ```
-#[macro_export]
-macro_rules! vm_attach {
-    (mut $var:ident) => {
-        let vm = $crate::android_vm();
-        let mut $var = vm.attach_current_thread().unwrap();
-    };
-    (_ $var:ident) => {
-        let vm = android_vm();
-        let $var = vm.attach_current_thread().unwrap()
-    };
+#[inline(always)]
+pub fn vm_attach<'a>() -> Result<AttachGuard<'a>> {
+    let vm = android_vm()?;
+    vm.attach_current_thread().map_err(|e| e.into())
 }
 
 /**
@@ -353,46 +357,37 @@ pub fn android_context<'a>() -> JObject<'a> {
 /// * `interfaces`: 要实现的java接口。
 /// * `handler`: 代理的处理函数。
 ///
-/// returns: GlobalRef 代理对象
+/// returns: Result<GlobalRef> 代理对象
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::new_proxy;
 /// let proxy = new_proxy(&["java.lang.Runnable"]);
 /// ```
 //noinspection SpellCheckingInspection
-pub fn new_proxy(interfaces: &[&str]) -> GlobalRef {
-    let class = load_rust_call_method_hook_class();
-    vm_attach!(mut env);
-    let obj = env.new_object(class, "()V", &[]).unwrap();
-    let faces = env
-        .new_object_array(
-            interfaces.len() as jsize,
-            "java/lang/Class",
-            &JObject::null(),
-        )
-        .unwrap();
+pub fn new_proxy(interfaces: &[&str]) -> Result<GlobalRef> {
+    let class = load_rust_call_method_hook_class()?;
+    let mut env = vm_attach()?;
+    let obj = env.new_object(class, "()V", &[])?;
+    let faces = env.new_object_array(
+        interfaces.len() as jsize,
+        "java/lang/Class",
+        &JObject::null(),
+    )?;
     for i in 0..interfaces.len() {
-        let class = env.new_string(interfaces[i]).unwrap();
+        let class = env.new_string(interfaces[i])?;
         let face = env
             .call_static_method(
                 "java/lang/Class",
                 "forName",
                 "(Ljava/lang/String;)Ljava/lang/Class;",
                 &[(&class).into()],
-            )
-            .unwrap()
-            .l()
-            .unwrap();
-        env.set_object_array_element(&faces, i as jsize, &face)
-            .unwrap();
+            )?
+            .l()?;
+        env.set_object_array_element(&faces, i as jsize, &face)?;
     }
-    let hash_code = env
-        .call_method(&obj, "hashCode", "()I", &[])
-        .unwrap()
-        .i()
-        .unwrap();
+    let hash_code = env.call_method(&obj, "hashCode", "()I", &[])?.i()?;
     let res = env.call_static_method(
         "java/lang/reflect/Proxy",
         "newProxyInstance",
@@ -402,16 +397,15 @@ pub fn new_proxy(interfaces: &[&str]) -> GlobalRef {
             (&faces).into(),
             (&obj).into()
         ]
-    ).unwrap()
-        .l()
-        .unwrap();
-    let res = env.new_global_ref(&res).unwrap();
+    )?
+        .l()?;
+    let res = env.new_global_ref(&res)?;
     let lock = HOOK_OBJECTS_OTHER.lock();
     let mut hasher = DefaultHasher::new();
     res.hash(&mut hasher);
     lock.borrow_mut().insert(hasher.finish(), hash_code);
     drop(lock);
-    res
+    Ok(res)
 }
 
 //noinspection SpellCheckingInspection
@@ -424,26 +418,26 @@ pub fn new_proxy(interfaces: &[&str]) -> GlobalRef {
 ///
 /// returns: ()
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{bind_proxy_handler, new_proxy, vm_attach};
-/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// let proxy = new_proxy(&["java.lang.Runnable"]).unwrap();
 /// bind_proxy_handler(&proxy, |mut env, method, args| {
-///     let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
-///     let name = env.get_string((&name).into()).unwrap();
-///     println!("Method `{}` is called with proxy.", name.to_str().unwrap());
+///     let name = env.call_method(&method, "getName", "()Ljava/lang/String;", &[])?.l()?;
+///     let name = env.get_string((&name).into())?;
+///     println!("Method `{}` is called with proxy.", name.to_str()?);
 ///     droid_wrap_utils::null_value(env)
 /// });
-/// vm_attach!(mut env);
+/// let mut env = vm_attach().unwrap();
 /// env.call_method(&proxy, "run", "()V", &[]).unwrap();
 /// ```
 pub fn bind_proxy_handler(
     proxy: &GlobalRef,
-    handler: impl Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> GlobalRef
-        + Send
-        + Sync
-        + 'static,
+    handler: impl Fn(&mut JNIEnv<'_>, &JObject<'_>, &JObjectArray<'_>) -> Result<GlobalRef>
+    + Send
+    + Sync
+    + 'static,
 ) {
     let hash_code = get_proxy_hash_code(proxy);
     let lock = match HOOK_OBJECTS.try_lock() {
@@ -464,11 +458,11 @@ pub fn bind_proxy_handler(
 ///
 /// returns: i32
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{new_proxy, get_proxy_hash_code};
-/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// let proxy = new_proxy(&["java.lang.Runnable"]).unwrap();
 /// let hash_code = get_proxy_hash_code(&proxy);
 /// ```
 pub fn get_proxy_hash_code(proxy: &GlobalRef) -> i32 {
@@ -491,11 +485,11 @@ pub fn get_proxy_hash_code(proxy: &GlobalRef) -> i32 {
 ///
 /// returns: ()
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{unbind_proxy_handler, new_proxy};
-/// let proxy = new_proxy(&["java.lang.Runnable"]);
+/// let proxy = new_proxy(&["java.lang.Runnable"]).unwrap();
 /// unbind_proxy_handler(&proxy);
 /// ```
 pub fn unbind_proxy_handler(proxy: &GlobalRef) {
@@ -514,39 +508,39 @@ pub fn unbind_proxy_handler(proxy: &GlobalRef) {
 解析JObject类型。
 */
 pub trait ParseJObjectType<T: FromStr> {
-    fn parse(&self, env: &mut JNIEnv) -> T
+    fn parse(&self, env: &mut JNIEnv) -> Result<T>
     where
         <T as FromStr>::Err: Debug;
 }
 
 impl<T: FromStr> ParseJObjectType<T> for JObject<'_> {
     //noinspection SpellCheckingInspection
-    fn parse(&self, env: &mut JNIEnv) -> T
+    fn parse(&self, env: &mut JNIEnv) -> Result<T>
     where
         <T as FromStr>::Err: Debug,
     {
         let s = env
-            .call_method(self, "toString", "()Ljava/lang/String;", &[])
-            .unwrap()
-            .l()
-            .unwrap();
-        let s = env.get_string((&s).into()).unwrap();
-        s.to_str().unwrap().parse().unwrap()
+            .call_method(self, "toString", "()Ljava/lang/String;", &[])?
+            .l()?;
+        let s = env.get_string((&s).into())?;
+        let s = s.to_str()?;
+        Ok(s.parse()
+            .map_err(|_| DroidWrapError::FromStr(format!("Invalid value: {}", s)))?)
     }
 }
 
 //noinspection SpellCheckingInspection
-fn load_rust_call_method_hook_class<'a>() -> &'a GlobalRef {
+fn load_rust_call_method_hook_class<'a>() -> Result<&'a GlobalRef> {
     #[cfg(target_os = "android")]
     const BYTECODE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/classes.dex"));
     #[cfg(not(target_os = "android"))]
     const BYTECODE: &[u8] = &[];
     const LOADER_CLASS: &str = "dalvik/system/InMemoryDexClassLoader";
-    static INSTANCE: OnceLock<GlobalRef> = OnceLock::new();
+    static INSTANCE: OnceLock<Result<GlobalRef>> = OnceLock::new();
 
     INSTANCE.get_or_init(|| {
-        vm_attach!(mut env);
-        let byte_buffer = unsafe { env.new_direct_byte_buffer(BYTECODE.as_ptr() as *mut u8, BYTECODE.len()) }.unwrap();
+        let mut env = vm_attach()?;
+        let byte_buffer = unsafe { env.new_direct_byte_buffer(BYTECODE.as_ptr() as *mut u8, BYTECODE.len()) }?;
 
         let dex_class_loader = env
             .new_object(
@@ -556,28 +550,26 @@ fn load_rust_call_method_hook_class<'a>() -> &'a GlobalRef {
                     JValueGen::Object(&JObject::from(byte_buffer)),
                     JValueGen::Object(&JObject::null()),
                 ],
-            ).unwrap();
+            )?;
 
-        let class = env.new_string("rust/CallMethodHook").unwrap();
+        let class = env.new_string("rust/CallMethodHook")?;
         let class = env
             .call_method(
                 &dex_class_loader,
                 "loadClass",
                 "(Ljava/lang/String;)Ljava/lang/Class;",
                 &[(&class).into()],
-            )
-            .unwrap()
-            .l()
-            .unwrap();
+            )?
+            .l()?;
         let m = NativeMethod {
             name: "invoke".into(),
             sig: "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;".into(),
             fn_ptr: rust_callback as *mut _,
         };
-        env.register_native_methods(Into::<&JClass<'_>>::into(&class), &[m]).unwrap();
+        env.register_native_methods(Into::<&JClass<'_>>::into(&class), &[m])?;
 
-        env.new_global_ref(&class).unwrap()
-    })
+        Ok(env.new_global_ref(&class)?)
+    }).as_ref().map_err(|e| e.clone())
 }
 
 //noinspection SpellCheckingInspection
@@ -588,59 +580,47 @@ unsafe extern "C" fn rust_callback<'a>(
     method: JObject<'a>,
     args: JObjectArray<'a>,
 ) -> JObject<'a> {
-    let hash_code = env
-        .call_method(&this, "hashCode", "()I", &[])
-        .unwrap()
-        .i()
-        .unwrap_or(0);
+    fn get_hash_code<'a>(env: &mut JNIEnv<'a>, this: &JObject<'a>) -> Result<i32> {
+        Ok::<_, DroidWrapError>(env.call_method(this, "hashCode", "()I", &[])?.i()?)
+    }
 
-    let name = match env.call_method(&method, "getName", "()Ljava/lang/String;", &[]) {
-        Ok(name) => name.l(),
-        Err(e) => {
-            error!("{}", e);
-            return JObject::null();
+    fn get_name<'a>(env: &mut JNIEnv<'a>, method: &JObject<'a>) -> Result<String> {
+        let name = env
+            .call_method(method, "getName", "()Ljava/lang/String;", &[])?
+            .l()?;
+        Ok::<_, DroidWrapError>(env.get_string((&name).into())?.to_str()?.to_string())
+    }
+
+    let hash_code = get_hash_code(&mut env, &this).unwrap_or_default();
+
+    match get_name(&mut env, &method).unwrap_or_default().as_str() {
+        "toString" => {
+            return match env.new_string(format!("Proxy@{:x}", hash_code).as_str()) {
+                Ok(r) => r.into(),
+                _ => JObject::null(),
+            };
         }
-    };
-    let name = match name {
-        Ok(name) => name,
-        Err(e) => {
-            error!("{}", e);
-            return JObject::null();
+        "equals" | "hashCode" => {
+            return match env.call_method(
+                &method,
+                "invoke",
+                "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
+                &[(&this).into(), (&args).into()],
+            ) {
+                Ok(r) => match r.l() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error!("{}", e);
+                        return JObject::null();
+                    }
+                },
+                Err(e) => {
+                    error!("{}", e);
+                    return JObject::null();
+                }
+            };
         }
-    };
-    let name = match env.get_string((&name).into()) {
-        Ok(name) => name,
-        Err(e) => {
-            error!("{}", e);
-            return JObject::null();
-        }
-    };
-    match name.to_str() {
-        Ok(name) => match name {
-            "toString" => {
-                return env
-                    .new_string(format!("Proxy@{:x}", hash_code).as_str())
-                    .unwrap()
-                    .into()
-            }
-            "equals" | "hashCode" => {
-                return env
-                    .call_method(
-                        &method,
-                        "invoke",
-                        "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;",
-                        &[(&this).into(), (&args).into()],
-                    )
-                    .unwrap()
-                    .l()
-                    .unwrap()
-            }
-            _ => (),
-        },
-        Err(e) => {
-            error!("{}", e);
-            return JObject::null();
-        }
+        _ => (),
     }
 
     let lock = HOOK_OBJECTS.lock();
@@ -653,39 +633,52 @@ unsafe extern "C" fn rust_callback<'a>(
         return JObject::null();
     };
     drop(lock);
-    let ret = func(&mut env, &method, &args);
-    env.new_local_ref(ret.as_obj()).unwrap()
+
+    match func(&mut env, &method, &args) {
+        Ok(ret) => match env.new_local_ref(ret.as_obj()) {
+            Ok(r) => return r,
+            Err(e) => {
+                error!("{}", e);
+                JObject::null()
+            }
+        },
+        Err(e) => {
+            error!("{}", e);
+            JObject::null()
+        }
+    }
 }
 
 /// 把java对象数组转换成Vec
 ///
-/// # Arguments
+/// # 参数
 ///
 /// * `env`: java环境
 /// * `arr`: java数组
 ///
-/// returns: Vec<JObject, Global>
+/// # 返回值
 ///
-/// # Examples
+/// 返回: Result<Vec<JObject, Global>>
+///
+/// # 示例
 ///
 /// ```
 /// use jni::objects::JObjectArray;
 /// use droid_wrap_utils::{to_vec, vm_attach};
-/// vm_attach!(mut env);
+/// let mut env = vm_attach().unwrap();
 /// unsafe {
 ///     let arr=JObjectArray::from_raw(0 as _);
-///     to_vec(&mut env, &arr);
+///     to_vec(&mut env, &arr).unwrap();
 /// }
 /// ```
-pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Vec<JObject<'a>> {
-    let Ok(size) = env.get_array_length(arr) else {
-        return vec![];
-    };
+pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Result<Vec<JObject<'a>>> {
+    let size = env.get_array_length(arr)?;
     let mut arr2 = Vec::with_capacity(size as usize);
     for i in 0..size {
-        arr2.push(env.get_object_array_element(arr, i).unwrap());
+        arr2.push(env.get_object_array_element(arr, i)?);
     }
-    arr2
+
+    Ok(arr2)
 }
 
 /// 将Rust数组转换为Java对象数组
@@ -700,19 +693,19 @@ pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Vec<JObject<'a>> 
 ///
 /// # 返回值
 ///
-/// 返回一个`JObjectArray`类型的Java数组。
+/// 返回: Result<JObjectArray>
 ///
 /// # 示例
 ///
 /// ```rust
 /// use droid_wrap_utils::{ JNIEnv, JObject, JObjectArray, jint, to_java_object_array, vm_attach };
 ///
-/// vm_attach!(mut env);
+/// let mut env = vm_attach().unwrap();
 /// // 假设我们有一个Rust数组
 /// let rust_array = vec![env.new_string("hello").unwrap(), env.new_string("world").unwrap()];
 ///
 /// // 将Rust数组转换为Java数组
-/// let java_array = to_java_object_array(&mut env, &rust_array, "java/lang/String");
+/// let java_array = to_java_object_array(&mut env, &rust_array, "java/lang/String").unwrap();
 /// ```
 ///
 pub fn to_java_object_array<'a, O: AsRef<JObject<'a>>>(
@@ -722,17 +715,16 @@ pub fn to_java_object_array<'a, O: AsRef<JObject<'a>>>(
     arr: &[O],
     // element_class：Java数组元素的类名
     element_class: &str,
-) -> JObjectArray<'a> {
+) -> Result<JObjectArray<'a>> {
     // 创建一个新的Java数组，长度为arr.len()，元素类型为element_class，初始值为JObject::null()
-    let arr2 = env
-        .new_object_array(arr.len() as _, element_class, JObject::null())
-        .unwrap();
+    let arr2 = env.new_object_array(arr.len() as _, element_class, JObject::null())?;
     // 遍历Rust数组，将每个元素设置为Java数组的对应位置
     for (i, j) in arr.iter().enumerate() {
-        env.set_object_array_element(&arr2, i as _, j).unwrap();
+        env.set_object_array_element(&arr2, i as _, j)?;
     }
+
     // 返回Java数组
-    arr2
+    Ok(arr2)
 }
 
 //noinspection SpellCheckingInspection
@@ -754,12 +746,12 @@ pub fn to_java_object_array<'a, O: AsRef<JObject<'a>>>(
 /// ```rust
 /// use droid_wrap_utils::{ JNIEnv, JBooleanArray, jint, to_java_byte_array, vm_attach };
 ///
-/// vm_attach!(mut env);
+/// let mut env = vm_attach().unwrap();
 /// // 假设我们有一个Rust数组
 /// let rust_array = vec![65i8,66,67];
 ///
 /// // 将Rust数组转换为Java数组
-/// let java_array = to_java_byte_array(&mut env, &rust_array);
+/// let java_array = to_java_byte_array(&mut env, &rust_array).unwrap();
 /// ```
 ///
 pub fn to_java_byte_array<'a>(
@@ -767,100 +759,173 @@ pub fn to_java_byte_array<'a>(
     env: &mut JNIEnv<'a>,
     // arr：Rust[u8]数组
     arr: &[jbyte],
-) -> JByteArray<'a> {
+) -> Result<JByteArray<'a>> {
     // 创建一个新的Java数组，长度为arr.len()，元素类型为element_class，初始值为JObject::null()
-    let arr2 = env.new_byte_array(arr.len() as _).unwrap();
+    let arr2 = env.new_byte_array(arr.len() as _)?;
     // 遍历Rust数组，将每个元素设置为Java数组的对应位置
-    env.set_byte_array_region(&arr2, 0, arr).unwrap();
+    env.set_byte_array_region(&arr2, 0, arr)?;
     // 返回Java数组
-    arr2
+    Ok(arr2)
 }
 
 /// 获取null的全局引用值。
 ///
-/// # Arguments
+/// # 参数
 ///
 /// * `env`: jni环境。
 ///
-/// returns: GlobalRef
+/// # 返回值
 ///
-/// # Examples
+/// 返回: Result<GlobalRef>
+///
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{null_value, vm_attach};
-/// vm_attach!(mut env);
+/// let mut env = vm_attach().unwrap();
 /// let null_value = null_value(&mut env);
 /// ```
-pub fn null_value(env: &mut JNIEnv) -> GlobalRef {
+pub fn null_value(env: &mut JNIEnv) -> Result<GlobalRef> {
     let obj = JObject::null();
-    env.new_global_ref(&obj).unwrap()
+    Ok(env.new_global_ref(&obj)?)
 }
 
 /// 获取boolean的包装对象的全局引用值。
 ///
-/// # Arguments
+/// # 参数
 ///
 /// * `value`: 数据。
 /// * `env`: jni环境。
 ///
-/// returns: GlobalRef
+/// # 返回值
 ///
-/// # Examples
+/// 返回: Result<GlobalRef>
+///
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{vm_attach, wrapper_bool_value};
-/// vm_attach!(mut env);
-/// let true_value = wrapper_bool_value(true, &mut env);
+/// let mut env = vm_attach().unwrap();
+/// let true_value = wrapper_bool_value(true, &mut env).unwrap();
 /// ```
-pub fn wrapper_bool_value(value: bool, env: &mut JNIEnv) -> GlobalRef {
-    let obj = env
-        .new_object("java/lang/Boolean", "(Z)V", &[(value as jboolean).into()])
-        .unwrap();
-    env.new_global_ref(&obj).unwrap()
+pub fn wrapper_bool_value(value: bool, env: &mut JNIEnv) -> Result<GlobalRef> {
+    let obj = env.new_object("java/lang/Boolean", "(Z)V", &[(value as jboolean).into()])?;
+    Ok(env.new_global_ref(&obj)?)
 }
 
 /// 获取int的包装对象的全局引用值。
 ///
-/// # Arguments
+/// # 参数
 ///
 /// * `value`: 数据。
 /// * `env`: jni环境。
 ///
-/// returns: GlobalRef
+/// # 返回值
 ///
-/// # Examples
+/// 返回: Result<GlobalRef>
+///
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{vm_attach, wrapper_integer_value};
-/// vm_attach!(mut env);
-/// let zero_value = wrapper_integer_value(0, &mut env);
+/// let mut env = vm_attach().unwrap();
+/// let zero_value = wrapper_integer_value(0, &mut env).unwrap();
 /// ```
-pub fn wrapper_integer_value(value: i32, env: &mut JNIEnv) -> GlobalRef {
-    let obj = env
-        .new_object("java/lang/Integer", "(I)V", &[value.into()])
-        .unwrap();
-    env.new_global_ref(&obj).unwrap()
+pub fn wrapper_integer_value(value: i32, env: &mut JNIEnv) -> Result<GlobalRef> {
+    let obj = env.new_object("java/lang/Integer", "(I)V", &[value.into()])?;
+    Ok(env.new_global_ref(&obj)?)
 }
 
 /// 获取long的包装对象的全局引用值。
 ///
-/// # Arguments
+/// # 参数
 ///
 /// * `value`: 数据。
 /// * `env`: jni环境。
 ///
-/// returns: GlobalRef
+/// # 返回值
 ///
-/// # Examples
+/// 返回: Result<GlobalRef>
+///
+/// # 示例
 ///
 /// ```
 /// use droid_wrap_utils::{vm_attach, wrapper_long_value};
-/// vm_attach!(mut env);
-/// let zero_value = wrapper_long_value(0, &mut env);
+/// let mut env = vm_attach().unwrap();
+/// let zero_value = wrapper_long_value(0, &mut env).unwrap();
 /// ```
-pub fn wrapper_long_value(value: i64, env: &mut JNIEnv) -> GlobalRef {
-    let obj = env
-        .new_object("java/lang/Long", "(J)V", &[value.into()])
-        .unwrap();
-    env.new_global_ref(&obj).unwrap()
+pub fn wrapper_long_value(value: i64, env: &mut JNIEnv) -> Result<GlobalRef> {
+    let obj = env.new_object("java/lang/Long", "(J)V", &[value.into()])?;
+    Ok(env.new_global_ref(&obj)?)
+}
+
+//noinspection SpellCheckingInspection
+/// 比较两个Java对象是否相等。
+///
+/// # 参数
+///
+/// * `a`: 第一个对象。
+/// * `b`: 第二个对象。
+///
+/// # 返回值
+///
+/// 返回: Result<bool>
+///
+/// # 示例
+///
+/// ```
+/// use droid_wrap_utils::{vm_attach, java_object_equals};
+/// let mut env = vm_attach().unwrap();
+/// let obj1 = env.new_object("java/lang/Object", "()V", &[]).unwrap();
+/// let obj2 = env.new_object("java/lang/Object", "()V", &[]).unwrap();
+/// let equal = java_object_equals(obj1, obj2).unwrap();
+/// ```
+pub fn java_object_equals<'a, O: AsRef<JObject<'a>>>(a: O, b: O) -> Result<bool> {
+    let a = a.as_ref();
+    let b = b.as_ref();
+    if a.is_null() && a.is_null() {
+        return Ok(true);
+    }
+    if a.is_null() {
+        return Ok(false);
+    }
+    let mut env = vm_attach()?;
+    let res = env
+        .call_method(a, "equals", "(Ljava/lang/Object;)Z", &[b.into()])?
+        .z()?;
+
+    Ok(res)
+}
+
+//noinspection SpellCheckingInspection
+/// 将Java对象转换为字符串。
+///
+/// # 参数
+///
+/// * `obj`: Java对象。
+///
+/// # 返回值
+///
+/// 返回: Result<String>
+///
+/// # 示例
+///
+/// ```
+/// use droid_wrap_utils::{vm_attach, java_object_to_string};
+/// let mut env = vm_attach().unwrap();
+/// let obj = env.new_object("java/lang/Object", "()V", &[]).unwrap();
+/// let s = java_object_to_string(obj).unwrap();
+/// ```
+pub fn java_object_to_string<'a, O: AsRef<JObject<'a>>>(obj: O) -> Result<String> {
+    let obj = obj.as_ref();
+    if obj.is_null() {
+        return Err(DroidWrapError::Jni(JniError::NullPtr("to_string")));
+    }
+    let mut env = vm_attach()?;
+    let s = env
+        .call_method(obj, "toString", "()Ljava/lang/String;", &[])?
+        .l()?;
+    let s = env.get_string((&s).into())?;
+
+    Ok(s.to_str()?.to_string())
 }

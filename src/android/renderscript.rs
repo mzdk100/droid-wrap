@@ -13,10 +13,7 @@
 
 #![allow(deprecated)]
 
-
-use crate::{JType,JObjRef,JObjNew};
-use droid_wrap_derive::java_class;
-
+use crate::{JObjNew, JObjRef, JType, java_class};
 
 //noinspection SpellCheckingInspection
 /**
@@ -31,7 +28,6 @@ Allocation 可以使用 copyFrom 例程填充。对于更复杂的 Element 类�
 #[deprecated(note = "Renderscript 已在 API 级别 31 中弃用。请参阅迁移指南了解建议的替代方案。")]
 #[java_class(name = "android/renderscript/Allocation")]
 pub struct Allocation;
-
 
 //noinspection SpellCheckingInspection
 /**

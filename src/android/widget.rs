@@ -11,20 +11,17 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-use droid_wrap_derive::{
-    java_class, java_constructor, java_field, java_implement, java_interface, java_method,
-};
-use std::sync::Arc;
-
 use crate::{
+    JObjNew, JObjRef, JProxy, JType, Result,
     android::{
         content::Context,
         text::TextWatcher,
         view::{KeyEvent, ViewGroup, ViewGroup_LayoutParams, ViewGroup_MarginLayoutParams},
     },
     java::lang::CharSequence,
-    JObjNew, JObjRef, JProxy, JType,
+    java_class, java_constructor, java_field, java_implement, java_interface, java_method,
 };
+use std::sync::Arc;
 
 //noinspection SpellCheckingInspection
 /**
@@ -51,12 +48,13 @@ impl EditText {
     #[java_method]
     pub fn select_all(&self) {}
 
+    //noinspection SpellCheckingInspection
     /**
     方便选择。
     setSelection(Spannable, int, int)。
     */
     #[java_method]
-    pub fn set_selection(&self, start: i32, stop: i32) -> Result<(), droid_wrap_utils::Error> {}
+    pub fn set_selection(&self, start: i32, stop: i32) -> Result<()> {}
 
     /**
     子类会重写此功能以指定它们默认具有 KeyListener，即使在 XML 选项中没有特别调用。
@@ -98,6 +96,7 @@ impl TextView {
     #[java_constructor]
     pub fn new(context: &Context) -> Self {}
 
+    //noinspection SpellCheckingInspection
     /**
     设置要显示的文本。TextView 不接受类似 HTML 的格式，但您可以使用 XML 资源文件中的文本字符串进行这种格式设置。要设置字符串的样式，请将 android.text.style.* 对象附加到 android.text.SpannableString，或参阅可用资源类型文档，了解在 XML 资源文件中设置格式化文本的示例。必要时，TextView 将使用 Spannable.Factory 创建最终或中间 Spannable。同样，它将使用 Editable.Factory 创建最终或中间 Editable。如果传递的文本是 PrecomputedText，但用于创建 PrecomputedText 的参数与此 TextView 不匹配，则会引发 IllegalArgumentException。要确保参数匹配，您可以在调用此方法之前调用 setTextMetricsParams。
     可能抛出IllegalArgumentException 如果传递的文本是 PrecomputedText，但用于创建 PrecomputedText 的参数与此 TextView 不匹配。
@@ -106,6 +105,7 @@ impl TextView {
     #[java_method]
     pub fn set_text<CS: CharSequence>(&self, text: Option<CS>) {}
 
+    //noinspection SpellCheckingInspection
     /**
     返回 TextView 正在显示的文本。如果使用 BufferType.SPANNABLE 或 BufferType.EDITABLE 参数调用 setText(CharSequence)，则可以将此方法的返回值分别转换为 Spannable 或 Editable。返回值的内容不应修改。如果您想要一个可修改的内容，您应该先制作自己的副本。
     返回：文本视图显示的文本。
@@ -203,14 +203,14 @@ impl Default for TextView_OnEditorActionListenerImplDefault {
 impl TextView_OnEditorActionListenerImpl {
     pub fn from_fn(
         func: impl Fn(
-                /* v */ TextView,
-                /* action_id */ i32,
-                /* event */ Option<KeyEvent>,
-            ) -> bool
-            + Send
-            + Sync
-            + 'static,
-    ) -> Arc<Self> {
+            /* v */ TextView,
+            /* action_id */ i32,
+            /* event */ Option<KeyEvent>,
+        ) -> bool
+        + Send
+        + Sync
+        + 'static,
+    ) -> Result<Arc<Self>> {
         Self::new(TextView_OnEditorActionListenerImplDefault(Box::new(func)))
     }
 }
@@ -357,30 +357,30 @@ pub fn test() {
         },
         java::lang::{CharSequenceExt, CharSequenceImpl},
     };
-    let act = Activity::fetch();
+    let act = Activity::fetch().unwrap();
     let edit = EditText::new(&act);
     assert!(edit.to_string().starts_with("android.widget.EditText"));
     edit.select_all();
     // let _ = edit.set_selection(0,2);
-    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true);
+    let editor_listener = TextView_OnEditorActionListenerImpl::from_fn(|_, _, _| true).unwrap();
     edit.set_on_editor_action_listener(editor_listener.as_ref());
 
     let text = TextView::new(&act);
     assert!(text.to_string().starts_with("android.widget.TextView"));
-    text.set_text(Some("你好".to_char_sequence::<CharSequenceImpl>()));
+    text.set_text("你好".to_char_sequence::<CharSequenceImpl>().ok());
     assert_eq!(
-        Some("你好".to_char_sequence()),
+        "你好".to_char_sequence().ok(),
         text.get_text::<CharSequenceImpl>()
     );
-    text.set_hint(Some("世界".to_char_sequence::<CharSequenceImpl>()));
+    text.set_hint("世界".to_char_sequence::<CharSequenceImpl>().ok());
     assert_eq!(
-        Some("世界".to_char_sequence::<CharSequenceImpl>()),
+        "世界".to_char_sequence::<CharSequenceImpl>().ok(),
         text.get_hint()
     );
     text.set_input_type(InputTypeImpl::TYPE_CLASS_DATETIME);
     assert_eq!(InputTypeImpl::TYPE_CLASS_DATETIME, text.get_input_type());
     let button = Button::new(&act);
-    button.set_text(Some("测试按钮".to_char_sequence::<CharSequenceImpl>()));
+    button.set_text("测试按钮".to_char_sequence::<CharSequenceImpl>().ok());
     let layout = LinearLayout::new(&act);
     layout.set_orientation(LinearLayout::VERTICAL);
     assert_eq!(LinearLayout::VERTICAL, layout.get_orientation());
@@ -400,7 +400,8 @@ pub fn test() {
         |s| {
             dbg!(s);
         },
-    );
+    )
+    .unwrap();
     button.add_text_changed_listener(watcher.as_ref());
     button.remove_text_changed_listener(watcher.as_ref());
 }
