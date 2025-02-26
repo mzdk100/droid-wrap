@@ -357,7 +357,7 @@ pub fn android_context<'a>() -> JObject<'a> {
 /// * `interfaces`: 要实现的java接口。
 /// * `handler`: 代理的处理函数。
 ///
-/// returns: Result<GlobalRef> 代理对象
+/// 返回: `Result<GlobalRef>` 代理对象
 ///
 /// # 示例
 ///
@@ -693,7 +693,7 @@ pub fn to_vec<'a>(env: &mut JNIEnv<'a>, arr: &JObjectArray) -> Result<Vec<JObjec
 ///
 /// # 返回值
 ///
-/// 返回: Result<JObjectArray>
+/// 返回: `Result<JObjectArray>`
 ///
 /// # 示例
 ///
@@ -776,7 +776,7 @@ pub fn to_java_byte_array<'a>(
 ///
 /// # 返回值
 ///
-/// 返回: Result<GlobalRef>
+/// 返回: `Result<GlobalRef>`
 ///
 /// # 示例
 ///
@@ -799,7 +799,7 @@ pub fn null_value(env: &mut JNIEnv) -> Result<GlobalRef> {
 ///
 /// # 返回值
 ///
-/// 返回: Result<GlobalRef>
+/// 返回: `Result<GlobalRef>`
 ///
 /// # 示例
 ///
@@ -822,7 +822,7 @@ pub fn wrapper_bool_value(value: bool, env: &mut JNIEnv) -> Result<GlobalRef> {
 ///
 /// # 返回值
 ///
-/// 返回: Result<GlobalRef>
+/// 返回: `Result<GlobalRef>`
 ///
 /// # 示例
 ///
@@ -845,7 +845,7 @@ pub fn wrapper_integer_value(value: i32, env: &mut JNIEnv) -> Result<GlobalRef> 
 ///
 /// # 返回值
 ///
-/// 返回: Result<GlobalRef>
+/// 返回: `Result<GlobalRef>`
 ///
 /// # 示例
 ///
@@ -869,7 +869,7 @@ pub fn wrapper_long_value(value: i64, env: &mut JNIEnv) -> Result<GlobalRef> {
 ///
 /// # 返回值
 ///
-/// 返回: Result<bool>
+/// 返回: `Result<bool>`
 ///
 /// # 示例
 ///
@@ -906,7 +906,7 @@ pub fn java_object_equals<'a, O: AsRef<JObject<'a>>>(a: O, b: O) -> Result<bool>
 ///
 /// # 返回值
 ///
-/// 返回: Result<String>
+/// 返回: `Result<String>`
 ///
 /// # 示例
 ///
