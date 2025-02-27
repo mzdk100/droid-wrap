@@ -59,7 +59,7 @@ fn main() -> Result<()> {
             let layout = LinearLayout::new(act2.as_ref());
             layout.set_orientation(LinearLayout::VERTICAL);
             // layout.add_view(&text_view);
-            layout.set_content_description("容器".to_char_sequence::<CharSequenceImpl>().ok());
+            layout.set_content_description(Some("容器".to_char_sequence::<CharSequenceImpl>()?));
             layout.set_layout_params(&params);
 
             act2.set_content_view(&layout);
@@ -71,11 +71,12 @@ fn main() -> Result<()> {
             let _ = wm.add_view(&edit, &params);
             let runnable = RunnableImpl::from_fn(|| {
                 println!("post delayed");
-            })
-            .unwrap();
+                Ok(())
+            })?;
             edit.post_delayed(runnable.as_ref(), 100);
             // 请在合适的时机手动释放，因为rust无法感知java什么时候不再需要Runnable。
             // runnable.release();
+            Ok(())
         })?
         .as_ref(),
     );
