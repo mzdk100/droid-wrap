@@ -390,7 +390,7 @@ pub(super) fn java_implement(attrs: TokenStream, input: TokenStream) -> TokenStr
                 }
                 methods.extend(quote! {
                     #name_camel => {
-                        let args2 = droid_wrap_utils::to_vec(env, &args)?;
+                        let args2 = droid_wrap_utils::to_vec(env, &args).unwrap_or_default();
                         let _ret = self_.#name(#arg_tokens);
                         #ret_token
                     },
