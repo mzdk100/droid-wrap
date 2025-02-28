@@ -256,24 +256,24 @@ pub trait Runnable {
 
 #[doc(hidden)]
 #[java_class(name = "java/lang/RunnableImpl", extends=Object)]
-pub struct RunnableImpl(Box<dyn Fn() + Sync + Send>);
+pub struct RunnableImpl(Box<dyn Fn() -> Result<()> + Sync + Send>);
 
 impl RunnableImpl {
-    pub fn from_fn(func: impl Fn() + Sync + Send + 'static) -> Result<Arc<Self>> {
+    pub fn from_fn(func: impl Fn() -> Result<()> + Sync + Send + 'static) -> Result<Arc<Self>> {
         Self::new(RunnableImplDefault(Box::new(func)))
     }
 }
 
 impl Default for RunnableImplDefault {
     fn default() -> Self {
-        Self(Box::new(|| ()))
+        Self(Box::new(|| Ok(())))
     }
 }
 
 #[java_implement]
 impl Runnable for RunnableImpl {
     fn run(&self) {
-        self.0();
+        self.0().unwrap();
     }
 }
 
