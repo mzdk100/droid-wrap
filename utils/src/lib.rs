@@ -350,6 +350,29 @@ pub fn android_context<'a>() -> JObject<'a> {
     unsafe { JObject::from_raw(ctx.context().cast()) }
 }
 
+
+/**
+加载一个java类。
+*/
+pub fn load_class<'a>(class_name: &str) -> Result<JClass<'a>> {
+    let mut env = vm_attach()?;
+    let activity = android_context();
+    let class_loader = env.call_method(
+        activity,
+        "getClassLoader",
+        "()Ljava/lang/ClassLoader;",
+        &[],
+    )?;
+    let cls_name = env.new_string(class_name)?;
+    let loaded_class = env.call_method(
+        class_loader.l()?,
+        "loadClass",
+        "(Ljava/lang/String;)Ljava/lang/Class;",
+        &[(&cls_name).into()],
+    )?;
+    Ok(loaded_class.l()?.into())
+}
+
 /// 创建一个java动态代理，用于在rust层实现java接口的方法。
 ///
 /// # Arguments
