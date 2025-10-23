@@ -238,7 +238,7 @@ pub(super) fn java_method(attrs: TokenStream, input: TokenStream) -> TokenStream
 
     let class_token = if let Some(it) = type_bounds.iter().find(|i| i.0.to_string() == "Self") {
         let tt = it.1.clone();
-        quote! {<Self as #tt>::CLASS}
+        quote! {droid_wrap_utils::load_class(<Self as #tt>::CLASS)?}
     } else {
         quote! {droid_wrap_utils::load_class(Self::CLASS)?}
     };
