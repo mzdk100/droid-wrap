@@ -266,8 +266,7 @@ pub fn test() {
     let runnable = RunnableImpl::from_fn(move || {
         act2.set_content_view(&edit);
         Ok(())
-    })
-    。unwrap();
+    }).unwrap();
     act.run_on_ui_thread(runnable.as_ref());
     let wm: WindowManagerImpl = act.get_window_manager();
     assert!(wm.to_string().starts_with("android.view.WindowManagerImpl"));
