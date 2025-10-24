@@ -284,6 +284,35 @@ macro_rules! impl_array {
             const OBJECT_SIG: &'static str = <String as JType>::OBJECT_SIG;
             const DIM: u8 = $dim;
         }
+
+        // 为 String 类型实现必要的 trait
+        impl JType for String {
+            const CLASS: &'static str = "java/lang/String";
+            const OBJECT_SIG: &'static str = "Ljava/lang/String;";
+        }
+
+        impl JObjRef for String {
+            fn java_ref(&self) -> Result<GlobalRef> {
+                let mut env = vm_attach()?;
+                let jstring = env.new_string(self)?;
+                Ok(env.new_global_ref(&jstring)?)
+            }
+        }
+
+        impl JObjNew for String {
+            type Fields = ();
+
+            fn _new(this: &GlobalRef, _fields: Self::Fields) -> Result<Self> {
+                if this.is_null() {
+                    return Ok(String::new());
+                }
+
+                let mut env = vm_attach()?;
+                let jstring = this.as_obj();
+                let java_string = env.get_string(jstring.into())?;
+                Ok(java_string.to_str()?.to_string())
+            }
+        }
     };
 
     (u8, $dim:expr) => {
