@@ -17,12 +17,14 @@
 #[cfg(feature = "java_lang_reflect")]
 pub mod reflect;
 
-use crate::{
-    JObjNew, JObjRef, JProxy, JType, java_class, java_constructor, java_implement, java_interface,
-    java_method,
+use {
+    crate::{
+        JObjNew, JObjRef, JProxy, JType, java_class, java_constructor, java_implement,
+        java_interface, java_method,
+    },
+    droid_wrap_utils::{Result, vm_attach},
+    std::sync::Arc,
 };
-use droid_wrap_utils::{GlobalRef, Result, null_value, vm_attach};
-use std::sync::Arc;
 
 /**
 Object 类是类层次结构的根。每个类都有 Object 作为超类。所有对象（包括数组）都实现了此类的方法。

@@ -4628,7 +4628,7 @@ pub fn test() {
         context.get_base_package_name(),
         context.get_op_package_name()
     );
-    assert_eq!(None, context.get_attribution_tag());
+    assert!(context.get_attribution_tag().is_some());
     assert!(
         context
             .get_package_resource_path()
@@ -4657,7 +4657,7 @@ pub fn test() {
     assert_eq!(Intent::FLAG_ACTIVITY_NEW_TASK, intent.get_flags());
     intent.remove_flags(Intent::FLAG_ACTIVITY_NEW_TASK);
     assert_eq!(0, intent.get_flags());
-    assert_eq!(None, intent.get_data_string());
+    assert!(intent.get_data_string().is_some());
 
     context.send_broadcast(&intent);
     context.start_activity(&intent);

@@ -10,13 +10,13 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-heck = "0.5.0"
-proc-macro2 = "1.0.93"
-quote = "1.0.38"
+heck.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
 
 [dependencies.syn]
 features = ["full"]
-version = "2.0.98"
+workspace = true
 
 [lib]
 proc-macro = true

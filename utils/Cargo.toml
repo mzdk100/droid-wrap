@@ -15,13 +15,13 @@ rustc-args = ["--cfg", "docsrs"]
 rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
 
 [dependencies]
-jni = "0.21.1"
-ndk-context = "0.1.1"
-log = "0.4.26"
-parking_lot = "0.12.3"
+jni.workspace = true
+ndk-context.workspace = true
+log.workspace = true
+parking_lot.workspace = true
 
 [build-dependencies]
 android-build.workspace = true
-noak = "0.6.1"
-cargo-emit = "0.2.1"
+noak.workspace = true
+cargo-emit.workspace = true
 
