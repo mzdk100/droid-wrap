@@ -389,7 +389,10 @@ pub fn test() {
     System::gc();
     let cl = ClassLoader::null().unwrap();
     assert_eq!(cl, ClassLoader::null().unwrap());
-    let func = RunnableImpl::from_fn(move || println!("Runnable is running."));
+    let func = RunnableImpl::from_fn(move || {
+        println!("Runnable is running.");
+        Ok(())
+    });
     let _ = dbg!(func);
     // System::exit(0).unwrap();
 }
