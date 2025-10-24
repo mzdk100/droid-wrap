@@ -58,41 +58,41 @@ impl ObjectExt for Object {
     }
 }
 
-impl JObjRef for String {
-    fn java_ref(&self) -> Result<GlobalRef> {
-        let mut env = vm_attach()?;
-        if self.is_empty() {
-            return null_value(&mut env);
-        }
-
-        let s = env.new_string(self.as_str())?;
-        Ok(env.new_global_ref(&s)?)
-    }
-}
-
-impl JObjNew for String {
-    type Fields = ();
-
-    fn _new(this: &GlobalRef, _: Self::Fields) -> Result<Self> {
-        let mut env = vm_attach()?;
-        let s = env.get_string(this.as_obj().into())?;
-        Ok(s.to_str()?.to_string())
-    }
-
-    fn null() -> Result<Self>
-    where
-        Self: Sized,
-        Self::Fields: Default,
-    {
-        Ok(Default::default())
-    }
-}
-
-impl JType for String {
-    const CLASS: &'static str = "java/lang/String";
-    //noinspection SpellCheckingInspection
-    const OBJECT_SIG: &'static str = "Ljava/lang/String;";
-}
+// impl JObjRef for String {
+//     fn java_ref(&self) -> Result<GlobalRef> {
+//         let mut env = vm_attach()?;
+//         if self.is_empty() {
+//             return null_value(&mut env);
+//         }
+//
+//         let s = env.new_string(self.as_str())?;
+//         Ok(env.new_global_ref(&s)?)
+//     }
+// }
+//
+// impl JObjNew for String {
+//     type Fields = ();
+//
+//     fn _new(this: &GlobalRef, _: Self::Fields) -> Result<Self> {
+//         let mut env = vm_attach()?;
+//         let s = env.get_string(this.as_obj().into())?;
+//         Ok(s.to_str()?.to_string())
+//     }
+//
+//     fn null() -> Result<Self>
+//     where
+//         Self: Sized,
+//         Self::Fields: Default,
+//     {
+//         Ok(Default::default())
+//     }
+// }
+//
+// impl JType for String {
+//     const CLASS: &'static str = "java/lang/String";
+//     //noinspection SpellCheckingInspection
+//     const OBJECT_SIG: &'static str = "Ljava/lang/String;";
+// }
 
 /**
 Boolean 类将原始类型布尔值包装在对象中。布尔类型的对象包含一个类型为布尔的字段。此外，此类还提供了许多将布尔值转换为字符串和将字符串转换为布尔值的方法，以及处理布尔值时有用的其他常量和方法。
