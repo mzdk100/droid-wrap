@@ -12,8 +12,8 @@ publish = false
 
 [package.metadata.android.sdk]
 min_sdk_version = 26
-target_sdk_version = 36
-max_sdk_version = 36
+target_sdk_version = 37
+max_sdk_version = 37
 
 [[example]]
 name = "activity-example"
@@ -42,7 +42,8 @@ categories = ["android.intent.category.LAUNCHER"]
 
 [dependencies]
 ndk-glue.workspace = true
+jni.workspace = true
 
 [dependencies.droid-wrap]
-features = ["android_app", "android_content", "android_widget"]
+features = ["android", "android_app", "java", "java_lang"]
 path = ".."

@@ -12,8 +12,8 @@ repository.workspace = true
 
 [package.metadata.android.sdk]
 min_sdk_version = 26
-target_sdk_version = 36
-max_sdk_version = 36
+target_sdk_version = 37
+max_sdk_version = 37
 
 [[package.metadata.android.uses_feature]]
 name = "android.hardware.camera"
@@ -43,33 +43,13 @@ value = "droid_wrap_test"
 actions = ["android.intent.action.VIEW", "android.intent.action.MAIN"]
 categories = ["android.intent.category.LAUNCHER"]
 
-[features]
-android = ["droid-wrap/android_app"]
-android_app = ["android", "droid-wrap/test_android_app"]
-android_content = ["android", "droid-wrap/test_android_content"]
-android_hardware = ["android", "droid-wrap/test_android_hardware"]
-android_os = ["android", "droid-wrap/test_android_os"]
-android_provider = ["android", "droid-wrap/test_android_provider"]
-android_speech = ["android", "droid-wrap/test_android_speech"]
-android_speech_tts = ["android_speech", "droid-wrap/test_android_speech_tts"]
-android_text = ["android", "droid-wrap/test_android_text"]
-android_view = ["android", "droid-wrap/test_android_view"]
-android_view_inputmethod = ["android_view", "droid-wrap/test_android_view_inputmethod"]
-android_widget = ["android", "droid-wrap/test_android_widget"]
-dalvik = []
-dalvik_system = ["dalvik", "droid-wrap/test_dalvik_system"]
-java = []
-java_io = ["java", "droid-wrap/test_java_io"]
-java_lang = ["java", "droid-wrap/test_java_lang"]
-java_lang_reflect = ["java_lang", "droid-wrap/test_java_lang_reflect"]
-java_nio = ["java", "droid-wrap/test_java_nio"]
-
 [lib]
 crate-type = ["dylib"]
 
 [dependencies]
+jni.workspace = true
 ndk-glue.workspace = true
 
 [dependencies.droid-wrap]
-optional = true
 path = ".."
+features = ["android", "android_app", "android_content", "java", "java_lang"]

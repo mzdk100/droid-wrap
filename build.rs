@@ -1,21 +1,78 @@
-/*
- * Copyright (c) 2024. The RigelA open source project team and
- * its contributors reserve all rights.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and limitations under the License.
- */
-
 use cargo_emit::rerun_if_changed;
 use noak::{AccessFlags, writer::ClassWriter};
 use std::{collections::HashMap, env::var, fs::OpenOptions, io::Write, path::PathBuf};
 
-pub fn gen_class(
+fn main() {
+    let out_dir = var("OUT_DIR").unwrap();
+    let generated = std::path::Path::new(&out_dir).join("generated");
+
+    // Generate DEX bytecode for proxy support
+    generate_dex(&out_dir);
+
+    // Generate bindings from Android SDK sources
+    let sdk_root = var("CARGO_APK2_SDK_HOME")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .or_else(|| android_build::android_sdk().map(|p| p.to_string_lossy().into_owned()))
+        .unwrap_or_default();
+
+    if sdk_root.is_empty() {
+        println!("cargo:warning=Android SDK not found (set CARGO_APK2_SDK_HOME or ANDROID_HOME), generating empty bindings");
+        droid_wrap_codegen::generate_empty_modules(&generated);
+        return;
+    }
+
+    let api_level = var("ANDROID_API_LEVEL").unwrap_or_else(|_| "37".into());
+
+    let enabled_features: std::collections::HashSet<String> = std::env::vars()
+        .filter_map(|(key, _)| key.strip_prefix("CARGO_FEATURE_").map(|f| f.to_lowercase()))
+        .collect();
+
+    let cargo_toml_path = format!("{}/Cargo.toml", var("CARGO_MANIFEST_DIR").unwrap());
+    let defined_features = parse_features_from_cargo_toml(&cargo_toml_path);
+
+    droid_wrap_codegen::generate(
+        &sdk_root,
+        &api_level,
+        &generated,
+        &defined_features,
+        &enabled_features,
+    );
+
+    println!("cargo:rerun-if-env-changed=CARGO_APK2_SDK_HOME");
+    println!("cargo:rerun-if-env-changed=ANDROID_HOME");
+    println!("cargo:rerun-if-env-changed=ANDROID_SDK_ROOT");
+    println!("cargo:rerun-if-env-changed=ANDROID_API_LEVEL");
+}
+
+fn parse_features_from_cargo_toml(path: &str) -> std::collections::HashSet<String> {
+    let content = match std::fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return std::collections::HashSet::new(),
+    };
+    let mut features = std::collections::HashSet::new();
+    let mut in_features = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[features]" {
+            in_features = true;
+            continue;
+        }
+        if in_features {
+            if trimmed.starts_with('[') {
+                break;
+            }
+            if let Some((name, _)) = trimmed.split_once('=') {
+                features.insert(name.trim().to_string());
+            }
+        }
+    }
+
+    features
+}
+
+fn gen_class(
     class: &str,
     interfaces: &[&str],
     method_map: &HashMap<&str, (bool, String)>,
@@ -38,7 +95,7 @@ pub fn gen_class(
                 methods.begin(|m| {
                     let mut flags = AccessFlags::PUBLIC | AccessFlags::NATIVE;
                     if *is_static {
-                        flags |= AccessFlags::STATIC;
+                        flags = flags | AccessFlags::STATIC;
                     }
                     m.access_flags(flags)?
                         .name(*name)?
@@ -54,16 +111,14 @@ pub fn gen_class(
     Ok(bytes)
 }
 
-//noinspection SpellCheckingInspection
-fn main() {
+fn generate_dex(out_dir: &str) {
     let target_os = var("CARGO_CFG_TARGET_OS").unwrap();
-
     if target_os != "android" {
         return;
     }
 
     rerun_if_changed!("build.rs");
-    let out_dir = PathBuf::from(var("OUT_DIR").unwrap());
+    let out_dir = PathBuf::from(out_dir);
     const CLASS: &str = "rust/CallMethodHook";
     let java_class_path = out_dir.join("CallMethodHook.class");
     let mut java_class_file = OpenOptions::new()
